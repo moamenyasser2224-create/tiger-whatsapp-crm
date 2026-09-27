@@ -27,6 +27,7 @@ import {
   Check,
   Key,
 } from 'lucide-react';
+import { MotionPage } from '../components/motion/MotionPage.js';
 
 export const SettingsPage: React.FC = () => {
   const { user, refreshUser, updateUser, logout } = useAuth();
@@ -284,7 +285,7 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <MotionPage className="space-y-6 max-w-4xl">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-black text-neutral-900 dark:text-white">إعدادات النظام والحساب</h1>
@@ -1086,6 +1087,6 @@ export const SettingsPage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </MotionPage>
   );
 };

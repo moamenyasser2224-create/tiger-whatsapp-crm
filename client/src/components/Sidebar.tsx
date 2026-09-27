@@ -10,13 +10,16 @@ import {
   LayoutDashboard,
   MessageSquareQuote,
   Settings as SettingsIcon,
+  ReceiptText,
 } from 'lucide-react';
 import { cn } from '../lib/utils.js';
 import { useAuth } from '../contexts/AuthContext.js';
+import { LazyMotion, domAnimation, m } from 'framer-motion';
 
 export const navItems = [
   { name: 'العملاء (CRM)', href: '/customers', icon: Users },
   { name: 'الحضور والانصراف', href: '/attendance', icon: Clock },
+  { name: 'خصوماتي والرواتب', href: '/deductions', icon: ReceiptText },
   { name: 'الشات الداخلي', href: '/chat', icon: MessageSquare },
   { name: 'لوحة الإحصائيات', href: '/', icon: LayoutDashboard },
   { name: 'قوالب الرسائل', href: '/templates', icon: MessageSquareQuote },
@@ -50,31 +53,44 @@ export const Sidebar: React.FC = () => {
             </div>
           </div>
 
-          <nav className="space-y-1.5">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <NavLink
-                  key={item.href}
-                  to={item.href}
-                  end={item.href === '/'}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-150 border',
-                      isActive
-                        ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-neutral-100 dark:text-neutral-900 dark:border-white shadow-xs'
-                        : 'border-transparent text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-900 dark:hover:text-white'
-                    )
-                  }
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon className="h-4 w-4 flex-shrink-0" />
-                    <span>{item.name}</span>
-                  </div>
-                </NavLink>
-              );
-            })}
-          </nav>
+          <LazyMotion features={domAnimation}>
+            <nav className="space-y-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <NavLink
+                    key={item.href}
+                    to={item.href}
+                    end={item.href === '/'}
+                    className={({ isActive }) =>
+                      cn(
+                        'relative flex items-center justify-between rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors duration-150',
+                        isActive
+                          ? 'text-white dark:text-neutral-900'
+                          : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
+                      )
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        {isActive && (
+                          <m.div
+                            layoutId="sidebarActiveTab"
+                            transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                            className="absolute inset-0 rounded-xl bg-neutral-900 dark:bg-neutral-100 shadow-sm"
+                          />
+                        )}
+                        <div className="relative z-10 flex items-center gap-3">
+                          <Icon className="h-4 w-4 flex-shrink-0" />
+                          <span>{item.name}</span>
+                        </div>
+                      </>
+                    )}
+                  </NavLink>
+                );
+              })}
+            </nav>
+          </LazyMotion>
         </div>
 
         <div className="space-y-3">
@@ -106,29 +122,44 @@ export const Sidebar: React.FC = () => {
       </aside>
 
       {/* Mobile Horizontal Scrollable Tab Bar */}
-      <div className="md:hidden border-b border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950 px-2 py-2 overflow-x-auto flex gap-1.5 scrollbar-none sticky top-16 z-20">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.href}
-              to={item.href}
-              end={item.href === '/'}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold transition-all border',
-                  isActive
-                    ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-neutral-900 dark:border-white'
-                    : 'border-transparent text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-900'
-                )
-              }
-            >
-              <Icon className="h-3.5 w-3.5 flex-shrink-0" />
-              <span>{item.name}</span>
-            </NavLink>
-          );
-        })}
-      </div>
+      <LazyMotion features={domAnimation}>
+        <div className="md:hidden border-b border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950 px-2 py-2 overflow-x-auto flex gap-1.5 scrollbar-none sticky top-16 z-20">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.href}
+                to={item.href}
+                end={item.href === '/'}
+                className={({ isActive }) =>
+                  cn(
+                    'relative flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold transition-colors',
+                    isActive
+                      ? 'text-white dark:text-neutral-900'
+                      : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
+                  )
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    {isActive && (
+                      <m.div
+                        layoutId="mobileActiveTab"
+                        transition={{ type: 'spring', stiffness: 450, damping: 35 }}
+                        className="absolute inset-0 rounded-lg bg-neutral-900 dark:bg-white"
+                      />
+                    )}
+                    <span className="relative z-10 flex items-center gap-1.5">
+                      <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span>{item.name}</span>
+                    </span>
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
+        </div>
+      </LazyMotion>
     </>
   );
 };

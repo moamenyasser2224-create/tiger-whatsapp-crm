@@ -29,6 +29,8 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react';
+import { MotionPage } from '../components/motion/MotionPage.js';
+import { LazyMotion, domAnimation, m } from 'framer-motion';
 
 export const CustomersPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -152,7 +154,7 @@ export const CustomersPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <MotionPage className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -561,6 +563,6 @@ export const CustomersPage: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </MotionPage>
   );
 };

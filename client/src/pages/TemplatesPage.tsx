@@ -13,6 +13,7 @@ import {
   Eye,
   Info,
 } from 'lucide-react';
+import { MotionPage } from '../components/motion/MotionPage.js';
 
 export const TemplatesPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -95,7 +96,7 @@ export const TemplatesPage: React.FC = () => {
   const formattedPreview = currentBody.replace(/\{name\}/g, previewName || 'العميل');
 
   return (
-    <div className="space-y-6">
+    <MotionPage className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-black text-neutral-900 dark:text-white">قوالب رسائل واتساب</h1>
@@ -227,6 +228,6 @@ export const TemplatesPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </MotionPage>
   );
 };

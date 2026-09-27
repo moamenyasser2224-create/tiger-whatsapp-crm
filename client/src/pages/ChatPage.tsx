@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { MotionPage } from '../components/motion/MotionPage.js';
+import { LazyMotion, domAnimation, m } from 'framer-motion';
 
 export const ChatPage: React.FC = () => {
   const { user } = useAuth();
@@ -117,7 +119,8 @@ export const ChatPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8.5rem)] rounded-2xl border border-neutral-300 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
+    <MotionPage className="h-full">
+      <div className="flex flex-col h-[calc(100vh-8.5rem)] rounded-2xl border border-neutral-300 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
       {/* Chat Room Header */}
       <div className="flex items-center justify-between border-b border-neutral-200 bg-neutral-50/80 px-6 py-4 dark:border-neutral-800 dark:bg-neutral-800/60 backdrop-blur-sm">
         <div className="flex items-center gap-3">
@@ -183,59 +186,73 @@ export const ChatPage: React.FC = () => {
             <p className="text-xs text-neutral-400 mt-1">ابدأ المحادثة وشارك فريقك التحديثات اليومية!</p>
           </div>
         ) : (
-          messages.map((msg) => {
-            const isMe = msg.senderId === user?.id;
+          <LazyMotion features={domAnimation}>
+            {messages.map((msg) => {
+              const isMe = msg.senderId === user?.id;
 
-            return (
-              <div
-                key={msg.id}
-                className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} transition-all`}
-              >
-                <div className={`flex gap-2.5 items-end ${isMe ? 'flex-row-reverse' : 'flex-row'} max-w-[85%] md:max-w-[70%]`}>
-                  {msg.sender?.photoUrl ? (
-                    <img
-                      src={msg.sender.photoUrl}
-                      alt={msg.sender.name}
-                      className="w-7 h-7 rounded-full object-cover border border-neutral-400 dark:border-neutral-600 grayscale shrink-0 mb-1"
-                    />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full border border-neutral-400 dark:border-neutral-600 bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 flex items-center justify-center font-bold text-[10px] shrink-0 mb-1">
-                      {msg.sender?.name?.[0]?.toUpperCase() || '؟'}
-                    </div>
-                  )}
+              return (
+                <m.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1.0] }}
+                  className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
+                >
+                  <div className={`flex gap-2.5 items-end ${isMe ? 'flex-row-reverse' : 'flex-row'} max-w-[85%] md:max-w-[70%]`}>
+                    {msg.sender?.photoUrl ? (
+                      <img
+                        src={msg.sender.photoUrl}
+                        alt={msg.sender.name}
+                        className="w-7 h-7 rounded-full object-cover border border-neutral-400 dark:border-neutral-600 grayscale shrink-0 mb-1"
+                      />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full border border-neutral-400 dark:border-neutral-600 bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 flex items-center justify-center font-bold text-[10px] shrink-0 mb-1">
+                        {msg.sender?.name?.[0]?.toUpperCase() || '؟'}
+                      </div>
+                    )}
 
-                  <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                    {/* Sender Name & Role */}
-                    <div className="flex items-center gap-1.5 mb-1 px-1 text-xs text-neutral-500 dark:text-neutral-400">
-                      <span className="font-bold text-neutral-800 dark:text-neutral-200">
-                        {isMe ? 'أنت' : msg.sender?.name || 'عضو الفريق'}
-                      </span>
-                      {msg.sender?.role === 'admin' && (
-                        <span className="rounded border border-neutral-400 bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:border-neutral-600 dark:text-neutral-200 text-[10px] px-1 font-bold">
-                          مدير
+                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                      {/* Sender Name & Role */}
+                      <div className="flex items-center gap-1.5 mb-1 px-1 text-xs text-neutral-500 dark:text-neutral-400">
+                        <span className="font-bold text-neutral-800 dark:text-neutral-200">
+                          {isMe ? 'أنت' : msg.sender?.name || 'عضو الفريق'}
                         </span>
-                      )}
-                      <span className="text-[10px] text-neutral-400">
-                        {formatMessageTime(msg.createdAt)}
-                      </span>
-                    </div>
+                        {msg.sender?.role === 'admin' && (
+                          <span className="rounded border border-neutral-400 bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:border-neutral-600 dark:text-neutral-200 text-[10px] px-1 font-bold">
+                            مدير
+                          </span>
+                        )}
+                        <span className="text-[10px] text-neutral-400">
+                          {formatMessageTime(msg.createdAt)}
+                        </span>
+                      </div>
 
-                    {/* Message Bubble */}
-                    <div
-                      className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-xs break-words ${
-                        isMe
-                          ? 'bg-black text-white dark:bg-white dark:text-black rounded-br-xs'
-                          : 'bg-neutral-100 text-neutral-900 border border-neutral-300 dark:bg-neutral-800 dark:text-neutral-100 dark:border-neutral-700 rounded-bl-xs'
-                      }`}
-                    >
-                      <p className="whitespace-pre-wrap">{msg.text}</p>
+                      {/* Message Bubble */}
+                      <div
+                        className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-xs break-words ${
+                          isMe
+                            ? 'bg-black text-white dark:bg-white dark:text-black rounded-br-xs'
+                            : 'bg-neutral-100 text-neutral-900 border border-neutral-300 dark:bg-neutral-800 dark:text-neutral-100 dark:border-neutral-700 rounded-bl-xs'
+                        }`}
+                      >
+                        <p className="whitespace-pre-wrap">{msg.text}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            );
-          })
+                </m.div>
+              );
+            })}
+          </LazyMotion>
         )}
+
+        {/* Live Typing & Active Connection Indicator */}
+        <div className="flex items-center gap-2 pt-1 pb-1">
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800/80 text-[10px] font-bold text-neutral-600 dark:text-neutral-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-neutral-600 dark:bg-neutral-400 animate-pulse" />
+            <span>متصل لحظياً</span>
+          </div>
+        </div>
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -269,5 +286,6 @@ export const ChatPage: React.FC = () => {
         </button>
       </form>
     </div>
+  </MotionPage>
   );
 };

@@ -16,6 +16,10 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { MotionPage } from '../components/motion/MotionPage.js';
+import { SpotlightCard } from '../components/motion/SpotlightCard.js';
+import { CountUp } from '../components/motion/CountUp.js';
+
 export const DashboardPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
@@ -54,7 +58,7 @@ export const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <MotionPage className="space-y-6">
       {/* Top Header & Quick Action Buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -104,67 +108,67 @@ export const DashboardPage: React.FC = () => {
         }}
       />
 
-      {/* KPI Cards */}
+      {/* KPI Cards with Spotlight & CountUp */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Customers */}
-        <div className="rounded-2xl border border-neutral-300 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 transition-colors">
+        <SpotlightCard className="p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">إجمالي العملاء</p>
               <h3 className="text-2xl font-black text-neutral-900 dark:text-white mt-1">
-                {statsLoading ? '...' : stats?.totalCustomers || 0}
+                {statsLoading ? '...' : <CountUp end={stats?.totalCustomers || 0} />}
               </h3>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white">
               <Users className="h-6 w-6" />
             </div>
           </div>
-        </div>
+        </SpotlightCard>
 
         {/* Due Today & Overdue */}
-        <div className="rounded-2xl border-2 border-neutral-900 dark:border-neutral-600 bg-white p-5 shadow-sm dark:bg-neutral-900 transition-colors">
+        <SpotlightCard className="p-5 border-2 border-neutral-900 dark:border-neutral-400">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">متابعات اليوم والمتأخرة</p>
               <h3 className="text-2xl font-black text-black dark:text-white mt-1">
-                {statsLoading ? '...' : stats?.dueTodayCount || 0}
+                {statsLoading ? '...' : <CountUp end={stats?.dueTodayCount || 0} />}
               </h3>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white dark:bg-white dark:text-black">
               <Clock className="h-6 w-6" />
             </div>
           </div>
-        </div>
+        </SpotlightCard>
 
         {/* Conversion Rate */}
-        <div className="rounded-2xl border border-neutral-300 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 transition-colors">
+        <SpotlightCard className="p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">معدل التحويل (تم البيع)</p>
               <h3 className="text-2xl font-black text-neutral-900 dark:text-white mt-1">
-                {statsLoading ? '...' : `${stats?.conversionRate || 0}%`}
+                {statsLoading ? '...' : <><CountUp end={stats?.conversionRate || 0} decimals={1} />%</>}
               </h3>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white">
               <TrendingUp className="h-6 w-6" />
             </div>
           </div>
-        </div>
+        </SpotlightCard>
 
         {/* Sold Count */}
-        <div className="rounded-2xl border border-neutral-300 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 transition-colors">
+        <SpotlightCard className="p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">الطلبات المكتملة</p>
               <h3 className="text-2xl font-black text-neutral-900 dark:text-white mt-1">
-                {statsLoading ? '...' : stats?.statusDistribution?.['تم البيع'] || 0}
+                {statsLoading ? '...' : <CountUp end={stats?.statusDistribution?.['تم البيع'] || 0} />}
               </h3>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white">
               <CheckCircle className="h-6 w-6" />
             </div>
           </div>
-        </div>
+        </SpotlightCard>
       </div>
 
       {/* Analytics Charts */}
@@ -180,6 +184,6 @@ export const DashboardPage: React.FC = () => {
         onSubmit={handleCustomerModalSubmit}
         initialData={selectedCustomer}
       />
-    </div>
+    </MotionPage>
   );
 };

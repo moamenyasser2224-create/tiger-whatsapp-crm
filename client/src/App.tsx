@@ -19,6 +19,8 @@ import { ChatPage } from './pages/ChatPage.js';
 import { TemplatesPage } from './pages/TemplatesPage.js';
 import { SettingsPage } from './pages/SettingsPage.js';
 
+import { ToastProvider } from './components/motion/Toast.js';
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -34,30 +36,32 @@ export const App: React.FC = () => {
       <ThemeProvider>
         <AuthProvider>
           <SocketProvider>
-            <BrowserRouter>
-              <Routes>
-                {/* Public Auth Routes */}
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <ToastProvider>
+              <BrowserRouter>
+                <Routes>
+                  {/* Public Auth Routes */}
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-                {/* Protected App Routes */}
-                <Route element={<ProtectedRoute />}>
-                  <Route element={<Layout />}>
-                    <Route path="/" element={<DashboardPage />} />
-                    <Route path="/customers" element={<CustomersPage />} />
-                    <Route path="/attendance" element={<AttendancePage />} />
-                    <Route path="/chat" element={<ChatPage />} />
-                    <Route path="/templates" element={<TemplatesPage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
+                  {/* Protected App Routes */}
+                  <Route element={<ProtectedRoute />}>
+                    <Route element={<Layout />}>
+                      <Route path="/" element={<DashboardPage />} />
+                      <Route path="/customers" element={<CustomersPage />} />
+                      <Route path="/attendance" element={<AttendancePage />} />
+                      <Route path="/chat" element={<ChatPage />} />
+                      <Route path="/templates" element={<TemplatesPage />} />
+                      <Route path="/settings" element={<SettingsPage />} />
+                    </Route>
                   </Route>
-                </Route>
 
-                {/* Catch-all */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </BrowserRouter>
+                  {/* Catch-all */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </BrowserRouter>
+            </ToastProvider>
           </SocketProvider>
         </AuthProvider>
       </ThemeProvider>
