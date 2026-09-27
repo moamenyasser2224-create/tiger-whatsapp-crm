@@ -29,6 +29,12 @@ const auditRepository = new AuditRepository();
 
 const BCRYPT_COST = 12;
 
+interface FailedAttempt {
+  count: number;
+  lockedUntil?: Date;
+}
+const failedLogins = new Map<string, FailedAttempt>();
+
 export class AuthService {
   async register(data: { name: string; email: string; password: string; ipAddress?: string; userAgent?: string }) {
     const existing = await userRepository.findByEmail(data.email);
@@ -79,15 +85,32 @@ export class AuthService {
   }
 
   async login(data: { email: string; password: string; twoFactorCode?: string; ipAddress?: string; userAgent?: string }) {
-    const user = await userRepository.findByEmail(data.email);
+    const normalizedEmail = data.email.toLowerCase().trim();
+    const attemptKey = `${normalizedEmail}_${data.ipAddress || 'unknown'}`;
+    const record = failedLogins.get(attemptKey);
+
+    if (record?.lockedUntil && new Date() < record.lockedUntil) {
+      const remainingMins = Math.ceil((record.lockedUntil.getTime() - Date.now()) / (60 * 1000));
+      throw new CustomError(
+        `تم تجميد الحساب مؤقتاً لمدة ${remainingMins} دقيقة لحماية الأمان بعد محاولات فاشلة متكررة (حماية سحابية)`,
+        429
+      );
+    }
+
+    const user = await userRepository.findByEmail(normalizedEmail);
     if (!user) {
+      this.recordFailedLogin(attemptKey, normalizedEmail, data.ipAddress, data.userAgent);
       throw new CustomError('البريد الإلكتروني أو كلمة المرور غير صحيحة', 401);
     }
 
     const isMatch = await bcrypt.compare(data.password, user.password);
     if (!isMatch) {
+      this.recordFailedLogin(attemptKey, normalizedEmail, data.ipAddress, data.userAgent, user.id);
       throw new CustomError('البريد الإلكتروني أو كلمة المرور غير صحيحة', 401);
     }
+
+    // Reset failed login counter on success
+    failedLogins.delete(attemptKey);
 
     // Check 2FA
     if (user.isTwoFactorEnabled) {
@@ -136,6 +159,33 @@ export class AuthService {
       accessToken,
       refreshToken: rawRefreshToken,
     };
+  }
+
+  private recordFailedLogin(attemptKey: string, email: string, ipAddress?: string, userAgent?: string, userId?: string) {
+    const record = failedLogins.get(attemptKey);
+    const count = (record?.count || 0) + 1;
+
+    if (count >= 5) {
+      failedLogins.set(attemptKey, {
+        count,
+        lockedUntil: new Date(Date.now() + 15 * 60 * 1000), // 15 mins lockout
+      });
+    } else {
+      failedLogins.set(attemptKey, { count });
+    }
+
+    if (userId) {
+      auditRepository
+        .log({
+          userId,
+          action: 'LOGIN_FAILED' as any,
+          entity: 'AUTH',
+          ipAddress,
+          userAgent,
+          details: { email, attemptCount: count },
+        })
+        .catch(() => {});
+    }
   }
 
   async refreshToken(rawRefreshToken: string) {

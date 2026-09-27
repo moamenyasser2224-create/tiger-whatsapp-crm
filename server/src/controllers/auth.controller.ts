@@ -29,7 +29,7 @@ export class AuthController {
     try {
       const result = await authService.register({
         ...req.body,
-        ipAddress: req.ip,
+        ipAddress: req.clientIp || req.ip,
         userAgent: req.headers['user-agent'],
       });
 
@@ -52,7 +52,7 @@ export class AuthController {
     try {
       const result = await authService.login({
         ...req.body,
-        ipAddress: req.ip,
+        ipAddress: req.clientIp || req.ip,
         userAgent: req.headers['user-agent'],
       });
 

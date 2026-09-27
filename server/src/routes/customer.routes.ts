@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { CustomerController } from '../controllers/customer.controller.js';
 import { authenticate } from '../middlewares/authenticate.js';
 import { validateRequest } from '../middlewares/validateRequest.js';
+import { exportRateLimiter } from '../middlewares/rateLimiter.js';
 import {
   createCustomerSchema,
   updateCustomerSchema,
@@ -35,7 +36,7 @@ router.get('/stats', (req, res, next) =>
   customerController.getStats(req, res, next)
 );
 
-router.get('/export', (req, res, next) =>
+router.get('/export', exportRateLimiter, (req, res, next) =>
   customerController.exportCsv(req, res, next)
 );
 

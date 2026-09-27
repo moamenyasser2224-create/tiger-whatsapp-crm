@@ -7,11 +7,18 @@ import { initSocket } from './socket.js';
 const app = createApp();
 const server = http.createServer(app);
 
+// Slowloris & Connection Exhaustion Protections (Cloud & Load Balancer Optimized)
+server.headersTimeout = 65000;   // Higher than ALB/Cloudflare keep-alive
+server.keepAliveTimeout = 61000; // Cloud reverse-proxy keepalive
+server.requestTimeout = 30000;   // Drop hanging requests after 30s
+server.maxHeadersCount = 100;    // Prevent Header Flooding attacks
+
 // Initialize Socket.io
 initSocket(server);
 
 server.listen(env.PORT, () => {
-  console.log(`🚀 WhatsApp & Workspace CRM Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
+  console.log(`🚀 [Tiger Workspace CRM] Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
+  console.log(`🛡️ Cloud Protection & WAF: ACTIVE (Strict CSP, HSTS, Scanner Block, Slowloris Shield)`);
   console.log(`📡 Frontend URL allowed: ${env.FRONTEND_URL}`);
   console.log(`🔌 Socket.io Real-time engine ready on port ${env.PORT}`);
 });
