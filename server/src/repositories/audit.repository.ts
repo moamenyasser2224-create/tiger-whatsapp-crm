@@ -12,12 +12,17 @@ export class AuditRepository {
     userAgent?: string;
   }): Promise<AuditLog | null> {
     try {
-      const isPostgres = Boolean(process.env.DATABASE_URL?.startsWith('postgres'));
+      const dbUrl = process.env.DATABASE_URL || '';
+      const isPostgres = dbUrl.startsWith('postgres://') || dbUrl.startsWith('postgresql://');
       let detailsVal: any = data.details;
 
       if (detailsVal !== undefined && detailsVal !== null) {
         if (!isPostgres && typeof detailsVal === 'object') {
-          detailsVal = JSON.stringify(detailsVal);
+          try {
+            detailsVal = JSON.stringify(detailsVal);
+          } catch {
+            detailsVal = String(detailsVal);
+          }
         }
       } else {
         detailsVal = null;
