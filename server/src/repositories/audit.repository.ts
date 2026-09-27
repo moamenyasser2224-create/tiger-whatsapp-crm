@@ -10,18 +10,34 @@ export class AuditRepository {
     details?: Prisma.InputJsonValue;
     ipAddress?: string;
     userAgent?: string;
-  }): Promise<AuditLog> {
-    return prisma.auditLog.create({
-      data: {
-        userId: data.userId,
-        action: data.action,
-        entity: data.entity,
-        entityId: data.entityId,
-        details: data.details as any,
-        ipAddress: data.ipAddress,
-        userAgent: data.userAgent,
-      },
-    });
+  }): Promise<AuditLog | null> {
+    try {
+      const isPostgres = Boolean(process.env.DATABASE_URL?.startsWith('postgres'));
+      let detailsVal: any = data.details;
+
+      if (detailsVal !== undefined && detailsVal !== null) {
+        if (!isPostgres && typeof detailsVal === 'object') {
+          detailsVal = JSON.stringify(detailsVal);
+        }
+      } else {
+        detailsVal = null;
+      }
+
+      return await prisma.auditLog.create({
+        data: {
+          userId: data.userId,
+          action: data.action,
+          entity: data.entity,
+          entityId: data.entityId,
+          details: detailsVal,
+          ipAddress: data.ipAddress,
+          userAgent: data.userAgent,
+        },
+      });
+    } catch (err) {
+      console.error('AuditLog error (non-fatal):', err);
+      return null;
+    }
   }
 
   async getRecentLogs(userId: string, limit = 50): Promise<AuditLog[]> {
