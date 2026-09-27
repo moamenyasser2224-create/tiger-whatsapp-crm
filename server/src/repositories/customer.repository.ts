@@ -51,19 +51,20 @@ export class CustomerRepository {
       limit = 20,
     } = options;
 
+    const isPostgres = Boolean(process.env.DATABASE_URL?.startsWith('postgres'));
     const where: Prisma.CustomerWhereInput = {
       userId,
       deletedAt: null,
       ...(status ? { status } : {}),
       ...(source ? { source } : {}),
-      ...(city ? { city: { contains: city, mode: 'insensitive' } } : {}),
+      ...(city ? { city: { contains: city, ...(isPostgres ? { mode: 'insensitive' as const } : {}) } } : {}),
     };
 
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { company: { contains: search, mode: 'insensitive' } },
-        { notes: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search, ...(isPostgres ? { mode: 'insensitive' as const } : {}) } },
+        { company: { contains: search, ...(isPostgres ? { mode: 'insensitive' as const } : {}) } },
+        { notes: { contains: search, ...(isPostgres ? { mode: 'insensitive' as const } : {}) } },
       ];
     }
 

@@ -17,7 +17,7 @@ export class AuditRepository {
         action: data.action,
         entity: data.entity,
         entityId: data.entityId,
-        details: data.details,
+        details: data.details as any,
         ipAddress: data.ipAddress,
         userAgent: data.userAgent,
       },
