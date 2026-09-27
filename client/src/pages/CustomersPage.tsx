@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
-import type { Customer, MessageTemplate, PaginatedCustomers, CustomerStatus, CustomerSource } from '../types/index.js';
+import type { Customer, MessageTemplate, PaginatedCustomers, CustomerStatus, CustomerSource, ListOption } from '../types/index.js';
 import { CUSTOMER_SOURCES, CUSTOMER_STATUSES } from '../types/index.js';
 import { CustomerModal } from '../components/CustomerModal.js';
 import { ConfirmModal } from '../components/ConfirmModal.js';
@@ -32,6 +32,23 @@ import {
 
 export const CustomersPage: React.FC = () => {
   const queryClient = useQueryClient();
+
+  // Dynamic Options (Statuses and Sources)
+  const { data: statusOptions = [] } = useQuery<ListOption[]>({
+    queryKey: ['options', 'status'],
+    queryFn: async () => {
+      const res = await api.get('/options?type=status');
+      return res.data.data;
+    },
+  });
+
+  const { data: sourceOptions = [] } = useQuery<ListOption[]>({
+    queryKey: ['options', 'source'],
+    queryFn: async () => {
+      const res = await api.get('/options?type=source');
+      return res.data.data;
+    },
+  });
 
   // Filters and pagination state
   const [search, setSearch] = useState('');
@@ -151,7 +168,7 @@ export const CustomersPage: React.FC = () => {
               setEditingCustomer(null);
               setIsCustomerModalOpen(true);
             }}
-            className="flex items-center gap-2 rounded-xl bg-whatsapp px-4 py-2.5 text-xs font-bold text-white hover:bg-whatsapp-dark shadow-md shadow-whatsapp/20 transition-colors"
+            className="flex items-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-4 py-2.5 text-xs font-bold transition-colors"
           >
             <UserPlus className="h-4 w-4" />
             <span>إضافة عميل</span>
@@ -163,17 +180,17 @@ export const CustomersPage: React.FC = () => {
               setImportResult(null);
               setIsImportModalOpen(true);
             }}
-            className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors"
+            className="flex items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-xs font-bold text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 transition-colors"
           >
-            <Upload className="h-4 w-4 text-blue-600" />
+            <Upload className="h-4 w-4 text-neutral-700 dark:text-neutral-300" />
             <span>استيراد CSV</span>
           </button>
 
           <button
             onClick={handleExportCsv}
-            className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors"
+            className="flex items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-xs font-bold text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 transition-colors"
           >
-            <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+            <FileSpreadsheet className="h-4 w-4 text-neutral-700 dark:text-neutral-300" />
             <span>تصدير CSV</span>
           </button>
         </div>
@@ -188,11 +205,11 @@ export const CustomersPage: React.FC = () => {
       />
 
       {/* Filter and Search Bar */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 transition-colors">
+      <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 transition-colors">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute right-3 top-2.5 h-4 w-4 text-gray-400" />
+            <Search className="absolute right-3 top-2.5 h-4 w-4 text-neutral-400" />
             <input
               type="text"
               value={search}
@@ -201,7 +218,7 @@ export const CustomersPage: React.FC = () => {
                 setPage(1);
               }}
               placeholder="بحث بالاسم، الشركة، أو الملاحظات..."
-              className="w-full rounded-xl border border-gray-300 pr-9 pl-3 py-2 text-xs focus:border-whatsapp focus:outline-none focus:ring-1 focus:ring-whatsapp dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className="w-full rounded-xl border border-neutral-300 pr-9 pl-3 py-2 text-xs focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
             />
           </div>
 
@@ -213,12 +230,20 @@ export const CustomersPage: React.FC = () => {
                 setStatus(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-xl border border-gray-300 px-3 py-2 text-xs focus:border-whatsapp focus:outline-none focus:ring-1 focus:ring-whatsapp dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-xs focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
             >
               <option value="">جميع الحالات</option>
-              {CUSTOMER_STATUSES.map((st) => (
-                <option key={st} value={st}>{st}</option>
-              ))}
+              {statusOptions.length > 0
+                ? statusOptions.map((opt) => (
+                    <option key={opt.id} value={opt.label}>
+                      {opt.label}
+                    </option>
+                  ))
+                : CUSTOMER_STATUSES.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
+                  ))}
             </select>
           </div>
 
@@ -230,12 +255,20 @@ export const CustomersPage: React.FC = () => {
                 setSource(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-xl border border-gray-300 px-3 py-2 text-xs focus:border-whatsapp focus:outline-none focus:ring-1 focus:ring-whatsapp dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-xs focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
             >
               <option value="">جميع المصادر</option>
-              {CUSTOMER_SOURCES.map((src) => (
-                <option key={src} value={src}>{src}</option>
-              ))}
+              {sourceOptions.length > 0
+                ? sourceOptions.map((opt) => (
+                    <option key={opt.id} value={opt.label}>
+                      {opt.label}
+                    </option>
+                  ))
+                : CUSTOMER_SOURCES.map((src) => (
+                    <option key={src} value={src}>
+                      {src}
+                    </option>
+                  ))}
             </select>
           </div>
 
@@ -249,7 +282,7 @@ export const CustomersPage: React.FC = () => {
                 setSortOrder(so);
                 setPage(1);
               }}
-              className="w-full rounded-xl border border-gray-300 px-3 py-2 text-xs focus:border-whatsapp focus:outline-none focus:ring-1 focus:ring-whatsapp dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-xs focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
             >
               <option value="createdAt-desc">الأحدث إضافة أولاً</option>
               <option value="createdAt-asc">الأقدم إضافة أولاً</option>
@@ -296,26 +329,30 @@ export const CustomersPage: React.FC = () => {
                   const overdue = isOverdue(customer.next);
                   const tplBody = getTemplateForCustomer(customer);
                   const waUrl = generateWhatsAppUrl(customer.phone, tplBody, customer.name);
-                  const statusStyle = STATUS_COLORS[customer.status as CustomerStatus] || STATUS_COLORS['جديد'];
+                  const statusStyle = STATUS_COLORS[customer.status] || {
+                    bg: 'bg-neutral-100 dark:bg-neutral-900',
+                    text: 'text-neutral-900 dark:text-neutral-100 font-bold',
+                    border: 'border-neutral-900 dark:border-neutral-300',
+                  };
 
                   return (
                     <tr
                       key={customer.id}
-                      className="hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition-colors"
+                      className="hover:bg-neutral-50/60 dark:hover:bg-neutral-800/40 transition-colors"
                     >
                       {/* Name & Company */}
                       <td className="px-5 py-3.5">
-                        <div className="font-bold text-gray-900 dark:text-white">
+                        <div className="font-bold text-neutral-900 dark:text-white">
                           {customer.name}
                         </div>
                         {customer.company && (
-                          <div className="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                          <div className="flex items-center gap-1 text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">
                             <Building className="h-3 w-3" />
                             <span>{customer.company}</span>
                           </div>
                         )}
                         {customer.city && (
-                          <div className="flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500">
+                          <div className="flex items-center gap-1 text-[11px] text-neutral-400 dark:text-neutral-500">
                             <MapPin className="h-3 w-3" />
                             <span>{customer.city}</span>
                           </div>
@@ -323,13 +360,13 @@ export const CustomersPage: React.FC = () => {
                       </td>
 
                       {/* Phone */}
-                      <td className="px-5 py-3.5 font-mono text-gray-700 dark:text-gray-300" dir="ltr">
+                      <td className="px-5 py-3.5 font-mono text-neutral-700 dark:text-neutral-300" dir="ltr">
                         {customer.phone}
                       </td>
 
                       {/* Source */}
                       <td className="px-5 py-3.5">
-                        <span className="rounded-md bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                        <span className="rounded-md border border-neutral-300 bg-neutral-100 px-2 py-1 text-[11px] font-semibold text-neutral-800 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
                           {customer.source}
                         </span>
                       </td>
@@ -337,14 +374,14 @@ export const CustomersPage: React.FC = () => {
                       {/* Status */}
                       <td className="px-5 py-3.5">
                         <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold border ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] border ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}
                         >
                           {customer.status}
                         </span>
                       </td>
 
                       {/* Last Contact */}
-                      <td className="px-5 py-3.5 text-gray-500 dark:text-gray-400">
+                      <td className="px-5 py-3.5 text-neutral-500 dark:text-neutral-400">
                         {formatDateArabic(customer.last)}
                       </td>
 
@@ -354,14 +391,14 @@ export const CustomersPage: React.FC = () => {
                           <div
                             className={`inline-flex items-center gap-1 font-semibold ${
                               overdue
-                                ? 'text-rose-600 dark:text-rose-400 font-bold'
-                                : 'text-gray-700 dark:text-gray-300'
+                                ? 'text-black dark:text-white font-extrabold underline decoration-2'
+                                : 'text-neutral-700 dark:text-neutral-300'
                             }`}
                           >
                             <Calendar className="h-3.5 w-3.5" />
                             <span>{formatDateArabic(customer.next)}</span>
                             {overdue && (
-                              <span className="text-[10px] bg-rose-100 dark:bg-rose-950 px-1.5 py-0.5 rounded text-rose-700 dark:text-rose-300">
+                              <span className="text-[10px] bg-black text-white dark:bg-white dark:text-black px-1.5 py-0.5 rounded font-bold">
                                 متأخرة
                               </span>
                             )}
@@ -379,7 +416,7 @@ export const CustomersPage: React.FC = () => {
                             target="_blank"
                             rel="noopener noreferrer"
                             title="إرسال رسالة واتساب بالقالب المخصص"
-                            className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-whatsapp hover:bg-whatsapp hover:text-white dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-whatsapp dark:hover:text-white transition-colors"
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-900 text-neutral-900 hover:bg-black hover:text-white dark:border-neutral-300 dark:text-neutral-300 dark:hover:bg-white dark:hover:text-black transition-colors"
                           >
                             <MessageCircle className="h-4 w-4" />
                           </a>
@@ -390,7 +427,7 @@ export const CustomersPage: React.FC = () => {
                               setIsCustomerModalOpen(true);
                             }}
                             title="تعديل العميل"
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-300 text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 transition-colors"
                           >
                             <Edit2 className="h-4 w-4" />
                           </button>
@@ -398,7 +435,7 @@ export const CustomersPage: React.FC = () => {
                           <button
                             onClick={() => setDeletingCustomer(customer)}
                             title="حذف العميل"
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900/50 dark:text-rose-400 dark:hover:bg-rose-950/50 transition-colors"
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-200 dark:border-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800 transition-colors"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -482,15 +519,15 @@ export const CustomersPage: React.FC = () => {
             </div>
 
             {importResult ? (
-              <div className="rounded-xl bg-emerald-50 p-4 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300 text-center mb-4">
-                <p className="font-bold text-sm">اكتمل الاستيراد بنجاح!</p>
-                <p className="text-xs mt-1">
+              <div className="rounded-xl border border-neutral-900 bg-neutral-100 p-4 text-neutral-900 dark:border-white dark:bg-neutral-800 dark:text-white text-center mb-4 font-bold">
+                <p className="font-black text-sm">اكتمل الاستيراد بنجاح!</p>
+                <p className="text-xs mt-1 font-medium">
                   تم استيراد: {importResult.importedCount} عميل • تم تخطي: {importResult.skippedCount} عميل
                 </p>
               </div>
             ) : (
               <>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-3">
                   الصق محتوى ملف CSV هنا مباشرة (تأكد من وجود عمود الاسم ورقم الجوال بالصيغة الدولية):
                 </p>
                 <textarea
@@ -499,7 +536,7 @@ export const CustomersPage: React.FC = () => {
                   onChange={(e) => setImportCsvText(e.target.value)}
                   placeholder="name,phone,company,source,status&#10;محمد أحمد,966501234567,شركة النور,واتساب,جديد"
                   dir="ltr"
-                  className="w-full rounded-xl border border-gray-300 p-3 font-mono text-xs focus:border-whatsapp focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  className="w-full rounded-xl border border-neutral-300 p-3 font-mono text-xs focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
                 />
               </>
             )}
@@ -507,7 +544,7 @@ export const CustomersPage: React.FC = () => {
             <div className="flex items-center justify-end gap-3 mt-4">
               <button
                 onClick={() => setIsImportModalOpen(false)}
-                className="rounded-xl border border-gray-300 px-4 py-2 text-xs font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300"
+                className="rounded-xl border border-neutral-300 px-4 py-2 text-xs font-semibold text-neutral-700 dark:border-neutral-700 dark:text-neutral-300"
               >
                 إغلاق
               </button>
@@ -515,7 +552,7 @@ export const CustomersPage: React.FC = () => {
                 <button
                   onClick={handleImportCsv}
                   disabled={importing || !importCsvText.trim()}
-                  className="rounded-xl bg-whatsapp px-5 py-2 text-xs font-bold text-white hover:bg-whatsapp-dark disabled:opacity-50"
+                  className="rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-5 py-2 text-xs font-bold disabled:opacity-50 transition-colors"
                 >
                   {importing ? 'جاري الاستيراد...' : 'بدء الاستيراد'}
                 </button>

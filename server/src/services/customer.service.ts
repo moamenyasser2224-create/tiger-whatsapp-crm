@@ -13,6 +13,8 @@ import type { Customer } from '@prisma/client';
 const customerRepository = new CustomerRepository();
 const auditRepository = new AuditRepository();
 
+import { prisma } from '../config/prisma.js';
+
 export interface FormattedCustomer {
   id: string;
   userId: string;
@@ -22,6 +24,10 @@ export interface FormattedCustomer {
   city: string | null;
   source: string;
   status: string;
+  sourceId: string | null;
+  statusId: string | null;
+  sourceOption?: any;
+  statusOption?: any;
   last: Date | null;
   next: Date | null;
   notes: string | null;
@@ -31,7 +37,7 @@ export interface FormattedCustomer {
   updatedAt: Date;
 }
 
-function formatCustomer(customer: Customer): FormattedCustomer {
+function formatCustomer(customer: any): FormattedCustomer {
   return {
     id: customer.id,
     userId: customer.userId,
@@ -39,8 +45,12 @@ function formatCustomer(customer: Customer): FormattedCustomer {
     company: customer.company,
     phone: decryptPhone(customer.phone),
     city: customer.city,
-    source: customer.source,
-    status: customer.status,
+    source: customer.sourceOption?.label || customer.source || 'واتساب',
+    status: customer.statusOption?.label || customer.status || 'جديد',
+    sourceId: customer.sourceId || null,
+    statusId: customer.statusId || null,
+    sourceOption: customer.sourceOption || null,
+    statusOption: customer.statusOption || null,
     last: customer.last,
     next: customer.next,
     notes: customer.notes,
@@ -61,6 +71,8 @@ export class CustomerService {
       city?: string | null;
       source?: string;
       status?: string;
+      sourceId?: string | null;
+      statusId?: string | null;
       last?: Date | null;
       next?: Date | null;
       notes?: string | null;
@@ -84,6 +96,28 @@ export class CustomerService {
 
     const encryptedPhone = encryptPhone(cleanPhone);
 
+    // Resolve source & sourceId
+    let sourceId = data.sourceId || null;
+    let source = data.source || 'واتساب';
+    if (sourceId) {
+      const opt = await prisma.listOption.findUnique({ where: { id: sourceId } });
+      if (opt) source = opt.label;
+    } else if (source) {
+      const opt = await prisma.listOption.findFirst({ where: { type: 'source', label: source } });
+      if (opt) sourceId = opt.id;
+    }
+
+    // Resolve status & statusId
+    let statusId = data.statusId || null;
+    let status = data.status || 'جديد';
+    if (statusId) {
+      const opt = await prisma.listOption.findUnique({ where: { id: statusId } });
+      if (opt) status = opt.label;
+    } else if (status) {
+      const opt = await prisma.listOption.findFirst({ where: { type: 'status', label: status } });
+      if (opt) statusId = opt.id;
+    }
+
     const customer = await customerRepository.create({
       userId,
       name: data.name.trim(),
@@ -91,8 +125,10 @@ export class CustomerService {
       phone: encryptedPhone,
       phoneHash,
       city: data.city?.trim() || null,
-      source: data.source || 'واتساب',
-      status: data.status || 'جديد',
+      source,
+      status,
+      sourceId,
+      statusId,
       last: data.last || null,
       next: data.next || null,
       notes: data.notes || null,
@@ -151,6 +187,8 @@ export class CustomerService {
       city?: string | null;
       source?: string;
       status?: string;
+      sourceId?: string | null;
+      statusId?: string | null;
       last?: Date | null;
       next?: Date | null;
       notes?: string | null;
@@ -168,12 +206,34 @@ export class CustomerService {
     if (data.name !== undefined) updatePayload.name = data.name.trim();
     if (data.company !== undefined) updatePayload.company = data.company?.trim() || null;
     if (data.city !== undefined) updatePayload.city = data.city?.trim() || null;
-    if (data.source !== undefined) updatePayload.source = data.source;
-    if (data.status !== undefined) updatePayload.status = data.status;
     if (data.last !== undefined) updatePayload.last = data.last;
     if (data.next !== undefined) updatePayload.next = data.next;
     if (data.notes !== undefined) updatePayload.notes = data.notes;
     if (data.consent !== undefined) updatePayload.consent = data.consent;
+
+    if (data.sourceId !== undefined) {
+      updatePayload.sourceId = data.sourceId;
+      if (data.sourceId) {
+        const opt = await prisma.listOption.findUnique({ where: { id: data.sourceId } });
+        if (opt) updatePayload.source = opt.label;
+      }
+    } else if (data.source !== undefined) {
+      updatePayload.source = data.source;
+      const opt = await prisma.listOption.findFirst({ where: { type: 'source', label: data.source } });
+      if (opt) updatePayload.sourceId = opt.id;
+    }
+
+    if (data.statusId !== undefined) {
+      updatePayload.statusId = data.statusId;
+      if (data.statusId) {
+        const opt = await prisma.listOption.findUnique({ where: { id: data.statusId } });
+        if (opt) updatePayload.status = opt.label;
+      }
+    } else if (data.status !== undefined) {
+      updatePayload.status = data.status;
+      const opt = await prisma.listOption.findFirst({ where: { type: 'status', label: data.status } });
+      if (opt) updatePayload.statusId = opt.id;
+    }
 
     if (data.phone) {
       const cleanPhone = normalizePhone(data.phone);

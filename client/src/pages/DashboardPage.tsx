@@ -72,7 +72,7 @@ export const DashboardPage: React.FC = () => {
               setSelectedCustomer(null);
               setIsCustomerModalOpen(true);
             }}
-            className="flex items-center gap-2 rounded-xl bg-whatsapp px-4 py-2.5 text-xs font-bold text-white hover:bg-whatsapp-dark shadow-md shadow-whatsapp/20 transition-colors"
+            className="flex items-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-4 py-2.5 text-xs font-bold transition-colors"
           >
             <UserPlus className="h-4 w-4" />
             <span>إضافة عميل جديد</span>
@@ -80,17 +80,17 @@ export const DashboardPage: React.FC = () => {
 
           <button
             onClick={handleExportCsv}
-            className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors"
+            className="flex items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-xs font-bold text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 transition-colors"
           >
-            <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+            <FileSpreadsheet className="h-4 w-4 text-neutral-700 dark:text-neutral-300" />
             <span>تصدير CSV</span>
           </button>
 
           <Link
             to="/templates"
-            className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors"
+            className="flex items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-xs font-bold text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 transition-colors"
           >
-            <MessageSquareQuote className="h-4 w-4 text-whatsapp" />
+            <MessageSquareQuote className="h-4 w-4 text-neutral-700 dark:text-neutral-300" />
             <span>قوالب الرسائل</span>
           </Link>
         </div>
@@ -107,60 +107,60 @@ export const DashboardPage: React.FC = () => {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Customers */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 transition-colors">
+        <div className="rounded-2xl border border-neutral-300 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-gray-500 dark:text-gray-400">إجمالي العملاء</p>
-              <h3 className="text-2xl font-black text-gray-900 dark:text-white mt-1">
+              <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">إجمالي العملاء</p>
+              <h3 className="text-2xl font-black text-neutral-900 dark:text-white mt-1">
                 {statsLoading ? '...' : stats?.totalCustomers || 0}
               </h3>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white">
               <Users className="h-6 w-6" />
             </div>
           </div>
         </div>
 
         {/* Due Today & Overdue */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 transition-colors">
+        <div className="rounded-2xl border-2 border-neutral-900 dark:border-neutral-600 bg-white p-5 shadow-sm dark:bg-neutral-900 transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-gray-500 dark:text-gray-400">متابعات اليوم والمتأخرة</p>
-              <h3 className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">
+              <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">متابعات اليوم والمتأخرة</p>
+              <h3 className="text-2xl font-black text-black dark:text-white mt-1">
                 {statsLoading ? '...' : stats?.dueTodayCount || 0}
               </h3>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white dark:bg-white dark:text-black">
               <Clock className="h-6 w-6" />
             </div>
           </div>
         </div>
 
         {/* Conversion Rate */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 transition-colors">
+        <div className="rounded-2xl border border-neutral-300 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-gray-500 dark:text-gray-400">معدل التحويل (تم البيع)</p>
-              <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+              <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">معدل التحويل (تم البيع)</p>
+              <h3 className="text-2xl font-black text-neutral-900 dark:text-white mt-1">
                 {statsLoading ? '...' : `${stats?.conversionRate || 0}%`}
               </h3>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white">
               <TrendingUp className="h-6 w-6" />
             </div>
           </div>
         </div>
 
         {/* Sold Count */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 transition-colors">
+        <div className="rounded-2xl border border-neutral-300 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-gray-500 dark:text-gray-400">الطلبات المكتملة</p>
-              <h3 className="text-2xl font-black text-gray-900 dark:text-white mt-1">
+              <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">الطلبات المكتملة</p>
+              <h3 className="text-2xl font-black text-neutral-900 dark:text-white mt-1">
                 {statsLoading ? '...' : stats?.statusDistribution?.['تم البيع'] || 0}
               </h3>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white">
               <CheckCircle className="h-6 w-6" />
             </div>
           </div>

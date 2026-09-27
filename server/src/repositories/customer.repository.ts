@@ -26,6 +26,10 @@ export class CustomerRepository {
         userId,
         deletedAt: null,
       },
+      include: {
+        sourceOption: true,
+        statusOption: true,
+      },
     });
   }
 
@@ -75,6 +79,10 @@ export class CustomerRepository {
         orderBy: { [sortBy]: sortOrder },
         skip: (page - 1) * limit,
         take: limit,
+        include: {
+          sourceOption: true,
+          statusOption: true,
+        },
       }),
     ]);
 
@@ -107,6 +115,10 @@ export class CustomerRepository {
       },
       orderBy: {
         next: 'asc',
+      },
+      include: {
+        sourceOption: true,
+        statusOption: true,
       },
     });
   }
@@ -166,7 +178,9 @@ export class CustomerRepository {
     };
 
     counts.forEach((item) => {
-      result[item.status] = item._count.id;
+      if (item.status) {
+        result[item.status] = item._count.id;
+      }
     });
 
     return result;
@@ -186,7 +200,9 @@ export class CustomerRepository {
 
     const result: Record<string, number> = {};
     counts.forEach((item) => {
-      result[item.source] = item._count.id;
+      if (item.source) {
+        result[item.source] = item._count.id;
+      }
     });
 
     return result;

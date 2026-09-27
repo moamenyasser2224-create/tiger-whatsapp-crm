@@ -16,16 +16,10 @@ export const createCustomerSchema = z.object({
       message: 'رقم الجوال يجب أن يتكون من أرقام فقط بصيغة دولية بدون + (8 إلى 15 رقم)',
     }),
   city: z.string().max(100, 'المدينة يجب أن لا تتجاوز 100 حرف').optional().nullable(),
-  source: z
-    .enum(CUSTOMER_SOURCES, {
-      errorMap: () => ({ message: 'المصدر المحدد غير صالح' }),
-    })
-    .default('واتساب'),
-  status: z
-    .enum(CUSTOMER_STATUSES, {
-      errorMap: () => ({ message: 'الحالة المحددة غير صالحة' }),
-    })
-    .default('جديد'),
+  source: z.string().optional().default('واتساب'),
+  status: z.string().optional().default('جديد'),
+  sourceId: z.string().uuid().optional().nullable(),
+  statusId: z.string().uuid().optional().nullable(),
   last: z
     .string()
     .datetime({ offset: true })
@@ -66,16 +60,10 @@ export const updateCustomerSchema = z.object({
     })
     .optional(),
   city: z.string().max(100, 'المدينة يجب أن لا تتجاوز 100 حرف').optional().nullable(),
-  source: z
-    .enum(CUSTOMER_SOURCES, {
-      errorMap: () => ({ message: 'المصدر المحدد غير صالح' }),
-    })
-    .optional(),
-  status: z
-    .enum(CUSTOMER_STATUSES, {
-      errorMap: () => ({ message: 'الحالة المحددة غير صالحة' }),
-    })
-    .optional(),
+  source: z.string().optional(),
+  status: z.string().optional(),
+  sourceId: z.string().uuid().optional().nullable(),
+  statusId: z.string().uuid().optional().nullable(),
   last: z
     .string()
     .datetime({ offset: true })

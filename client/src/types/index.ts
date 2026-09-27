@@ -57,6 +57,20 @@ export interface ChatMessage {
   };
 }
 
+export interface ListOption {
+  id: string;
+  type: 'source' | 'status';
+  label: string;
+  order: number;
+  isDefault: boolean;
+}
+
+export interface Settings {
+  id: string;
+  orgName: string;
+  updatedAt: string;
+}
+
 export interface Customer {
   id: string;
   userId: string;
@@ -64,8 +78,12 @@ export interface Customer {
   company: string | null;
   phone: string;
   city: string | null;
-  source: CustomerSource;
-  status: CustomerStatus;
+  source: string;
+  status: string;
+  sourceId?: string | null;
+  statusId?: string | null;
+  sourceOption?: ListOption | null;
+  statusOption?: ListOption | null;
   last: string | null;
   next: string | null;
   notes: string | null;

@@ -38,14 +38,14 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({ onCustomerClick 
 
   if (dueCustomers.length === 0) {
     return (
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
+      <div className="rounded-2xl border border-neutral-300 bg-neutral-100/70 p-4 dark:border-neutral-800 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white">
             <Clock className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold">لا توجد متابعات مستحقة اليوم أو متأخرة 🎉</h3>
-            <p className="text-xs opacity-90">جميع العملاء في حالة متابعة منتظمة ومحدثة.</p>
+            <h3 className="text-sm font-bold">لا توجد متابعات مستحقة اليوم أو متأخرة</h3>
+            <p className="text-xs opacity-80">جميع العملاء في حالة متابعة منتظمة ومحدثة.</p>
           </div>
         </div>
       </div>
@@ -61,19 +61,19 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({ onCustomerClick 
   };
 
   return (
-    <div className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-5 shadow-sm dark:border-amber-900/40 dark:from-amber-950/20 dark:to-orange-950/20 mb-6">
+    <div className="rounded-2xl border-2 border-neutral-900 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900/60 p-5 shadow-sm mb-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500 text-white shadow-sm shadow-amber-500/30">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-black text-white dark:bg-white dark:text-black shadow-sm">
             <AlertCircle className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-gray-900 dark:text-white">
+            <h2 className="text-base font-black text-neutral-900 dark:text-white">
               متابعات اليوم والمتأخرة ({dueCustomers.length})
             </h2>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+            <p className="text-xs text-neutral-600 dark:text-neutral-400">
               {overdueList.length > 0 && (
-                <span className="font-semibold text-rose-600 dark:text-rose-400">
+                <span className="font-extrabold text-black dark:text-white underline decoration-2">
                   {overdueList.length} متأخرة •{' '}
                 </span>
               )}
@@ -92,52 +92,52 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({ onCustomerClick 
           return (
             <div
               key={customer.id}
-              className={`flex flex-col justify-between rounded-xl border p-3.5 transition-all bg-white dark:bg-gray-900 shadow-sm ${
+              className={`flex flex-col justify-between rounded-xl p-3.5 transition-all bg-white dark:bg-neutral-900 shadow-sm ${
                 overdue
-                  ? 'border-rose-200 dark:border-rose-900/60 hover:border-rose-300'
-                  : 'border-amber-200 dark:border-amber-900/60 hover:border-amber-300'
+                  ? 'border-2 border-neutral-900 dark:border-neutral-200'
+                  : 'border border-neutral-300 dark:border-neutral-700'
               }`}
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-1.5">
                   <button
                     onClick={() => onCustomerClick?.(customer)}
-                    className="font-bold text-sm text-gray-900 dark:text-gray-100 hover:text-whatsapp dark:hover:text-whatsapp text-right transition-colors"
+                    className="font-bold text-sm text-neutral-900 dark:text-white hover:underline text-right transition-colors"
                   >
                     {customer.name}
                   </button>
                   <span
                     className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
                       overdue
-                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400'
-                        : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400'
+                        ? 'bg-black text-white dark:bg-white dark:text-black font-extrabold'
+                        : 'border border-neutral-900 text-neutral-900 dark:border-white dark:text-white'
                     }`}
                   >
                     {overdue ? 'متأخرة' : 'اليوم'}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-2">
+                <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400 mb-2">
                   <Calendar className="h-3.5 w-3.5" />
                   <span>المتابعة: {formatDateArabic(customer.next)}</span>
                 </div>
 
                 {customer.company && (
-                  <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1 mb-2">
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-1 mb-2">
                     {customer.company}
                   </p>
                 )}
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800 gap-2">
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                  الحالة: <span className="font-semibold text-gray-700 dark:text-gray-200">{customer.status}</span>
+              <div className="flex items-center justify-between pt-2 border-t border-neutral-200 dark:border-neutral-800 gap-2">
+                <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                  الحالة: <span className="font-bold text-neutral-900 dark:text-white">{customer.status}</span>
                 </span>
                 <a
                   href={waUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-lg bg-whatsapp px-3 py-1.5 text-xs font-bold text-white hover:bg-whatsapp-dark shadow-sm shadow-whatsapp/20 transition-colors"
+                  className="flex items-center gap-1.5 rounded-lg border border-neutral-900 dark:border-neutral-300 px-3 py-1.5 text-xs font-bold text-neutral-900 dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
                 >
                   <MessageCircle className="h-3.5 w-3.5" />
                   <span>مراسلة واتساب</span>

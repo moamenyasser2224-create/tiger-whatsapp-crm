@@ -52,40 +52,41 @@ export function generateWhatsAppUrl(
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
 }
 
-export const STATUS_COLORS: Record<CustomerStatus, { bg: string; text: string; border: string }> = {
+export const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   'جديد': {
-    bg: 'bg-blue-50 dark:bg-blue-950/40',
-    text: 'text-blue-700 dark:text-blue-400',
-    border: 'border-blue-200 dark:border-blue-800',
+    bg: 'bg-neutral-100 dark:bg-neutral-900',
+    text: 'text-neutral-900 dark:text-neutral-100 font-bold',
+    border: 'border-neutral-900 dark:border-neutral-300',
   },
   'تم التواصل': {
-    bg: 'bg-amber-50 dark:bg-amber-950/40',
-    text: 'text-amber-700 dark:text-amber-400',
-    border: 'border-amber-200 dark:border-amber-800',
+    bg: 'bg-neutral-200 dark:bg-neutral-800',
+    text: 'text-neutral-800 dark:text-neutral-200 font-medium',
+    border: 'border-neutral-400 dark:border-neutral-600',
   },
   'مهتم': {
-    bg: 'bg-purple-50 dark:bg-purple-950/40',
-    text: 'text-purple-700 dark:text-purple-400',
-    border: 'border-purple-200 dark:border-purple-800',
+    bg: 'bg-neutral-800 dark:bg-neutral-200',
+    text: 'text-white dark:text-neutral-900 font-bold',
+    border: 'border-neutral-800 dark:border-neutral-200',
   },
   'تم البيع': {
-    bg: 'bg-emerald-50 dark:bg-emerald-950/40',
-    text: 'text-emerald-700 dark:text-emerald-400',
-    border: 'border-emerald-200 dark:border-emerald-800',
+    bg: 'bg-black dark:bg-white',
+    text: 'text-white dark:text-black font-black',
+    border: 'border-black dark:border-white shadow-sm',
   },
   'غير مهتم': {
-    bg: 'bg-rose-50 dark:bg-rose-950/40',
-    text: 'text-rose-700 dark:text-rose-400',
-    border: 'border-rose-200 dark:border-rose-800',
+    bg: 'bg-neutral-100 dark:bg-neutral-950',
+    text: 'text-neutral-500 dark:text-neutral-500 line-through',
+    border: 'border-neutral-300 dark:border-neutral-800',
   },
 };
 
-export const SOURCE_COLORS: Record<CustomerSource, string> = {
-  'إعلان': '#3b82f6',
-  'واتساب': '#22c55e',
-  'انستغرام': '#ec4899',
-  'فيسبوك': '#1d4ed8',
-  'توصية': '#8b5cf6',
-  'معرض': '#f59e0b',
-  'أخرى': '#64748b',
+export const SOURCE_COLORS: Record<string, string> = {
+  'إعلان': '#171717',
+  'واتساب': '#404040',
+  'انستغرام': '#737373',
+  'فيسبوك': '#a3a3a3',
+  'توصية': '#525252',
+  'معرض': '#262626',
+  'أخرى': '#d4d4d4',
 };
+

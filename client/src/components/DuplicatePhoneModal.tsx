@@ -22,10 +22,10 @@ export const DuplicatePhoneModal: React.FC<DuplicatePhoneModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-900 border border-amber-200 dark:border-amber-900/50">
+      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-900 border border-neutral-300 dark:border-neutral-700">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
               <AlertTriangle className="h-6 w-6" />
             </div>
             <div>
@@ -45,27 +45,27 @@ export const DuplicatePhoneModal: React.FC<DuplicatePhoneModalProps> = ({
           </button>
         </div>
 
-        <div className="mb-6 rounded-xl border border-amber-200/80 bg-amber-50/50 p-4 dark:border-amber-900/40 dark:bg-amber-950/30">
-          <p className="text-sm font-semibold text-amber-900 dark:text-amber-200 mb-2">
+        <div className="mb-6 rounded-xl border border-neutral-300 bg-neutral-100/60 p-4 dark:border-neutral-700 dark:bg-neutral-800/40">
+          <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-200 mb-2">
             يوجد بالفعل عميل مسجل بهذا الرقم في حسابك:
           </p>
           {existingCustomer && (
             <div className="space-y-1.5 text-xs text-gray-700 dark:text-gray-300">
-              <div className="flex justify-between py-1 border-b border-amber-200/50 dark:border-amber-900/30">
+              <div className="flex justify-between py-1 border-b border-neutral-200 dark:border-neutral-700">
                 <span className="text-gray-500 dark:text-gray-400">اسم العميل الحالي:</span>
                 <span className="font-bold">{existingCustomer.name}</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-amber-200/50 dark:border-amber-900/30">
+              <div className="flex justify-between py-1 border-b border-neutral-200 dark:border-neutral-700">
                 <span className="text-gray-500 dark:text-gray-400">الحالة:</span>
                 <span className="font-bold">{existingCustomer.status}</span>
               </div>
               {existingCustomer.company && (
-                <div className="flex justify-between py-1 border-b border-amber-200/50 dark:border-amber-900/30">
+                <div className="flex justify-between py-1 border-b border-neutral-200 dark:border-neutral-700">
                   <span className="text-gray-500 dark:text-gray-400">الشركة:</span>
                   <span>{existingCustomer.company}</span>
                 </div>
               )}
-              <div className="flex justify-between py-1 border-b border-amber-200/50 dark:border-amber-900/30">
+              <div className="flex justify-between py-1 border-b border-neutral-200 dark:border-neutral-700">
                 <span className="text-gray-500 dark:text-gray-400">تاريخ الإنشاء:</span>
                 <span>{formatDateArabic(existingCustomer.createdAt)}</span>
               </div>
@@ -94,7 +94,7 @@ export const DuplicatePhoneModal: React.FC<DuplicatePhoneModalProps> = ({
           <button
             type="button"
             onClick={onConfirmForce}
-            className="flex items-center gap-2 rounded-xl bg-amber-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-amber-700 shadow-md shadow-amber-600/20 transition-colors"
+            className="flex items-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-5 py-2.5 text-sm font-bold transition-colors"
           >
             <UserCheck className="h-4 w-4" />
             <span>تأكيد الإضافة رغم التكرار</span>

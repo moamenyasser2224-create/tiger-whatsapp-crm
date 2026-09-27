@@ -18,13 +18,16 @@ interface StatsChartsProps {
   stats: DashboardStats;
 }
 
-const statusHexColors: Record<CustomerStatus, string> = {
-  'جديد': '#3b82f6',
-  'تم التواصل': '#f59e0b',
-  'مهتم': '#8b5cf6',
-  'تم البيع': '#10b981',
-  'غير مهتم': '#f43f5e',
+const MONOCHROME_GRAYS = ['#171717', '#404040', '#737373', '#a3a3a3', '#d4d4d4', '#525252'];
+
+const statusHexColors: Record<string, string> = {
+  'جديد': '#737373',
+  'تم التواصل': '#525252',
+  'مهتم': '#404040',
+  'تم البيع': '#171717',
+  'غير مهتم': '#a3a3a3',
 };
+
 
 export const StatsCharts: React.FC<StatsChartsProps> = ({ stats }) => {
   const statusData = Object.entries(stats.statusDistribution || {}).map(([name, count]) => ({
@@ -64,10 +67,10 @@ export const StatsCharts: React.FC<StatsChartsProps> = ({ stats }) => {
                 formatter={(value: any) => [`${value} عميل`, 'العدد']}
               />
               <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                {statusData.map((entry) => (
+                {statusData.map((entry, idx) => (
                   <Cell
                     key={`cell-${entry.name}`}
-                    fill={statusHexColors[entry.name as CustomerStatus] || '#128C7E'}
+                    fill={statusHexColors[entry.name] || MONOCHROME_GRAYS[idx % MONOCHROME_GRAYS.length]}
                   />
                 ))}
               </Bar>
@@ -99,10 +102,10 @@ export const StatsCharts: React.FC<StatsChartsProps> = ({ stats }) => {
                   outerRadius={85}
                   paddingAngle={4}
                 >
-                  {sourceData.map((entry) => (
+                  {sourceData.map((entry, idx) => (
                     <Cell
                       key={`source-${entry.name}`}
-                      fill={(SOURCE_COLORS as any)[entry.name] || '#64748b'}
+                      fill={(SOURCE_COLORS as any)[entry.name] || MONOCHROME_GRAYS[idx % MONOCHROME_GRAYS.length]}
                     />
                   ))}
                 </Pie>

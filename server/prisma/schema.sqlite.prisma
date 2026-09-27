@@ -38,8 +38,10 @@ model Customer {
   phone       String
   phoneHash   String
   city        String?
-  source      String    @default("واتساب")
-  status      String    @default("جديد")
+  source      String?   @default("واتساب")
+  status      String?   @default("جديد")
+  sourceId    String?
+  statusId    String?
   last        DateTime?
   next        DateTime?
   notes       String?
@@ -49,7 +51,9 @@ model Customer {
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceOption ListOption? @relation("CustomerSource", fields: [sourceId], references: [id])
+  statusOption ListOption? @relation("CustomerStatus", fields: [statusId], references: [id])
 
   @@index([userId, deletedAt])
   @@index([userId, phoneHash])
@@ -57,17 +61,43 @@ model Customer {
   @@map("customers")
 }
 
-model MessageTemplate {
+model ListOption {
   id        String   @id @default(uuid())
-  userId    String
-  status    String
-  body      String
+  type      String   // "source" | "status"
+  label     String
+  order     Int      @default(0)
+  isDefault Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceCustomers Customer[]        @relation("CustomerSource")
+  statusCustomers Customer[]        @relation("CustomerStatus")
+  templates       MessageTemplate[]
 
-  @@unique([userId, status])
+  @@index([type, order])
+  @@map("list_options")
+}
+
+model Settings {
+  id        String   @id @default(uuid())
+  orgName   String   @default("تايجر CRM")
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+model MessageTemplate {
+  id        String      @id @default(uuid())
+  userId    String
+  status    String?
+  statusId  String?
+  body      String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  statusOption ListOption? @relation(fields: [statusId], references: [id])
+
   @@map("message_templates")
 }
 

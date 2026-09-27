@@ -30,10 +30,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div
-              className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+              className={`flex h-10 w-10 items-center justify-center rounded-xl border ${
                 danger
-                  ? 'bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400'
-                  : 'bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400'
+                  ? 'border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-black font-bold'
+                  : 'border-neutral-300 bg-neutral-100 text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100'
               }`}
             >
               <AlertCircle className="h-5 w-5" />
@@ -64,10 +64,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
               onConfirm();
               onClose();
             }}
-            className={`rounded-xl px-5 py-2 text-sm font-bold text-white shadow-md transition-colors ${
+            className={`rounded-xl px-5 py-2 text-sm font-bold transition-colors ${
               danger
-                ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/20'
-                : 'bg-whatsapp hover:bg-whatsapp-dark shadow-whatsapp/20'
+                ? 'bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border-2 border-black dark:border-white font-extrabold'
+                : 'bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-black dark:hover:bg-white border border-neutral-900 dark:border-neutral-100 font-bold'
             }`}
           >
             {confirmText}

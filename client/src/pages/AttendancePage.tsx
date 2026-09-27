@@ -114,31 +114,31 @@ export const AttendancePage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2.5">
-            <Clock className="h-7 w-7 text-whatsapp" />
+          <h1 className="text-2xl font-black text-neutral-900 dark:text-white flex items-center gap-2.5">
+            <Clock className="h-7 w-7 text-neutral-900 dark:text-white" />
             <span>نظام الحضور والانصراف الذكي</span>
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
             سجّل حضورك وانصرافك بضغطة زر، وتابع تواجد أعضاء الفريق لحظياً عبر البث المباشر.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-4 py-2 text-sm text-gray-600 dark:text-gray-300 shadow-xs">
-          <Calendar className="h-4 w-4 text-whatsapp" />
+        <div className="flex items-center gap-2 rounded-xl bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 shadow-xs">
+          <Calendar className="h-4 w-4 text-neutral-700 dark:text-neutral-300" />
           <span>{format(new Date(), 'EEEE، d MMMM yyyy', { locale: ar })}</span>
         </div>
       </div>
 
       {/* Notifications */}
       {actionError && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300 flex items-center gap-3">
+        <div className="rounded-xl border border-neutral-900 bg-neutral-100 p-4 text-sm text-neutral-900 dark:border-white dark:bg-neutral-800 dark:text-white flex items-center gap-3 font-bold">
           <AlertCircle className="h-5 w-5 flex-shrink-0" />
           <span>{actionError}</span>
         </div>
       )}
 
       {successMessage && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300 flex items-center gap-3">
+        <div className="rounded-xl border border-neutral-900 bg-neutral-100 p-4 text-sm text-neutral-900 dark:border-white dark:bg-neutral-800 dark:text-white flex items-center gap-3 font-bold">
           <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
           <span>{successMessage}</span>
         </div>
@@ -147,13 +147,13 @@ export const AttendancePage: React.FC = () => {
       {/* Main Grid: My Status & Action Buttons */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Action Controls Card */}
-        <div className="lg:col-span-1 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 flex flex-col justify-between">
+        <div className="lg:col-span-1 rounded-2xl border border-neutral-300 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 flex flex-col justify-between">
           <div>
-            <h2 className="text-base font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-              <Briefcase className="h-5 w-5 text-whatsapp" />
+            <h2 className="text-base font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
+              <Briefcase className="h-5 w-5 text-neutral-900 dark:text-white" />
               <span>إجراءات الدوام</span>
             </h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-6">
               اضغط على الإجراء المناسب. يتم قفل الأزرار آلياً بعد تسجيل الحركة لمنع التكرار.
             </p>
 
@@ -162,10 +162,10 @@ export const AttendancePage: React.FC = () => {
               <button
                 onClick={() => checkInMutation.mutate()}
                 disabled={hasCheckedIn || checkInMutation.isPending || isMyStatusLoading}
-                className={`w-full flex items-center justify-center gap-3 rounded-xl py-3.5 px-4 text-sm font-bold transition-all shadow-md ${
+                className={`w-full flex items-center justify-center gap-3 rounded-xl py-3.5 px-4 text-sm font-bold transition-all ${
                   hasCheckedIn
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 shadow-none'
-                    : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.99] shadow-emerald-500/20'
+                    ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed border border-neutral-300 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-500'
+                    : 'bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white'
                 }`}
               >
                 <LogIn className="h-5 w-5" />
@@ -182,10 +182,10 @@ export const AttendancePage: React.FC = () => {
               <button
                 onClick={() => checkOutMutation.mutate()}
                 disabled={!hasCheckedIn || hasCheckedOut || checkOutMutation.isPending || isMyStatusLoading}
-                className={`w-full flex items-center justify-center gap-3 rounded-xl py-3.5 px-4 text-sm font-bold transition-all shadow-md ${
+                className={`w-full flex items-center justify-center gap-3 rounded-xl py-3.5 px-4 text-sm font-bold transition-all ${
                   !hasCheckedIn || hasCheckedOut
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-500 shadow-none'
-                    : 'bg-amber-600 text-white hover:bg-amber-700 active:scale-[0.99] shadow-amber-500/20'
+                    ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed border border-neutral-300 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-500'
+                    : 'bg-white text-neutral-900 border-2 border-neutral-900 hover:bg-neutral-100 dark:bg-neutral-900 dark:text-white dark:border-white dark:hover:bg-neutral-800'
                 }`}
               >
                 <LogOut className="h-5 w-5" />
@@ -200,34 +200,34 @@ export const AttendancePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-400 dark:text-gray-500 text-center">
+          <div className="mt-6 pt-4 border-t border-neutral-200 dark:border-neutral-800 text-xs text-neutral-400 dark:text-neutral-500 text-center">
             يتم توثيق كل حركة بعنوان الـ IP والطابع الزمني في سجل الرقابة
           </div>
         </div>
 
         {/* My Status Details Card */}
-        <div className="lg:col-span-2 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 flex flex-col justify-between">
+        <div className="lg:col-span-2 rounded-2xl border border-neutral-300 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
                 <span>بطاقة حالتي اليوم</span>
-                <span className="text-xs font-normal text-gray-500">({user?.name})</span>
+                <span className="text-xs font-normal text-neutral-500">({user?.name})</span>
               </h2>
 
               {/* Current Status Badge */}
               {hasCheckedOut ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                  <span className="h-2 w-2 rounded-full bg-gray-400" />
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-400 bg-neutral-100 px-3 py-1 text-xs font-bold text-neutral-700 dark:bg-neutral-800 dark:border-neutral-600 dark:text-neutral-300">
+                  <span className="h-2 w-2 rounded-full bg-neutral-400" />
                   مغادر (تم الانصراف)
                 </span>
               ) : hasCheckedIn ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-neutral-900 bg-black px-3 py-1 text-xs font-black text-white dark:border-white dark:bg-white dark:text-black">
+                  <span className="h-2 w-2 rounded-full bg-white dark:bg-black animate-pulse" />
                   متواجد في الدوام
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-neutral-500 bg-transparent px-3 py-1 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
+                  <span className="h-2 w-2 rounded-full bg-neutral-500" />
                   لم يحضر بعد
                 </span>
               )}
@@ -235,30 +235,30 @@ export const AttendancePage: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
               {/* Check-In Time Block */}
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 dark:border-emerald-900/30 dark:bg-emerald-950/20">
-                <div className="text-xs font-medium text-emerald-800 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
+              <div className="rounded-xl border border-neutral-300 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/40">
+                <div className="text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1 flex items-center gap-1.5">
                   <LogIn className="h-4 w-4" />
                   <span>وقت الحضور المسجل</span>
                 </div>
-                <div className="text-2xl font-black text-emerald-950 dark:text-emerald-100">
+                <div className="font-mono text-2xl font-black text-neutral-900 dark:text-white">
                   {formatTime(myStatus?.checkIn)}
                 </div>
               </div>
 
               {/* Check-Out Time Block */}
-              <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4 dark:border-amber-900/30 dark:bg-amber-950/20">
-                <div className="text-xs font-medium text-amber-800 dark:text-amber-300 mb-1 flex items-center gap-1.5">
+              <div className="rounded-xl border border-neutral-300 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/40">
+                <div className="text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1 flex items-center gap-1.5">
                   <LogOut className="h-4 w-4" />
                   <span>وقت الانصراف المسجل</span>
                 </div>
-                <div className="text-2xl font-black text-amber-950 dark:text-amber-100">
+                <div className="font-mono text-2xl font-black text-neutral-900 dark:text-white">
                   {formatTime(myStatus?.checkOut)}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="rounded-xl bg-gray-50 dark:bg-gray-800/60 p-4 border border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+          <div className="rounded-xl bg-neutral-50 dark:bg-neutral-800/60 p-4 border border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
             <span>تاريخ السجل: {myStatus?.date || format(new Date(), 'yyyy-MM-dd')}</span>
             <span>الفرع: المقر الرئيسي (عن بُعد)</span>
           </div>
@@ -266,30 +266,30 @@ export const AttendancePage: React.FC = () => {
       </div>
 
       {/* Team Live Attendance Table */}
-      <div className="rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+      <div className="rounded-2xl border border-neutral-300 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
+        <div className="p-6 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-whatsapp/10 text-whatsapp dark:bg-whatsapp/20">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-300 dark:border-neutral-700 bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white">
               <Users className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-gray-900 dark:text-white">
+              <h2 className="text-base font-bold text-neutral-900 dark:text-white">
                 حالة تواجد أعضاء الفريق اليوم (مباشر)
               </h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
                 تحديث لحظي عبر WebSocket يوضح من سجّل حضوره وانصرافه اليوم من كل الفريق.
               </p>
             </div>
           </div>
 
-          <span className="rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-bold px-3 py-1 text-xs">
+          <span className="rounded-full border border-neutral-900 bg-neutral-100 dark:border-white dark:bg-neutral-800 text-neutral-900 dark:text-white font-bold px-3 py-1 text-xs">
             {teamAttendance.length} مسجلين اليوم
           </span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-right text-sm">
-            <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
+            <thead className="bg-neutral-50 text-xs font-semibold uppercase text-neutral-500 dark:bg-neutral-800/50 dark:text-neutral-400 border-b border-neutral-200 dark:border-neutral-700">
               <tr>
                 <th className="px-6 py-4">اسم الموظف</th>
                 <th className="px-6 py-4">الدور</th>
@@ -298,10 +298,10 @@ export const AttendancePage: React.FC = () => {
                 <th className="px-6 py-4">الحالة الحالية</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {teamAttendance.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-gray-400">
+                  <td colSpan={5} className="py-12 text-center text-neutral-400">
                     لم يقم أي موظف بتسجيل الحضور اليوم بعد.
                   </td>
                 </tr>
@@ -313,47 +313,47 @@ export const AttendancePage: React.FC = () => {
                   return (
                     <tr
                       key={record.id}
-                      className="hover:bg-gray-50/70 dark:hover:bg-gray-800/50 transition-colors"
+                      className="hover:bg-neutral-50/70 dark:hover:bg-neutral-800/50 transition-colors"
                     >
-                      <td className="px-6 py-4 font-bold text-gray-900 dark:text-white flex items-center gap-2.5">
-                        <div className="h-8 w-8 rounded-full bg-whatsapp/15 text-whatsapp flex items-center justify-center font-bold text-xs">
+                      <td className="px-6 py-4 font-bold text-neutral-900 dark:text-white flex items-center gap-2.5">
+                        <div className="h-8 w-8 rounded-full border border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white flex items-center justify-center font-bold text-xs">
                           {record.user?.name ? record.user.name.charAt(0) : '؟'}
                         </div>
                         <div>
                           <div>{record.user?.name || 'موظف'}</div>
-                          <div className="text-xs text-gray-400 font-normal">{record.user?.email}</div>
+                          <div className="text-xs text-neutral-400 font-normal">{record.user?.email}</div>
                         </div>
                       </td>
 
-                      <td className="px-6 py-4 text-gray-600 dark:text-gray-300">
-                        <span className="rounded-md bg-gray-100 dark:bg-gray-800 px-2 py-1 text-xs font-medium">
+                      <td className="px-6 py-4 text-neutral-600 dark:text-neutral-300">
+                        <span className="rounded-md border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 px-2 py-1 text-xs font-medium">
                           {record.user?.role === 'admin' ? 'مدير' : 'موظف'}
                         </span>
                       </td>
 
-                      <td className="px-6 py-4 font-semibold text-emerald-600 dark:text-emerald-400">
+                      <td className="px-6 py-4 font-mono font-bold text-neutral-900 dark:text-neutral-100">
                         {formatTime(record.checkIn)}
                       </td>
 
-                      <td className="px-6 py-4 font-semibold text-amber-600 dark:text-amber-400">
+                      <td className="px-6 py-4 font-mono text-neutral-600 dark:text-neutral-400">
                         {formatTime(record.checkOut)}
                       </td>
 
                       <td className="px-6 py-4">
                         {isPresent && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-                            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-900 bg-black text-white dark:border-white dark:bg-white dark:text-black px-2.5 py-1 text-xs font-bold">
+                            <span className="h-2 w-2 rounded-full bg-white dark:bg-black animate-pulse" />
                             حاضر الآن
                           </span>
                         )}
                         {isDeparted && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                            <span className="h-2 w-2 rounded-full bg-gray-400" />
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-400 bg-neutral-100 px-2.5 py-1 text-xs font-bold text-neutral-600 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300">
+                            <span className="h-2 w-2 rounded-full bg-neutral-400" />
                             انصرف
                           </span>
                         )}
                         {!isPresent && !isDeparted && (
-                          <span className="text-xs text-gray-400">غير محدد</span>
+                          <span className="text-xs text-neutral-400">غير محدد</span>
                         )}
                       </td>
                     </tr>

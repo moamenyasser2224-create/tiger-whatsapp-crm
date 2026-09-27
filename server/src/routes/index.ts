@@ -5,6 +5,8 @@ import templateRoutes from './template.routes.js';
 import userRoutes from './user.routes.js';
 import attendanceRoutes from './attendance.routes.js';
 import chatRoutes from './chat.routes.js';
+import optionRoutes from './option.routes.js';
+import settingsRoutes from './settings.routes.js';
 
 const router = Router();
 
@@ -14,6 +16,8 @@ router.use('/templates', templateRoutes);
 router.use('/users', userRoutes);
 router.use('/attendance', attendanceRoutes);
 router.use('/chat', chatRoutes);
+router.use('/options', optionRoutes);
+router.use('/settings', settingsRoutes);
 
 export default router;
 

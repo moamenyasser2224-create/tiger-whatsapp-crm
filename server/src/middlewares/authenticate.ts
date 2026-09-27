@@ -6,6 +6,7 @@ export interface AuthenticatedUser {
   id: string;
   email: string;
   name: string;
+  role: string;
 }
 
 declare global {
@@ -40,6 +41,7 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
         id: true,
         email: true,
         name: true,
+        role: true,
       },
     });
 
@@ -63,4 +65,15 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
       error: 'انتهت صلاحية الجلسة أو الرمز غير صالح.',
     });
   }
+}
+
+export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
+  if (req.user?.role !== 'admin') {
+    res.status(403).json({
+      success: false,
+      error: 'غير مصرح لك بتنفيذ هذا الإجراء، يتطلب صلاحيات المدير (Admin).',
+    });
+    return;
+  }
+  next();
 }
