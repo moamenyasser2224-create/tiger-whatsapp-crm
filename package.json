@@ -1,0 +1,17 @@
+{
+  "name": "whatsapp-crm-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production-Ready WhatsApp CRM System (Node.js, Express, TypeScript, Prisma, PostgreSQL, React, Vite, Tailwind CSS)",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "build": "npm run build --prefix server && npm run build --prefix client",
+    "test": "npm run test --prefix server && npm run test --prefix client",
+    "lint": "npm run lint --prefix server && npm run lint --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
