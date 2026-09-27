@@ -7,6 +7,10 @@ export interface AuthenticatedUser {
   email: string;
   name: string;
   role: string;
+  photoUrl?: string | null;
+  mustChangePassword?: boolean;
+  biometricConsent?: boolean;
+  hasFaceEnrolled?: boolean;
 }
 
 declare global {
@@ -42,6 +46,10 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
         email: true,
         name: true,
         role: true,
+        photoUrl: true,
+        mustChangePassword: true,
+        biometricConsent: true,
+        faceEmbedding: true,
       },
     });
 
@@ -53,7 +61,16 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
       return;
     }
 
-    req.user = user;
+    req.user = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      photoUrl: user.photoUrl,
+      mustChangePassword: user.mustChangePassword,
+      biometricConsent: user.biometricConsent,
+      hasFaceEnrolled: !!user.faceEmbedding,
+    };
 
     // Set Postgres Row-Level Security user context
     await setRlsUserContext(user.id);

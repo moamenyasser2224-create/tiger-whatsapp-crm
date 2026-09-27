@@ -191,30 +191,46 @@ export const ChatPage: React.FC = () => {
                 key={msg.id}
                 className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} transition-all`}
               >
-                {/* Sender Name & Role */}
-                <div className="flex items-center gap-1.5 mb-1 px-1 text-xs text-neutral-500 dark:text-neutral-400">
-                  <span className="font-bold text-neutral-800 dark:text-neutral-200">
-                    {isMe ? 'أنت' : msg.sender?.name || 'عضو الفريق'}
-                  </span>
-                  {msg.sender?.role === 'admin' && (
-                    <span className="rounded border border-neutral-400 bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:border-neutral-600 dark:text-neutral-200 text-[10px] px-1 font-bold">
-                      مدير
-                    </span>
+                <div className={`flex gap-2.5 items-end ${isMe ? 'flex-row-reverse' : 'flex-row'} max-w-[85%] md:max-w-[70%]`}>
+                  {msg.sender?.photoUrl ? (
+                    <img
+                      src={msg.sender.photoUrl}
+                      alt={msg.sender.name}
+                      className="w-7 h-7 rounded-full object-cover border border-neutral-400 dark:border-neutral-600 grayscale shrink-0 mb-1"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full border border-neutral-400 dark:border-neutral-600 bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 flex items-center justify-center font-bold text-[10px] shrink-0 mb-1">
+                      {msg.sender?.name?.[0]?.toUpperCase() || '؟'}
+                    </div>
                   )}
-                  <span className="text-[10px] text-neutral-400">
-                    {formatMessageTime(msg.createdAt)}
-                  </span>
-                </div>
 
-                {/* Message Bubble */}
-                <div
-                  className={`max-w-[80%] md:max-w-[65%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-xs break-words ${
-                    isMe
-                      ? 'bg-black text-white dark:bg-white dark:text-black rounded-br-xs'
-                      : 'bg-neutral-100 text-neutral-900 border border-neutral-300 dark:bg-neutral-800 dark:text-neutral-100 dark:border-neutral-700 rounded-bl-xs'
-                  }`}
-                >
-                  <p className="whitespace-pre-wrap">{msg.text}</p>
+                  <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                    {/* Sender Name & Role */}
+                    <div className="flex items-center gap-1.5 mb-1 px-1 text-xs text-neutral-500 dark:text-neutral-400">
+                      <span className="font-bold text-neutral-800 dark:text-neutral-200">
+                        {isMe ? 'أنت' : msg.sender?.name || 'عضو الفريق'}
+                      </span>
+                      {msg.sender?.role === 'admin' && (
+                        <span className="rounded border border-neutral-400 bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:border-neutral-600 dark:text-neutral-200 text-[10px] px-1 font-bold">
+                          مدير
+                        </span>
+                      )}
+                      <span className="text-[10px] text-neutral-400">
+                        {formatMessageTime(msg.createdAt)}
+                      </span>
+                    </div>
+
+                    {/* Message Bubble */}
+                    <div
+                      className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-xs break-words ${
+                        isMe
+                          ? 'bg-black text-white dark:bg-white dark:text-black rounded-br-xs'
+                          : 'bg-neutral-100 text-neutral-900 border border-neutral-300 dark:bg-neutral-800 dark:text-neutral-100 dark:border-neutral-700 rounded-bl-xs'
+                      }`}
+                    >
+                      <p className="whitespace-pre-wrap">{msg.text}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             );

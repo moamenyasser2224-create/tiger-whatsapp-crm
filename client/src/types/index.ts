@@ -26,6 +26,11 @@ export interface User {
   email: string;
   role?: 'admin' | 'employee';
   isTwoFactorEnabled: boolean;
+  photoUrl?: string | null;
+  mustChangePassword?: boolean;
+  hasFaceEnrolled?: boolean;
+  faceEnrolledAt?: string | null;
+  biometricConsent?: boolean;
 }
 
 export interface Attendance {
@@ -41,6 +46,7 @@ export interface Attendance {
     name: string;
     email: string;
     role?: string;
+    photoUrl?: string | null;
   };
 }
 
@@ -54,6 +60,7 @@ export interface ChatMessage {
     name: string;
     email: string;
     role?: string;
+    photoUrl?: string | null;
   };
 }
 

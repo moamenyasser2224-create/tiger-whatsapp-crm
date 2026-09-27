@@ -80,3 +80,18 @@ export const exportRateLimiter = rateLimit({
     error: 'تم تجاوز الحد المسموح لتصدير البيانات، يرجى المحاولة لاحقاً.',
   },
 });
+
+/**
+ * Rate limiter for Face Verification attempts (10 attempts per minute)
+ */
+export const faceRateLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: getClientIp,
+  message: {
+    success: false,
+    error: 'تم تجاوز الحد الأقصى لمحاولات التحقق ببصمة الوجه، يرجى المحاولة بعد دقيقة واحدة.',
+  },
+});

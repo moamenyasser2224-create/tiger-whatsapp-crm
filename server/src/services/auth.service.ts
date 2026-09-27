@@ -154,6 +154,10 @@ export class AuthService {
         id: user.id,
         name: user.name,
         email: user.email,
+        role: user.role,
+        photoUrl: user.photoUrl,
+        mustChangePassword: user.mustChangePassword,
+        hasFaceEnrolled: !!user.faceEmbedding,
         isTwoFactorEnabled: user.isTwoFactorEnabled,
       },
       accessToken,
@@ -351,5 +355,42 @@ export class AuthService {
     });
 
     return { success: true, message: 'تم إلغاء تفعيل التحقق الثنائي' };
+  }
+
+  async changePassword(userId: string, data: { currentPassword?: string; newPassword: string; ipAddress?: string; userAgent?: string }) {
+    const user = await userRepository.findById(userId);
+    if (!user) throw new CustomError('المستخدم غير موجود', 404);
+
+    if (data.currentPassword) {
+      const isMatch = await bcrypt.compare(data.currentPassword, user.password);
+      if (!isMatch) {
+        throw new CustomError('كلمة المرور الحالية غير صحيحة', 400);
+      }
+    } else if (!user.mustChangePassword) {
+      throw new CustomError('كلمة المرور الحالية مطلوبة', 400);
+    }
+
+    if (!data.newPassword || data.newPassword.length < 8) {
+      throw new CustomError('يجب أن تتكون كلمة المرور الجديدة من 8 خانات على الأقل', 400);
+    }
+
+    const hashedPassword = await bcrypt.hash(data.newPassword, BCRYPT_COST);
+    await userRepository.update(userId, {
+      password: hashedPassword,
+      mustChangePassword: false,
+    });
+
+    await auditRepository.log({
+      userId,
+      action: 'PASSWORD_CHANGED',
+      entity: 'USER',
+      ipAddress: data.ipAddress,
+      userAgent: data.userAgent,
+    });
+
+    return {
+      success: true,
+      message: 'تم تغيير كلمة المرور بنجاح وتم تفعيل الحساب بالكامل',
+    };
   }
 }

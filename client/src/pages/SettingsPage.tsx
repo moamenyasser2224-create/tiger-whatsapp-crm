@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext.js';
 import { api } from '../lib/api.js';
 import type { ListOption, Settings } from '../types/index.js';
+import { ProfilePhotoModal } from '../components/ProfilePhotoModal.js';
+import { FaceBiometricsModal } from '../components/FaceBiometricsModal.js';
 import {
   ShieldCheck,
   QrCode,
@@ -17,11 +19,36 @@ import {
   Plus,
   Layers,
   Save,
+  Users,
+  UserPlus,
+  Camera,
+  ScanFace,
+  Copy,
+  Check,
+  Key,
 } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
-  const { user, refreshUser, logout } = useAuth();
+  const { user, refreshUser, updateUser, logout } = useAuth();
   const queryClient = useQueryClient();
+
+  // Photo & Biometrics Modals
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [isFaceModalOpen, setIsFaceModalOpen] = useState(false);
+  const [faceDeleteSuccess, setFaceDeleteSuccess] = useState<string | null>(null);
+  const [isDeletingFace, setIsDeletingFace] = useState(false);
+
+  // Employee Management State (Admin)
+  const [isAddEmployeeOpen, setIsAddEmployeeOpen] = useState(false);
+  const [newEmployeeName, setNewEmployeeName] = useState('');
+  const [newEmployeeEmail, setNewEmployeeEmail] = useState('');
+  const [employeeError, setEmployeeError] = useState<string | null>(null);
+  const [createdEmployeeCreds, setCreatedEmployeeCreds] = useState<{
+    name: string;
+    email: string;
+    temporaryPassword: string;
+  } | null>(null);
+  const [copiedPass, setCopiedPass] = useState(false);
 
   // 2FA Setup State
   const [is2FASetupOpen, setIs2FASetupOpen] = useState(false);
@@ -197,6 +224,65 @@ export const SettingsPage: React.FC = () => {
 
   const isAdmin = user?.role === 'admin';
 
+  // Employees Query (Admin Only)
+  const { data: employeesData = [], refetch: refetchEmployees, isLoading: loadingEmployees } = useQuery<any[]>({
+    queryKey: ['employees'],
+    queryFn: async () => {
+      const res = await api.get('/users/employees');
+      return res.data.data;
+    },
+    enabled: isAdmin,
+  });
+
+  const createEmployeeMutation = useMutation({
+    mutationFn: async (payload: { name: string; email: string }) => {
+      setEmployeeError(null);
+      const res = await api.post('/users/employee', payload);
+      return res.data;
+    },
+    onSuccess: (data) => {
+      setCreatedEmployeeCreds({
+        name: data.user.name,
+        email: data.user.email,
+        temporaryPassword: data.temporaryPassword,
+      });
+      setNewEmployeeName('');
+      setNewEmployeeEmail('');
+      setIsAddEmployeeOpen(false);
+      refetchEmployees();
+    },
+    onError: (err: any) => {
+      setEmployeeError(err.response?.data?.error || 'فشل إنشاء حساب الموظف');
+    },
+  });
+
+  const handleDeleteFaceData = async () => {
+    if (!window.confirm('هل أنت متأكد من رغبتك في حذف بصمة الوجه وإلغاء الموافقة البيومترية نهائياً؟')) {
+      return;
+    }
+    setIsDeletingFace(true);
+    setFaceDeleteSuccess(null);
+    try {
+      await api.delete('/auth/face');
+      updateUser({ hasFaceEnrolled: false });
+      setFaceDeleteSuccess('تم مسح بيانات بصمة الوجه وإلغاء الموافقة البيومترية بنجاح من قاعدة البيانات.');
+      setTimeout(() => setFaceDeleteSuccess(null), 4000);
+      await refreshUser();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'فشل حذف بيانات بصمة الوجه');
+    } finally {
+      setIsDeletingFace(false);
+    }
+  };
+
+  const handleCopyPassword = () => {
+    if (createdEmployeeCreds?.temporaryPassword) {
+      navigator.clipboard.writeText(createdEmployeeCreds.temporaryPassword);
+      setCopiedPass(true);
+      setTimeout(() => setCopiedPass(false), 2500);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Header */}
@@ -211,6 +297,121 @@ export const SettingsPage: React.FC = () => {
         <div className="rounded-2xl border border-neutral-900 bg-neutral-100 p-4 text-xs font-bold text-neutral-900 dark:border-white dark:bg-neutral-800 dark:text-white flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4" />
           <span>{setupSuccess}</span>
+        </div>
+      )}
+
+      {/* Admin Section: Employee Accounts Management */}
+      {isAdmin && (
+        <div className="rounded-2xl border border-neutral-300 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-neutral-900 dark:text-white" />
+                <h2 className="text-base font-bold text-neutral-900 dark:text-white">
+                  إدارة حسابات الموظفين (Employee Accounts)
+                </h2>
+                <span className="rounded-md border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 text-[11px] font-bold text-neutral-800 dark:text-neutral-200">
+                  إدارة فقط
+                </span>
+              </div>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                إنشاء حسابات الموظفين وتوليد كلمات مرور مؤقتة يُلزم الموظف بتغييرها عند أول دخول.
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                setEmployeeError(null);
+                setIsAddEmployeeOpen(true);
+              }}
+              className="flex items-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-4 py-2 text-xs font-bold transition-colors shrink-0"
+            >
+              <UserPlus className="h-4 w-4" />
+              <span>إضافة موظف جديد</span>
+            </button>
+          </div>
+
+          {/* Employees Table */}
+          <div className="overflow-x-auto border border-neutral-200 dark:border-neutral-800 rounded-xl">
+            <table className="w-full text-right text-xs">
+              <thead className="bg-neutral-100 dark:bg-neutral-800/60 border-b border-neutral-200 dark:border-neutral-800">
+                <tr>
+                  <th className="p-3 font-black">الموظف</th>
+                  <th className="p-3 font-black">البريد الإلكتروني</th>
+                  <th className="p-3 font-black">الدور</th>
+                  <th className="p-3 font-black">بصمة الوجه</th>
+                  <th className="p-3 font-black">حالة كلمة المرور</th>
+                  <th className="p-3 font-black">تاريخ الإنشاء</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                {loadingEmployees ? (
+                  <tr>
+                    <td colSpan={6} className="p-6 text-center text-neutral-500 font-bold">
+                      جاري تحميل بيانات الموظفين...
+                    </td>
+                  </tr>
+                ) : employeesData.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-6 text-center text-neutral-500 font-bold">
+                      لا يوجد موظفون مسجلون حالياً.
+                    </td>
+                  </tr>
+                ) : (
+                  employeesData.map((emp: any) => (
+                    <tr key={emp.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/30">
+                      <td className="p-3 flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full border border-neutral-400 bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center overflow-hidden shrink-0">
+                          {emp.photoUrl ? (
+                            <img src={emp.photoUrl} alt={emp.name} className="w-full h-full object-cover grayscale" />
+                          ) : (
+                            <span className="font-bold text-xs">{emp.name?.[0]?.toUpperCase()}</span>
+                          )}
+                        </div>
+                        <span className="font-bold text-neutral-900 dark:text-white">{emp.name}</span>
+                      </td>
+                      <td className="p-3 font-mono" dir="ltr">{emp.email}</td>
+                      <td className="p-3">
+                        <span className={`inline-block px-2 py-0.5 rounded border text-[10px] font-bold ${
+                          emp.role === 'admin'
+                            ? 'bg-black text-white dark:bg-white dark:text-black border-neutral-900 dark:border-white'
+                            : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700'
+                        }`}>
+                          {emp.role === 'admin' ? 'مدير' : 'موظف'}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        {emp.hasFaceEnrolled ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-black dark:text-white">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>مسجلة</span>
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-bold text-neutral-400">
+                            غير مسجلة
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-3">
+                        {emp.mustChangePassword ? (
+                          <span className="inline-block px-2 py-0.5 rounded border border-neutral-400 bg-neutral-100 dark:bg-neutral-800 text-[10px] font-bold text-neutral-800 dark:text-neutral-200">
+                            مؤقتة (يلزم تغييرها)
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-bold text-black dark:text-white">
+                            نشطة
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-3 text-neutral-500 font-mono text-[11px]">
+                        {new Date(emp.createdAt).toLocaleDateString('ar-EG')}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -394,6 +595,111 @@ export const SettingsPage: React.FC = () => {
             <span className="text-xs text-neutral-500 dark:text-neutral-400 block mb-1">البريد الإلكتروني:</span>
             <p className="font-mono text-sm text-neutral-900 dark:text-white" dir="ltr">{user?.email}</p>
           </div>
+        </div>
+      </div>
+
+      {/* Profile Photo & Biometric Face Authentication */}
+      <div className="rounded-2xl border border-neutral-300 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 space-y-6">
+        {/* Photo subsection */}
+        <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-6">
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20 rounded-full border-2 border-black dark:border-white overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 relative shadow-inner">
+              {user?.photoUrl ? (
+                <img src={user.photoUrl} alt={user.name} className="w-full h-full object-cover grayscale" />
+              ) : (
+                <span className="text-2xl font-black text-neutral-400">{user?.name?.[0]?.toUpperCase()}</span>
+              )}
+            </div>
+            <div>
+              <h3 className="font-bold text-sm text-neutral-900 dark:text-white flex items-center gap-2">
+                <Camera className="w-4 h-4" />
+                <span>الصورة الشخصية (Profile Photo)</span>
+              </h3>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 max-w-md">
+                تظهر صورتك الشخصية بجانب اسمك في المحادثات الداخلية، وسجلات الحضور والانصراف، والشريط الجانبي.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setIsPhotoModalOpen(true)}
+            className="flex items-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-4 py-2 text-xs font-bold transition-colors"
+          >
+            <Camera className="w-4 h-4" />
+            <span>تحديث الصورة الشخصية</span>
+          </button>
+        </div>
+
+        {/* Biometrics Face Recognition subsection */}
+        <div className="space-y-4">
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                <ScanFace className="h-5 w-5 text-neutral-900 dark:text-white" />
+                <span>المصادقة البيومترية بالتعرف على الوجه (Face Biometrics)</span>
+              </h3>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-xl">
+                بصمة وجه مشفرة (متجه رياضي AES-256-GCM) تُستخدم لتسجيل الحضور السريع من جهاز العمل وبديل للتحقق الثنائي 2FA مع كشف حيوي.
+              </p>
+            </div>
+
+            <div>
+              {user?.hasFaceEnrolled ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-neutral-900 bg-black px-3 py-1 text-xs font-black text-white dark:border-white dark:bg-white dark:text-black">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span>مسجلة ونشطة</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full border border-neutral-400 bg-neutral-100 px-3 py-1 text-xs font-bold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
+                  <span>غير مسجلة</span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          {faceDeleteSuccess && (
+            <div className="rounded-xl border border-neutral-900 bg-neutral-100 p-3 text-xs font-bold text-neutral-900 dark:border-white dark:bg-neutral-800 dark:text-white flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>{faceDeleteSuccess}</span>
+            </div>
+          )}
+
+          {user?.hasFaceEnrolled ? (
+            <div className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="text-xs text-neutral-600 dark:text-neutral-400 space-y-1">
+                <p className="font-bold text-neutral-900 dark:text-white">
+                  بيانات البصمة مشفرة بالكامل. يمكنك حذفها في أي وقت والتراجع عن الموافقة البيومترية.
+                </p>
+                <p>تُمسح البصمة الرياضية فوراً من قاعدة البيانات عند طلب الحذف دون الاحتفاظ بأي نسخ احتياطية.</p>
+              </div>
+
+              <button
+                onClick={handleDeleteFaceData}
+                disabled={isDeletingFace}
+                className="flex items-center gap-2 rounded-xl border border-neutral-400 px-4 py-2 text-xs font-bold text-neutral-800 hover:bg-neutral-200 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-800 transition-colors shrink-0"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>{isDeletingFace ? 'جاري الحذف...' : 'حذف بصمة الوجه وإلغاء الموافقة'}</span>
+              </button>
+            </div>
+          ) : (
+            <div className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="text-xs text-neutral-600 dark:text-neutral-400">
+                <p className="font-bold text-neutral-900 dark:text-white mb-1">
+                  لم تقم بتسجيل بصمة وجهك بعد.
+                </p>
+                <p>يتطلب التسجيل موافقة بيومترية قانونية مسبقة، واختبار حركة حيوية أمام الكاميرا.</p>
+              </div>
+
+              <button
+                onClick={() => setIsFaceModalOpen(true)}
+                className="flex items-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-5 py-2.5 text-xs font-bold transition-colors shrink-0"
+              >
+                <ScanFace className="w-4 h-4" />
+                <span>تسجيل بصمة الوجه الآن</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -621,6 +927,162 @@ export const SettingsPage: React.FC = () => {
                 {isDeleting ? 'جاري الحذف...' : 'تأكيد الحذف النهائي'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Photo Modal */}
+      <ProfilePhotoModal
+        isOpen={isPhotoModalOpen}
+        onClose={() => setIsPhotoModalOpen(false)}
+      />
+
+      {/* Face Biometrics Enrollment Modal */}
+      <FaceBiometricsModal
+        isOpen={isFaceModalOpen}
+        onClose={() => setIsFaceModalOpen(false)}
+        mode="enroll"
+        onSuccess={() => {
+          refreshUser();
+        }}
+      />
+
+      {/* Add Employee Modal (Admin Only) */}
+      {isAddEmployeeOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-neutral-900 border-2 border-black dark:border-white text-black dark:text-white">
+            <div className="flex items-center justify-between border-b-2 border-black dark:border-white pb-3 mb-4">
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-5 h-5" />
+                <h3 className="font-black text-base">إضافة موظف جديد للمنظومة</h3>
+              </div>
+              <button
+                onClick={() => setIsAddEmployeeOpen(false)}
+                className="text-xs font-bold p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            {employeeError && (
+              <div className="mb-4 p-3 border-2 border-black dark:border-white bg-neutral-100 dark:bg-neutral-800 text-xs font-bold">
+                {employeeError}
+              </div>
+            )}
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!newEmployeeName.trim() || !newEmployeeEmail.trim()) return;
+                createEmployeeMutation.mutate({
+                  name: newEmployeeName.trim(),
+                  email: newEmployeeEmail.trim(),
+                });
+              }}
+              className="space-y-4 text-xs"
+            >
+              <div>
+                <label className="block font-black uppercase mb-1">الاسم الكامل للموظف</label>
+                <input
+                  type="text"
+                  required
+                  value={newEmployeeName}
+                  onChange={(e) => setNewEmployeeName(e.target.value)}
+                  placeholder="مثال: أحمد علي"
+                  className="w-full rounded-xl border border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
+                />
+              </div>
+
+              <div>
+                <label className="block font-black uppercase mb-1">البريد الإلكتروني للعمل</label>
+                <input
+                  type="email"
+                  required
+                  value={newEmployeeEmail}
+                  onChange={(e) => setNewEmployeeEmail(e.target.value)}
+                  placeholder="ahmed@company.com"
+                  dir="ltr"
+                  className="w-full rounded-xl border border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white font-mono"
+                />
+              </div>
+
+              <div className="p-3 border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/40 rounded-xl space-y-1">
+                <p className="font-bold">ملاحظة أمنية:</p>
+                <p className="text-neutral-600 dark:text-neutral-400">
+                  سيقوم النظام بإنشاء كلمة مرور مؤقتة عشوائية مشفرة وإلزام الموظف بتغييرها فور تسجيل الدخول الأول، كما سيتمكن من رفع صورته وتسجيل بصمة وجهه.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddEmployeeOpen(false)}
+                  className="px-4 py-2 border border-neutral-300 dark:border-neutral-700 rounded-xl font-bold"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  disabled={createEmployeeMutation.isPending}
+                  className="px-5 py-2 bg-black dark:bg-white text-white dark:text-black font-black rounded-xl border border-black dark:border-white disabled:opacity-50"
+                >
+                  {createEmployeeMutation.isPending ? 'جاري الإنشاء...' : 'إنشاء حساب الموظف'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Created Employee Credentials Modal */}
+      {createdEmployeeCreds && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-neutral-900 border-2 border-black dark:border-white text-black dark:text-white space-y-4">
+            <div className="flex items-center gap-2 border-b-2 border-black dark:border-white pb-3">
+              <CheckCircle2 className="w-6 h-6 text-black dark:text-white" />
+              <div>
+                <h3 className="font-black text-base">تم إنشاء حساب الموظف بنجاح!</h3>
+                <p className="text-[11px] text-neutral-500 font-bold">يرجى نسخ بيانات الدخول المؤقتة وتزويد الموظف بها</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 p-4 border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/40 rounded-xl text-xs">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-neutral-500">اسم الموظف:</span>
+                <span className="font-black">{createdEmployeeCreds.name}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-neutral-500">البريد الإلكتروني:</span>
+                <span className="font-mono font-bold" dir="ltr">{createdEmployeeCreds.email}</span>
+              </div>
+              <div className="pt-2 border-t border-neutral-200 dark:border-neutral-700">
+                <span className="font-bold text-neutral-500 block mb-1">كلمة المرور المؤقتة:</span>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 bg-black text-white dark:bg-white dark:text-black p-2 rounded-lg font-mono text-sm font-bold text-center tracking-wider select-all">
+                    {createdEmployeeCreds.temporaryPassword}
+                  </code>
+                  <button
+                    onClick={handleCopyPassword}
+                    className="p-2 border-2 border-black dark:border-white rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors flex items-center gap-1 font-bold text-xs"
+                    title="نسخ كلمة المرور"
+                  >
+                    {copiedPass ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    <span>{copiedPass ? 'تم النسخ!' : 'نسخ'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-neutral-600 dark:text-neutral-400 font-bold">
+              * سيُطلب من الموظف تعيين كلمة مرور جديدة خاصة به بمجرد تسجيل الدخول لأول مرة.
+            </p>
+
+            <button
+              onClick={() => setCreatedEmployeeCreds(null)}
+              className="w-full py-2.5 bg-black dark:bg-white text-white dark:text-black font-black text-xs uppercase rounded-xl border border-black dark:border-white"
+            >
+              تم الحفظ، إغلاق النافذة
+            </button>
           </div>
         </div>
       )}

@@ -1,8 +1,13 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller.js';
+import { FaceController } from '../controllers/face.controller.js';
 import { validateRequest } from '../middlewares/validateRequest.js';
 import { authenticate } from '../middlewares/authenticate.js';
-import { authRateLimiter, passwordResetRateLimiter } from '../middlewares/rateLimiter.js';
+import {
+  authRateLimiter,
+  passwordResetRateLimiter,
+  faceRateLimiter,
+} from '../middlewares/rateLimiter.js';
 import {
   registerSchema,
   loginSchema,
@@ -14,6 +19,7 @@ import {
 
 const router = Router();
 const authController = new AuthController();
+const faceController = new FaceController();
 
 router.post('/register', authRateLimiter, validateRequest(registerSchema), (req, res, next) =>
   authController.register(req, res, next)
@@ -52,6 +58,10 @@ router.get('/me', authenticate, (req, res, next) =>
   authController.getMe(req, res, next)
 );
 
+router.post('/change-password', authenticate, (req, res, next) =>
+  authController.changePassword(req, res, next)
+);
+
 router.post('/2fa/setup', authenticate, (req, res, next) =>
   authController.setup2FA(req, res, next)
 );
@@ -68,6 +78,23 @@ router.post(
   authenticate,
   validateRequest(disableTwoFactorSchema),
   (req, res, next) => authController.disable2FA(req, res, next)
+);
+
+// --- Face Biometrics Endpoints ---
+router.get('/face/challenge', (req, res, next) =>
+  faceController.getChallenge(req, res, next)
+);
+
+router.post('/face/enroll', authenticate, (req, res, next) =>
+  faceController.enroll(req, res, next)
+);
+
+router.post('/face/verify', faceRateLimiter, (req, res, next) =>
+  faceController.verify(req, res, next)
+);
+
+router.delete('/face', authenticate, (req, res, next) =>
+  faceController.delete(req, res, next)
 );
 
 export default router;

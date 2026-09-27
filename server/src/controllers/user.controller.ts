@@ -4,6 +4,66 @@ import { UserService } from '../services/user.service.js';
 const userService = new UserService();
 
 export class UserController {
+  async createEmployee(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { name, email } = req.body;
+      if (!name || !email) {
+        res.status(400).json({
+          success: false,
+          error: 'الاسم والبريد الإلكتروني مطلوبان لإنشاء حساب الموظف',
+        });
+        return;
+      }
+
+      const result = await userService.createEmployee(req.user!.id, {
+        name,
+        email,
+        ipAddress: req.clientIp || req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      res.status(201).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async listEmployees(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const employees = await userService.listEmployees();
+      res.status(200).json({
+        success: true,
+        data: employees,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateProfilePhoto(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { photoUrl } = req.body;
+      if (!photoUrl) {
+        res.status(400).json({
+          success: false,
+          error: 'رابط أو بيانات الصورة مطلوبة',
+        });
+        return;
+      }
+
+      const result = await userService.updateProfilePhoto(
+        req.user!.id,
+        photoUrl,
+        req.clientIp || req.ip,
+        req.headers['user-agent']
+      );
+
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async exportData(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const data = await userService.exportAllUserData(req.user!.id);

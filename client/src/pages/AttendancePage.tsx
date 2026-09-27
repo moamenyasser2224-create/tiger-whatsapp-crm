@@ -13,9 +13,11 @@ import {
   Users,
   Calendar,
   Briefcase,
+  ScanFace,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { FaceBiometricsModal } from '../components/FaceBiometricsModal.js';
 
 export const AttendancePage: React.FC = () => {
   const { user } = useAuth();
@@ -23,6 +25,7 @@ export const AttendancePage: React.FC = () => {
   const queryClient = useQueryClient();
   const [actionError, setActionError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isFaceModalOpen, setIsFaceModalOpen] = useState(false);
 
   // Fetch my status for today
   const { data: myStatus, isLoading: isMyStatusLoading } = useQuery<Attendance | null>({
@@ -197,6 +200,16 @@ export const AttendancePage: React.FC = () => {
                     : 'تسجيل انصراف الآن'}
                 </span>
               </button>
+
+              {/* Face Biometrics Kiosk Button */}
+              <button
+                type="button"
+                onClick={() => setIsFaceModalOpen(true)}
+                className="w-full flex items-center justify-center gap-2 rounded-xl py-3 px-4 text-xs font-black uppercase tracking-wider border-2 border-dashed border-neutral-900 dark:border-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              >
+                <ScanFace className="h-4 w-4" />
+                <span>حضور وانصراف سريع بالوجه (Face Kiosk)</span>
+              </button>
             </div>
           </div>
 
@@ -316,9 +329,17 @@ export const AttendancePage: React.FC = () => {
                       className="hover:bg-neutral-50/70 dark:hover:bg-neutral-800/50 transition-colors"
                     >
                       <td className="px-6 py-4 font-bold text-neutral-900 dark:text-white flex items-center gap-2.5">
-                        <div className="h-8 w-8 rounded-full border border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white flex items-center justify-center font-bold text-xs">
-                          {record.user?.name ? record.user.name.charAt(0) : '؟'}
-                        </div>
+                        {record.user?.photoUrl ? (
+                          <img
+                            src={record.user.photoUrl}
+                            alt={record.user.name}
+                            className="h-8 w-8 rounded-full object-cover border border-neutral-300 dark:border-neutral-600 grayscale shrink-0"
+                          />
+                        ) : (
+                          <div className="h-8 w-8 rounded-full border border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white flex items-center justify-center font-bold text-xs shrink-0">
+                            {record.user?.name ? record.user.name.charAt(0) : '؟'}
+                          </div>
+                        )}
                         <div>
                           <div>{record.user?.name || 'موظف'}</div>
                           <div className="text-xs text-neutral-400 font-normal">{record.user?.email}</div>
@@ -364,6 +385,18 @@ export const AttendancePage: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Face Biometrics Modal */}
+      <FaceBiometricsModal
+        isOpen={isFaceModalOpen}
+        onClose={() => setIsFaceModalOpen(false)}
+        mode="verify_attendance"
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['attendance'] });
+          setSuccessMessage('تم تسجيل الحركة بنجاح بالتعرف على الوجه');
+          setTimeout(() => setSuccessMessage(null), 4000);
+        }}
+      />
     </div>
   );
 };

@@ -42,6 +42,13 @@ export class UserRepository {
     });
   }
 
+  async listEmployees(): Promise<User[]> {
+    return prisma.user.findMany({
+      where: { deletedAt: null },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async permanentDelete(id: string): Promise<void> {
     // Cascading deletes handled by foreign keys or transaction
     await prisma.$transaction([

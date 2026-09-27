@@ -12,6 +12,7 @@ import {
   Settings as SettingsIcon,
 } from 'lucide-react';
 import { cn } from '../lib/utils.js';
+import { useAuth } from '../contexts/AuthContext.js';
 
 export const navItems = [
   { name: 'العملاء (CRM)', href: '/customers', icon: Users },
@@ -23,6 +24,7 @@ export const navItems = [
 ];
 
 export const Sidebar: React.FC = () => {
+  const { user } = useAuth();
   const { data: settings } = useQuery<Settings>({
     queryKey: ['settings'],
     queryFn: async () => {
@@ -75,9 +77,31 @@ export const Sidebar: React.FC = () => {
           </nav>
         </div>
 
-        <div className="border-t border-neutral-200 dark:border-neutral-800 pt-4 px-3 text-xs text-neutral-400 dark:text-neutral-600 flex items-center justify-between">
-          <span>نظام أحادي اللون</span>
-          <span className="font-mono text-[10px] uppercase font-bold">Monochrome</span>
+        <div className="space-y-3">
+          {user && (
+            <div className="border-t border-neutral-200 dark:border-neutral-800 pt-3 px-2 flex items-center gap-3">
+              {user.photoUrl ? (
+                <img
+                  src={user.photoUrl}
+                  alt={user.name}
+                  className="w-9 h-9 rounded-lg object-cover border border-neutral-400 dark:border-neutral-600 grayscale"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-lg border border-neutral-400 dark:border-neutral-600 flex items-center justify-center font-bold text-xs bg-neutral-100 dark:bg-neutral-900">
+                  {user.name?.[0]?.toUpperCase()}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-bold truncate text-neutral-900 dark:text-white">{user.name}</div>
+                <div className="text-[10px] text-neutral-500 font-mono truncate">{user.role === 'admin' ? 'مدير النظام' : 'موظف'}</div>
+              </div>
+            </div>
+          )}
+
+          <div className="border-t border-neutral-200 dark:border-neutral-800 pt-3 px-3 text-xs text-neutral-400 dark:text-neutral-600 flex items-center justify-between">
+            <span>نظام أحادي اللون</span>
+            <span className="font-mono text-[10px] uppercase font-bold">Monochrome</span>
+          </div>
         </div>
       </aside>
 

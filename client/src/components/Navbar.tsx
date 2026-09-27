@@ -59,9 +59,17 @@ export const Navbar: React.FC = () => {
               to="/settings"
               className="flex items-center gap-2 rounded-xl border border-neutral-300 px-3 py-2 text-sm font-bold text-neutral-900 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-900 transition-colors"
             >
-              <div className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-400 text-neutral-800 dark:border-neutral-600 dark:text-neutral-200">
-                <UserIcon className="h-3.5 w-3.5" />
-              </div>
+              {user.photoUrl ? (
+                <img
+                  src={user.photoUrl}
+                  alt={user.name}
+                  className="h-6 w-6 rounded-md object-cover border border-neutral-400 dark:border-neutral-600 grayscale"
+                />
+              ) : (
+                <div className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-400 text-neutral-800 dark:border-neutral-600 dark:text-neutral-200">
+                  <UserIcon className="h-3.5 w-3.5" />
+                </div>
+              )}
               <span className="max-w-[120px] truncate">{user.name}</span>
               <span className="rounded border border-neutral-400 dark:border-neutral-600 bg-neutral-100 dark:bg-neutral-900 px-1.5 py-0.5 text-[10px] font-black uppercase">
                 {user.role === 'admin' ? 'مدير' : 'موظف'}
