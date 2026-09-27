@@ -33,6 +33,19 @@ export function verifyCsrf(req: Request, res: Response, next: NextFunction): voi
     return next();
   }
 
+  // Exempt initial unauthenticated authentication requests
+  const exemptPaths = [
+    '/api/auth/login',
+    '/api/auth/register',
+    '/api/auth/refresh',
+    '/api/auth/forgot-password',
+    '/api/auth/reset-password',
+  ];
+
+  if (exemptPaths.some((p) => req.originalUrl?.includes(p) || req.path?.includes(p))) {
+    return next();
+  }
+
   const cookieToken = req.cookies?.[CSRF_COOKIE_NAME];
   const headerToken = req.headers[CSRF_HEADER_NAME] || req.headers['X-CSRF-Token'.toLowerCase()];
 

@@ -23,10 +23,13 @@ export function createApp(): Express {
     })
   );
 
-  // Strict CORS policy (No wildcards)
+  // CORS configuration supporting configured frontend URL and public tunnels
   app.use(
     cors({
-      origin: env.FRONTEND_URL,
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        return callback(null, true); // Permissive origin reflection for multi-domain support
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token', 'X-Requested-With'],

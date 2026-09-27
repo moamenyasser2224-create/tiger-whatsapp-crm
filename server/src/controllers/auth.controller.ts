@@ -11,7 +11,7 @@ function setRefreshTokenCookie(res: Response, token: string) {
     secure: env.SECURE_COOKIE,
     sameSite: env.COOKIE_SAME_SITE,
     maxAge: REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
-    path: '/api/auth',
+    path: '/',
   });
 }
 
@@ -20,7 +20,7 @@ function clearRefreshTokenCookie(res: Response) {
     httpOnly: true,
     secure: env.SECURE_COOKIE,
     sameSite: env.COOKIE_SAME_SITE,
-    path: '/api/auth',
+    path: '/',
   });
 }
 
