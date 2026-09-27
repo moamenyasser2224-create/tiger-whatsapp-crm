@@ -35,11 +35,15 @@ export const RegisterPage: React.FC = () => {
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-whatsapp text-white shadow-lg shadow-whatsapp/30 mb-4">
             <UserPlus className="h-7 w-7" />
           </div>
+          <div className="flex items-center justify-center gap-1.5 mb-2">
+            <span className="text-2xl font-black text-amber-500">تايجر</span>
+            <span className="text-xl font-extrabold text-whatsapp">CRM</span>
+          </div>
           <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">
             إنشاء حساب جديد
           </h1>
           <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-            ابدأ بإدارة عملائك ورسائل واتساب باحترافية وأمان عالي
+            انضم لنظام تايجر لإدارة العملاء والمحادثات بأعلى درجات الأمان والسرعة
           </p>
         </div>
 

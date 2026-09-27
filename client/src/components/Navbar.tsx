@@ -17,7 +17,10 @@ export const Navbar: React.FC = () => {
               <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.592 2.654-.696c1.004.57 1.93.87 2.806.87 3.18 0 5.767-2.587 5.767-5.766.001-3.187-2.575-5.753-5.767-5.753zm3.421 8.136c-.144.406-.833.774-1.172.824-.34.05-1.748.263-3.69-1.68-1.554-1.554-1.734-2.96-1.784-3.3-.05-.339.288-1.028.694-1.172.144-.05.312-.022.427.093l.805 1.096c.114.156.114.341.012.493l-.361.542c-.062.093-.062.203 0 .296.347.525.792.97 1.317 1.317.093.062.203.062.296 0l.542-.361c.152-.102.337-.102.493.012l1.096.805c.115.115.143.283.093.427z"/>
             </svg>
           </div>
-          <span className="text-gray-900 dark:text-white">واتساب <span className="text-whatsapp font-extrabold">CRM</span></span>
+          <span className="text-gray-900 dark:text-white flex items-center gap-1.5">
+            <span className="text-amber-500 font-extrabold text-2xl">تايجر</span>
+            <span className="text-whatsapp font-extrabold text-xl">CRM</span>
+          </span>
         </Link>
       </div>
 
