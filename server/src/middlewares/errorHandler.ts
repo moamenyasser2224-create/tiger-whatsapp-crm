@@ -7,13 +7,25 @@ export interface AppError extends Error {
   details?: unknown;
 }
 
+import { ZodError } from 'zod';
+
 export function errorHandler(
-  err: AppError,
+  err: any,
   req: Request,
   res: Response,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   next: NextFunction
 ): void {
+  if (err instanceof ZodError) {
+    const message = err.errors.map((e) => e.message).join('، ');
+    res.status(400).json({
+      success: false,
+      error: message,
+      details: err.errors,
+    });
+    return;
+  }
+
   const statusCode = err.statusCode || 500;
   const message = err.message || 'حدث خطأ داخلي في الخادم';
 

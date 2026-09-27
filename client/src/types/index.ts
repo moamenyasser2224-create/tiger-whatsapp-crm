@@ -24,7 +24,37 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  role?: 'admin' | 'employee';
   isTwoFactorEnabled: boolean;
+}
+
+export interface Attendance {
+  id: string;
+  userId: string;
+  date: string;
+  checkIn: string | null;
+  checkOut: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    role?: string;
+  };
+}
+
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  text: string;
+  createdAt: string;
+  sender: {
+    id: string;
+    name: string;
+    email: string;
+    role?: string;
+  };
 }
 
 export interface Customer {

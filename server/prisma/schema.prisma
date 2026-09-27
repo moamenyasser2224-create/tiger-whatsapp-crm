@@ -12,17 +12,20 @@ model User {
   email              String               @unique
   password           String
   name               String
+  role               String               @default("employee") // [admin, employee]
   isTwoFactorEnabled Boolean              @default(false)
   twoFactorSecret    String?
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
   deletedAt          DateTime?
 
-  customers          Customer[]
-  messageTemplates   MessageTemplate[]
-  refreshTokens      RefreshToken[]
+  customers           Customer[]
+  messageTemplates    MessageTemplate[]
+  refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
-  auditLogs          AuditLog[]
+  auditLogs           AuditLog[]
+  attendances         Attendance[]
+  chatMessages        ChatMessage[]
 
   @@map("users")
 }
@@ -112,3 +115,32 @@ model AuditLog {
   @@index([userId, createdAt])
   @@map("audit_logs")
 }
+
+model Attendance {
+  id        String    @id @default(uuid())
+  userId    String
+  date      String    // YYYY-MM-DD
+  checkIn   DateTime?
+  checkOut  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([date])
+  @@map("attendances")
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  senderId  String
+  text      String   @db.Text
+  createdAt DateTime @default(now())
+
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@map("chat_messages")
+}
+

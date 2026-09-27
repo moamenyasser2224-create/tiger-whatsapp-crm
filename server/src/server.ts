@@ -1,12 +1,19 @@
+import http from 'http';
 import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { prisma } from './config/prisma.js';
+import { initSocket } from './socket.js';
 
 const app = createApp();
+const server = http.createServer(app);
 
-const server = app.listen(env.PORT, () => {
-  console.log(`🚀 WhatsApp CRM Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
+// Initialize Socket.io
+initSocket(server);
+
+server.listen(env.PORT, () => {
+  console.log(`🚀 WhatsApp & Workspace CRM Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
   console.log(`📡 Frontend URL allowed: ${env.FRONTEND_URL}`);
+  console.log(`🔌 Socket.io Real-time engine ready on port ${env.PORT}`);
 });
 
 // Graceful Shutdown

@@ -27,3 +27,20 @@ export const apiRateLimiter = rateLimit({
     error: 'تم تجاوز الحد المسموح من الطلبات، يرجى المحاولة لاحقاً.',
   },
 });
+
+/**
+ * Strict chat rate limiter (10 messages per minute per user)
+ */
+export const chatRateLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 10, // 10 messages per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipFailedRequests: true,
+  keyGenerator: (req) => (req as any).user?.id || (req as any).user?.userId || req.ip || 'anonymous',
+  message: {
+    success: false,
+    error: 'تم تجاوز الحد المسموح لإرسال الرسائل (10 رسائل في الدقيقة). يرجى الانتظار قليلاً.',
+  },
+});
+

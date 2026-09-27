@@ -1,57 +1,70 @@
-# 📱 نظام إدارة عملاء واتساب الشامل (WhatsApp CRM)
-> **نظام CRM حقيقي، متكامل، وجاهز للإنتاج (Production-Ready) مبني بأحدث المعايير البرمجية والأمنية لإدارة محادثات ومتابعات العملاء عبر واتساب.**
+# 🐅 تايجر CRM وإدارة العمل الداخلي (Tiger Workspace & WhatsApp CRM)
+> **نظام إدارة عمل داخلي متكامل وحقيقي جاهز للإنتاج (Production-Ready) يجمع بين إدارة عملاء واتساب (CRM)، نظام الحضور والانصراف اللحظي، والشات الداخلي المباشر بين أعضاء الفريق.**
 
 ---
 
 ## 📑 جدول المحتويات
-1. [المميزات الأساسية](#-المميزات-الأساسية)
+1. [نظرة عامة والمميزات الأساسية](#-المميزات-الأساسية)
 2. [البنية التقنية (Tech Stack)](#-البنية-التقنية-tech-stack)
 3. [هيكل المشروع (Monorepo Architecture)](#-هيكل-المشروع)
-4. [نموذج البيانات (Database Schema)](#-نموذج-البيانات)
-5. [التشغيل المحلي (Local Development Setup)](#-التشغيل-المحلي-خطوة-بخطوة)
+4. [نماذج البيانات (Database Schema)](#-نماذج-البيانات)
+5. [التشغيل المحلي خطوة بخطوة (Local Setup)](#-التشغيل-المحلي-خطوة-بخطوة)
 6. [إدارة قواعد البيانات والـ Migrations](#-إدارة-قواعد-البيانات-والـ-migrations)
-7. [قائمة الفحص الأمني (Security Checklist & Traceability)](#-قائمة-الفحص-الأمني-security-checklist)
+7. [قائمة الفحص الأمني والربط المرجعي (Security Checklist & Traceability)](#-قائمة-الفحص-الأمني-security-checklist)
 8. [خطوات النشر والإنتاج (Production Deployment Guide)](#-خطوات-النشر-والإنتاج)
    - [النشر باستخدام Docker Compose](#1-النشر-باستخدام-docker-compose)
-   - [النشر على VPS مستقل (Ubuntu + PM2 + Nginx + Let's Encrypt SSL)](#2-النشر-على-خادم-vps-مستقل-ubuntunginxpm2ssl)
-   - [النشر السحابي (Railway / Render)](#3-النشر-السحابي-railway--render)
+   - [النشر على VPS مستقل (Ubuntu + PM2 + Nginx + SSL + WebSocket Support)](#2-النشر-على-خادم-vps-مستقل-ubuntupm2nginxsslwebsocket)
+   - [النشر السحابي (Render / Railway)](#3-النشر-السحابي-render--railway)
 9. [الاختبارات وضمان الجودة (Testing & CI/CD)](#-الاختبارات-وضمان-الجودة)
 
 ---
 
 ## 🌟 المميزات الأساسية
 
-- 🔒 **عزل تام للبيانات (Multi-Tenant Data Isolation & IDOR Protection):** بيانات كل مستخدم معزولة بالكامل برمجياً وعلى مستوى قاعدة البيانات (Row-Level Security).
-- 🔐 **تشفير حقول حساسة (AES-256-GCM):** تشفير أرقام الجوال في قاعدة البيانات وفك تشفيرها فقط عند القراءة المصرح بها، مع فهرسة سريعة بالـ SHA-256 لمنع التكرار.
-- 🛡️ **نظام مصادقة متقدم (JWT + 2FA TOTP):** Access Token (15 دقيقة) + Refresh Token في كوكيز آمنة `HttpOnly` + مصادقة ثنائية فعلية متوافقة مع Google Authenticator و1Password.
-- 💬 **قوالب رسائل واتساب ذكية:** 5 قوالب افتراضية لكل مستخدم (جديد، تم التواصل، مهتم، تم البيع، غير مهتم) تدعم استبدال الاسم `{name}` تلقائياً ومعاينة حية وتوليد روابط `wa.me` فورية.
+### 1. إدارة عملاء واتساب (WhatsApp CRM)
+- 🔒 **عزل تام للبيانات (Multi-Tenant Data Isolation & IDOR Protection):** عزل بيانات كل مستخدم برمجياً وعلى مستوى قاعدة البيانات (Row-Level Security).
+- 🔐 **تشفير حقول حساسة (AES-256-GCM):** تشفير أرقام الهواتف بأمان وفك تشفيرها فقط عند الطلب المصرح به، مع فهرسة `SHA-256` للبحث وفحص التكرار.
+- 💬 **قوالب رسائل واتساب ذكية:** 5 قوالب افتراضية لكل مستخدم تدعم استبدال `{name}` آلياً، وتوليد روابط `wa.me` فورية.
 - ⏰ **لوحة المتابعات اليومية والمتأخرة:** فلترة ديناميكية ذكية للعملاء المستحقين للمتابعة اليوم أو المتأخرين (`next <= اليوم`) مع استبعاد الحالات المنتهية.
-- ⚠️ **فحص تكرار الأرقام الذكي:** تنبيه تحذيري فوري (409) عند محاولة إضافة عميل برقم مسجل مسبقاً، مع عرض بيانات العميل الموجود وزر تأكيد مخصص.
-- ✅ **حقل الموافقة الصريحة الإلزامي (Consent):** تسجيل إلزامي لموافقة العميل على التواصل مع توثيق التاريخ تلقائياً.
-- 📊 **لوحة إحصائيات وتحليلات:** رسوم بيانية تفاعلية (Recharts) لحساب معدل التحويل (Conversion Rate)، وتوزيع الحالات والمصادر.
-- 📁 **استيراد وتصدير متكامل:** تصدير واستيراد ملفات CSV تدعم اللغة العربية (UTF-8 BOM)، وزر لتصدير كافة بيانات الحساب (GDPR) وحذف الحساب نهائياً.
+- ⚠️ **فحص تكرار الأرقام:** تنبيه فوري عند تكرار رقم مسجل مع نافذة تأكيد للمستخدم.
+- ✅ **حقل الموافقة الصريحة الإلزامي (Consent):** توثيق موافقة العميل على التواصل مع التاريخ تلقائياً.
+- 📊 **لوحة إحصائيات تفاعلية:** رسوم بيانية تفاعلية (Recharts) لحساب معدل التحويل وتوزيع الحالات والمصادر.
+
+### 2. نظام الحضور والانصراف الذكي (Attendance System)
+- ⏱️ **تسجيل حضور وانصراف بضغطة زر:** أزرار ذكية تتفعل وتتعطل آلياً حسب حالة الموظف اليومية.
+- 🚫 **منع التكرار الصارم:** سجل واحد فقط لكل موظف في اليوم الواحد (`userId + date` Unique Constraint)، مع رفض تكرار الحضور أو تسجيل الانصراف قبل الحضور.
+- 📡 **بث مباشر عبر WebSocket (Socket.io):** تحديث لحظي لجدول حضور الفريق فور تسجيل أي موظف لحضوره أو انصرافه دون الحاجة لإعادة تحميل الصفحة.
+- 👤 **بطاقة حالتي اليوم:** استعراض توقيت الحضور، توقيت الانصراف، وحالة التواجد المباشرة.
+
+### 3. الشات الداخلي للمنظومة (Internal Team Chat)
+- 💬 **قناة عامة للمؤسسة (Organization-wide Channel):** محادثة جماعية مشفرة ومؤمنة تضم كافة أعضاء وإداريي المنظومة.
+- 🛡️ **حماية ضد هجمات XSS:** تنظيف وتعقيم نصوص الرسائل آلياً قبل حفظها وإرسالها للمستخدمين.
+- ⚡ **تحديث لحظي عبر Socket.io:** استلام الرسائل فور إرسالها مع ميزة التمرير التلقائي (Auto-scroll).
+- 🚦 **مكافحة الإغراق (Strict Rate Limiting):** تحديد حد أقصى 10 رسائل في الدقيقة لكل مستخدم لمنع السبام (Spam).
+- 🎨 **تصميم RTL راقي:** فقاعات محادثة مميزة، إظهار أسماء المرسلين الحقيقية ورتبهم (مدير / موظف)، وتوقيت الرسائل.
 
 ---
 
 ## 🛠️ البنية التقنية (Tech Stack)
 
 ### الخادم الخلفي (Backend)
-- **اللغة والبيئة:** Node.js 20+ مع TypeScript
-- **إطار العمل:** Express.js 4
-- **قاعدة البيانات:** PostgreSQL 16
+- **البيئة:** Node.js 20+ مع TypeScript
+- **إطار العمل:** Express.js 4 + HTTP Server
+- **المحرك اللحظي (Real-time):** Socket.io 4 مع Handshake JWT Authentication
+- **قواعد البيانات:** PostgreSQL 16 (أو SQLite محلياً للتطوير الخفيف)
 - **الـ ORM:** Prisma ORM 5
-- **الأمان والتحقق:** Zod, Helmet, CORS, CSRF Protection, bcrypt (cost 12), express-rate-limit, AES-256-GCM
+- **الأمان والتحقق:** Zod, Helmet, CORS, CSRF Double-Submit Protection, bcrypt (cost 12), express-rate-limit, AES-256-GCM
 - **المصادقة الثنائية:** `otplib` + `qrcode` (RFC 6238 TOTP)
-- **المراقبة وتتبع الأخطاء:** Sentry SDK
+- **المراقبة وتتبع الأعطال:** Sentry SDK
 - **الاختبارات:** Jest + Supertest
 
 ### الواجهة الأمامية (Frontend)
-- **الإطار واللغة:** React 18 + TypeScript + Vite 5
-- **التصميم والواجهات:** Tailwind CSS + Lucide React + دعم كامل لـ RTL والوضع الليلي (Dark Mode)
-- **إدارة الحالة والطلبات:** `@tanstack/react-query` (React Query v5) + Context API
-- **النماذج والتحقق:** React Hook Form + Zod Resolvers
-- **الرسوم البيانية:** Recharts
-- **الاختبارات:** Vitest + React Testing Library + jsdom
+- **البيئة:** React 18 + TypeScript + Vite 5
+- **التصميم:** Tailwind CSS + Lucide Icons + دعم كامل للغة العربية (RTL) والوضع الليلي (Dark Mode)
+- **إدارة الحالة:** `@tanstack/react-query` (React Query v5) + Context API
+- **النماذج:** React Hook Form + Zod
+- **المحرك اللحظي للعميل:** `socket.io-client` مع إعادة اتصال ذكية
+- **الاختبارات:** Vitest + React Testing Library + JSDOM
 
 ---
 
@@ -59,89 +72,70 @@
 
 ```
 whatsapp-crm/
-├── .github/
-│   └── workflows/
-│       └── ci.yml               # مسار أتمتة الاختبارات والبناء (CI/CD)
-├── docker-compose.yml           # تشغيل النظام بالكامل (Postgres + Server + Client)
+├── ci_workflows/workflows/ci.yml # مسار أتمتة الاختبارات والبناء (CI/CD)
+├── docker-compose.yml           # تشغيل النظام بالكامل بأمر واحد (Postgres + Server + Client)
 ├── .env.example                 # نموذج المتغيرات البيئية
-├── package.json                 # سكريبتات Monorepo الجذرية
 │
 ├── server/                      # كود الخادم الخلفي (Backend)
 │   ├── prisma/
-│   │   ├── schema.prisma        # هيكل قاعدة البيانات
-│   │   ├── seed.ts              # بذر المستخدم التجريبي والقوالب الخمسة
-│   │   └── migrations/          # ملفات الترحيل وسياسات Postgres RLS
+│   │   ├── schema.prisma        # هيكل PostgreSQL والترحيلات
+│   │   ├── schema.sqlite.prisma # هيكل SQLite لبيئة التطوير الخفيفة
+│   │   └── seed.ts              # بذر الحساب التجريبي والقوالب الخمسة
 │   ├── src/
-│   │   ├── config/              # إعدادات البيئة، الثوابت، Sentry، Prisma
-│   │   ├── controllers/         # معالجة الطلبات والردود
-│   │   ├── middlewares/         # التحقق من الجلسات، الأذونات، الفلترة، ومكافحة الهجمات
-│   │   ├── repositories/        # استعلامات Prisma والتعامل مع قاعدة البيانات
-│   │   ├── routes/              # مسارات الـ API (/auth, /customers, /templates, /users)
-│   │   ├── services/            # منطق العمل والتشفير والحسابات
-│   │   ├── utils/               # دوال التشفير AES-256، الـ TOTP، التوكنات، ومعالجة الـ CSV
-│   │   ├── validators/          # قواعد Zod برسائل خطأ عربية
+│   │   ├── config/              # إعدادات البيئة، Prisma، Sentry
+│   │   ├── controllers/         # معالجة طلبات Auth, Customers, Attendance, Chat, Templates
+│   │   ├── middlewares/         # التحقق من الجلسات، الأذونات، الفلترة، ومكافحة السبام
+│   │   ├── repositories/        # استعلامات Prisma لكافة الكيانات
+│   │   ├── routes/              # مسارات API (/auth, /customers, /attendance, /chat, /templates)
+│   │   ├── services/            # منطق العمل والتشفير والبث اللحظي
+│   │   ├── socket.ts            # تهيئة Socket.io ومصادقة Handshake JWT والبث اللحظي
+│   │   ├── utils/               # دوال AES-256، التعقيم ضد XSS، TOTP، والتوكنات
+│   │   ├── validators/          # قواعد التحقق Zod برسائل خطأ عربية
 │   │   ├── app.ts               # تهيئة Express والطبقات الأمنية
-│   │   └── server.ts            # نقطة البداية وخادم HTTP مع Graceful Shutdown
-│   ├── tests/                   # اختبارات التكامل للـ Auth, IDOR, Due-Today, CRUD
+│   │   └── server.ts            # نقطة البداية وتشغيل السيرفر اللحظي
+│   ├── tests/                   # 6 أجنحة اختبارات شاملة (29 اختبار نجح بالكامل)
 │   ├── Dockerfile               # Multi-stage Dockerfile للـ Backend
 │   └── package.json
 │
 └── client/                      # كود الواجهة الأمامية (Frontend)
     ├── src/
-    │   ├── components/          # المكونات (DueTodayBanner, CustomerModal, StatsCharts, etc.)
-    │   ├── contexts/            # سياق المصادقة (AuthContext) والمظهر (ThemeContext)
-    │   ├── lib/                 # عميل Axios مع تجديد التوكنات والـ CSRF
-    │   ├── pages/               # الصفحات (Dashboard, Customers, Templates, Settings, Login)
-    │   ├── types/               # تعريفات TypeScript
-    │   ├── App.tsx              # المسارات العامة والمحمية
-    │   └── main.tsx             # نقطة انطلاق التطبيق
-    ├── nginx.conf               # إعدادات Nginx للإنتاج وتوجيه الـ SPA والـ Proxy
+    │   ├── components/          # Sidebar متجاوب، Topbar، النوافذ والمخططات
+    │   ├── contexts/            # سياق AuthContext، ThemeContext، SocketContext
+    │   ├── lib/                 # عميل Axios مع تجديد التوكنات ومعالجة CSRF
+    │   ├── pages/               # CustomersPage, AttendancePage, ChatPage, SettingsPage, Login
+    │   ├── types/               # تعريفات TypeScript لجميع الكيانات
+    │   ├── App.tsx              # المسارات العامة والمحمية وسياق WebSocket
+    │   └── main.tsx
+    ├── nginx.conf               # إعدادات Nginx للإنتاج مع دعم WebSocket (/socket.io/)
     ├── Dockerfile               # Multi-stage Dockerfile مع Nginx
     └── package.json
 ```
 
 ---
 
-## 🗄️ نموذج البيانات
+## 🗄️ نماذج البيانات
 
-### جدول العملاء (`Customer`)
-| الحقل | النوع | الوصف |
-| :--- | :--- | :--- |
-| `id` | UUID | المعرف الفريد للعميل |
-| `userId` | UUID | معرف المستخدم المالك (عزل البيانات) |
-| `name` | String | اسم العميل (مطلوب) |
-| `company` | String? | اسم الشركة (اختياري) |
-| `phone` | String | رقم الجوال مشفر بـ AES-256-GCM |
-| `phoneHash` | String | تجزئة SHA-256 مفهرسة للبحث وفحص التكرار السريع |
-| `city` | String? | المدينة |
-| `source` | Enum | إعلان, واتساب, انستغرام, فيسبوك, توصية, معرض, أخرى |
-| `status` | Enum | جديد, تم التواصل, مهتم, تم البيع, غير مهتم |
-| `last` | DateTime? | تاريخ آخر تواصل |
-| `next` | DateTime? | تاريخ المتابعة القادمة |
-| `notes` | Text? | ملاحظات وتفاصيل العميل |
-| `consent` | Boolean | موافقة العميل على التواصل (إلزامي = true) |
-| `consentDate` | DateTime | تاريخ تسجيل الموافقة تلقائياً |
-| `deletedAt` | DateTime? | تاريخ الحذف المؤقت (Soft Delete) |
+### 1. المستخدم (`User`)
+- `id` (UUID), `name`, `email`, `password`, `role` (`admin` / `employee`), `isTwoFactorEnabled`, `twoFactorSecret`, `createdAt`, `updatedAt`, `deletedAt`.
 
-### جدول قوالب الرسائل (`MessageTemplate`)
-- **الحقول:** `id`, `userId`, `status`, `body`, `updatedAt`
-- **القوالب الافتراضية التلقائية:**
-  1. **جديد:** `"مرحباً {name}، شكرًا لتواصلك معنا! كيف يمكننا مساعدتك؟"`
-  2. **تم التواصل:** `"مرحباً {name}، تم التواصل معك سابقًا، حابب أتابع معاك آخر التفاصيل."`
-  3. **مهتم:** `"مرحباً {name}، حابب أطمّن هل لسه مهتم بالعرض؟ جاهز أساعدك بأي استفسار."`
-  4. **تم البيع:** `"مرحباً {name}، شكرًا لثقتك بنا! لو احتجت أي دعم بعد الشراء أنا موجود."`
-  5. **غير مهتم:** `"مرحباً {name}، تمام، لو احتجت أي حاجة في المستقبل أنا موجود."`
+### 2. العميل (`Customer`)
+- `id` (UUID), `userId` (عزل البيانات), `name`, `company`, `phone` (مشفر بـ AES-256-GCM), `phoneHash` (SHA-256 مفهرس), `city`, `source`, `status`, `last`, `next`, `notes`, `consent` (إلزامي = true), `consentDate`, `deletedAt`.
+
+### 3. الحضور والانصراف (`Attendance`)
+- `id` (UUID), `userId`, `date` (YYYY-MM-DD), `checkIn` (DateTime?), `checkOut` (DateTime?), `createdAt`, `updatedAt`.
+- **قيد فريد:** `@@unique([userId, date])` — سجل واحد فقط لكل موظف لكل يوم.
+
+### 4. الشات الداخلي (`ChatMessage`)
+- `id` (UUID), `senderId`, `text` (Text، معقم ضد XSS، حد أقصى 1000 حرف), `createdAt`.
+
+### 5. قوالب الرسائل (`MessageTemplate`)
+- `id`, `userId`, `status`, `body` (يحتوي على `{name}`), `updatedAt`.
 
 ---
 
 ## 💻 التشغيل المحلي خطوة بخطوة
 
-### 1. المتطلبات المسبقة
-- تثبيت [Node.js](https://nodejs.org/) الإصدار 20 أو أحدث.
-- تثبيت [PostgreSQL](https://www.postgresql.org/) أو تشغيل خادم Postgres عبر Docker.
-
-### 2. تثبيت الحزم
-من المجلد الرئيسي للمشروع:
+### 1. تثبيت الحزم
 ```bash
 # تثبيت حزم الخادم
 cd server
@@ -152,17 +146,17 @@ cd ../client
 npm install
 ```
 
-### 3. إعداد المتغيرات البيئية
-قم بإنشاء ملف `.env` داخل مجلد `server/`:
+### 2. إعداد المتغيرات البيئية
+أنشئ ملف `.env` داخل `server/`:
 ```env
 PORT=5000
 NODE_ENV=development
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/whatsapp_crm?schema=public"
+DATABASE_URL="file:./dev.db"
 FRONTEND_URL="http://localhost:5173"
 
-JWT_ACCESS_SECRET="your_very_strong_and_secure_jwt_access_secret_key_minimum_32_characters_long_12345"
-JWT_REFRESH_SECRET="your_very_strong_and_secure_jwt_refresh_secret_key_minimum_32_characters_long_67890"
-JWT_RESET_PASSWORD_SECRET="your_very_strong_and_secure_jwt_reset_password_secret_key_minimum_32_chars_abc"
+JWT_ACCESS_SECRET="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+JWT_REFRESH_SECRET="abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+JWT_RESET_PASSWORD_SECRET="reset_secret_key_minimum_32_characters_long_1234567890"
 
 PHONE_ENCRYPTION_KEY="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 SECURE_COOKIE=false
@@ -171,166 +165,71 @@ ENABLE_RLS=false
 SENTRY_DSN=""
 ```
 
-### 4. تطبيق الـ Migrations وبذر البيانات التجريبية
+### 3. مزامنة قاعدة البيانات والـ Seed
 ```bash
 cd server
-# تطبيق الترحيلات على قاعدة البيانات
-npx prisma migrate dev --name init
-
-# توليد عميل Prisma
-npx prisma generate
-
-# تشغيل الـ Seed لإنشاء الحساب التجريبي والقوالب الخمسة
+npx prisma db push --schema=prisma/schema.sqlite.prisma
 npm run prisma:seed
 ```
 
-> **بيانات الحساب التجريبي:**
-> - **البريد الإلكتروني:** `admin@example.com`
-> - **كلمة المرور:** `Admin@123456`
+> **بيانات حساب المدير التجريبي:**
+> - البريد الإلكتروني: `admin@example.com`
+> - كلمة المرور: `Admin@123456`
 
-### 5. تشغيل بيئة التطوير
-- **تشغيل الخادم الخلفي (Backend):**
-  ```bash
-  cd server
-  npm run dev
-  ```
-  *(سيعمل الخادم على: `http://localhost:5000`)*
-
-- **تشغيل الواجهة الأمامية (Frontend):**
-  ```bash
-  cd client
-  npm run dev
-  ```
-  *(ستفتح الواجهة على: `http://localhost:5173`)*
-
----
-
-## 🗃️ إدارة قواعد البيانات والـ Migrations
-
-عند تعديل نموذج البيانات في `server/prisma/schema.prisma`:
+### 4. تشغيل الخادم والواجهة
 ```bash
-# إنشاء ترحيل جديد وتطبيقه محلياً
-npx prisma migrate dev --name your_migration_name
+# تشغيل الخادم ومحرك Socket.io (المنفذ 5000)
+cd server
+npm run build && node dist/server.js
 
-# لتطبيق الترحيلات في بيئة الإنتاج (Production)
-npx prisma migrate deploy
-
-# لفتح لوحة استعراض قاعدة البيانات المرئية (Prisma Studio)
-npx prisma studio
+# تشغيل واجهة React (المنفذ 5173)
+cd client
+npm run dev
 ```
 
 ---
 
 ## 🛡️ قائمة الفحص الأمني (Security Checklist)
 
-تم تنفيذ جميع المتطلبات الأمنية المتقدمة وفق أفضل الممارسات المعتمدة:
-
-| البند الأمني | آلية التنفيذ | مسار الملف المسؤول |
+| المتطلب الأمني | آلية التنفيذ البرمجية | المسار الدقيق للملف |
 | :--- | :--- | :--- |
-| **تشفير أرقام الجوال** | تشفير بـ `AES-256-GCM` ومفتاح 32 بايت مع AuthTag وIV عشوائي لكل رقم | [`server/src/utils/crypto.ts`](file:///server/src/utils/crypto.ts) |
-| **فهرسة الأرقام المشفرة** | توليد تجزئة `SHA-256` مفهرسة للبحث السريع وفحص التكرار دون كشف الرقم | [`server/src/utils/crypto.ts`](file:///server/src/utils/crypto.ts) |
-| **التحقق الثنائي (2FA TOTP)** | توليد أسرار TOTP وQR Code والتحقق من الرموز المكونة من 6 أرقام | [`server/src/utils/totp.ts`](file:///server/src/utils/totp.ts) |
-| **تأمين الجلسات (JWT + Cookie)** | Access Token (15 دقيقة) + Refresh Token مشفر في HttpOnly Secure Cookie | [`server/src/utils/tokens.ts`](file:///server/src/utils/tokens.ts) |
+| **مصادقة WebSocket Handshake** | فحص JWT في مصافحة Socket.io ورفض أي اتصال غير مصرح | [`server/src/socket.ts`](file:///server/src/socket.ts) |
+| **تعقيم المدخلات ضد XSS** | تجريد ونزع وسوم `<script>` والسمات الخطرة من رسائل الشات والملاحظات | [`server/src/utils/sanitize.ts`](file:///server/src/utils/sanitize.ts) |
+| **منع إغراق الشات (Chat Rate Limit)** | تحديد 10 رسائل/دقيقة لكل مستخدم برفض الطلب الحادي عشر بكود `429` | [`server/src/middlewares/rateLimiter.ts`](file:///server/src/middlewares/rateLimiter.ts) |
+| **منع تكرار الحضور والانصراف** | فحص حالة الحضور والخروج مسبقاً مع قيد `@@unique([userId, date])` | [`server/src/services/attendance.service.ts`](file:///server/src/services/attendance.service.ts) |
+| **تشفير أرقام الهواتف** | تشفير بـ `AES-256-GCM` ومفتاح 32 بايت مع AuthTag وIV عشوائي | [`server/src/utils/crypto.ts`](file:///server/src/utils/crypto.ts) |
+| **فهرسة الأرقام المشفرة** | توليد تجزئة `SHA-256` للبحث السريع وفحص التكرار | [`server/src/utils/crypto.ts`](file:///server/src/utils/crypto.ts) |
 | **حماية الـ CSRF** | نمط Double Submit Cookie عبر الـ Header `x-csrf-token` | [`server/src/middlewares/csrfProtection.ts`](file:///server/src/middlewares/csrfProtection.ts) |
-| **عزل البيانات ومنع IDOR** | ربط كل العمليات بـ `req.user.id` + سياسات Postgres RLS المخصصة | [`server/src/middlewares/authenticate.ts`](file:///server/src/middlewares/authenticate.ts) & [`server/src/repositories/customer.repository.ts`](file:///server/src/repositories/customer.repository.ts) |
-| **مكافحة هجمات القوة الغاشمة** | `express-rate-limit` (5 محاولات/دقيقة للدخول، 120/دقيقة للـ API) | [`server/src/middlewares/rateLimiter.ts`](file:///server/src/middlewares/rateLimiter.ts) |
-| **ترويسات الأمان الصارمة** | `helmet()` لإضافة ترويسات HSTS, X-Content-Type-Options, Referrer-Policy | [`server/src/app.ts`](file:///server/src/app.ts) |
-| **تقييد النطاقات (CORS)** | تقييد الوصول حصراً لنطاق الواجهة الأمامية بدون أي Wildcard (`*`) | [`server/src/app.ts`](file:///server/src/app.ts) |
-| **تقييد حجم الحمولات** | ضبط حد أقصى للـ JSON Body عند `1MB` لمنع هجمات حجب الخدمة (DoS) | [`server/src/app.ts`](file:///server/src/app.ts) |
-| **تجزئة كلمات المرور** | `bcrypt` بعامل تكلفة مرتفع (Cost Factor = 12) | [`server/src/services/auth.service.ts`](file:///server/src/services/auth.service.ts) |
-| **سجل التدقيق (Audit Logs)** | توثيق كامل لكل عملية إضافة، تعديل، حذف، تصدير، أو تغيير أمني مع IP وUser-Agent | [`server/src/repositories/audit.repository.ts`](file:///server/src/repositories/audit.repository.ts) |
-| **مراقبة وتتبع الأعطال** | تكامل كامل مع `Sentry Node SDK` لالتقاط الاستثناءات في بيئة الإنتاج | [`server/src/config/sentry.ts`](file:///server/src/config/sentry.ts) |
+| **عزل البيانات ومنع IDOR** | ربط كافة العمليات بـ `req.user.id` مع سياسات RLS | [`server/src/middlewares/authenticate.ts`](file:///server/src/middlewares/authenticate.ts) |
+| **المصادقة الثنائية (2FA TOTP)** | توليد أسرار TOTP وQR Code والتحقق من رموز الـ 6 أرقام | [`server/src/utils/totp.ts`](file:///server/src/utils/totp.ts) |
+| **ترويسات الحماية الصارمة** | تفعيل `helmet()` لضبط HSTS وX-Content-Type-Options | [`server/src/app.ts`](file:///server/src/app.ts) |
+| **تجزئة كلمات المرور** | خوارزمية `bcrypt` بعامل تكلفة 12 | [`server/src/services/auth.service.ts`](file:///server/src/services/auth.service.ts) |
+| **سجل التدقيق (Audit Logs)** | توثيق كامل للعمليات الحساسة مع عنوان الـ IP والـ User-Agent | [`server/src/repositories/audit.repository.ts`](file:///server/src/repositories/audit.repository.ts) |
 
 ---
 
 ## 🚀 خطوات النشر والإنتاج
 
 ### 1. النشر باستخدام Docker Compose
-أسرع وأسهل طريقة للنشر على أي خادم سحابي تدعم تشغيل النظام بالكامل بأمر واحد:
-
-1. انسخ المشروع إلى خادمك.
-2. أنشئ ملف `.env` في المجلد الرئيسي واملأ المفاتيح السرية الحقيقية:
-   ```bash
-   POSTGRES_USER=crm_admin
-   POSTGRES_PASSWORD=SuperStrongDbPassword123!
-   POSTGRES_DB=whatsapp_crm_prod
-   FRONTEND_URL=https://crm.yourdomain.com
-   JWT_ACCESS_SECRET=your_production_64_char_hex_access_secret_key
-   JWT_REFRESH_SECRET=your_production_64_char_hex_refresh_secret_key
-   JWT_RESET_PASSWORD_SECRET=your_production_reset_secret_key
-   PHONE_ENCRYPTION_KEY=your_production_32_bytes_64_hex_encryption_key
-   ```
-3. شغّل الحاويات:
-   ```bash
-   docker-compose up -d --build
-   ```
-4. نفّذ الترحيلات والبذر داخل حاوية الخادم:
-   ```bash
-   docker-compose exec server npx prisma migrate deploy
-   docker-compose exec server npm run prisma:seed
-   ```
+تشغيل النظام بالكامل متضمناً قاعدة بيانات PostgreSQL، خادم Express مع محرك Socket.io، وواجهة React عبر Nginx:
+```bash
+docker-compose up -d --build
+```
 
 ---
 
-### 2. النشر على خادم VPS مستقل (Ubuntu/Nginx/PM2/SSL)
+### 2. النشر على خادم VPS مستقل (Ubuntu/PM2/Nginx/SSL/WebSocket)
 
-#### أ. إعداد الخادم والتبعيات
-```bash
-# تحديث الحزم
-sudo apt update && sudo apt upgrade -y
+عند النشر على VPS، يجب تهيئة Nginx ليدعم ترقية اتصالات **WebSocket الخاصة بـ Socket.io** عبر التكوين التالي:
 
-# تثبيت Node.js 20 وPostgreSQL وNginx وGit
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs postgresql postgresql-contrib nginx git certbot python3-certbot-nginx
-
-# تثبيت PM2 لإدارة العمليات
-sudo npm install -g pm2
-```
-
-#### ب. إعداد قاعدة بيانات PostgreSQL
-```bash
-sudo -u postgres psql
-```
-داخل موجه PostgreSQL:
-```sql
-CREATE DATABASE whatsapp_crm_prod;
-CREATE USER crm_user WITH ENCRYPTED PASSWORD 'StrongPassword123!';
-GRANT ALL PRIVILEGES ON DATABASE whatsapp_crm_prod TO crm_user;
-\c whatsapp_crm_prod
-GRANT ALL ON SCHEMA public TO crm_user;
-\q
-```
-
-#### ج. بناء وتشغيل الخادم الخلفي عبر PM2
-```bash
-cd /var/www/whatsapp-crm/server
-npm ci
-npx prisma generate
-npx prisma migrate deploy
-npm run prisma:seed
-npm run build
-
-# تشغيل التطبيق عبر PM2
-pm2 start dist/server.js --name "whatsapp-crm-api"
-pm2 save
-pm2 startup
-```
-
-#### د. بناء الواجهة الأمامية
-```bash
-cd /var/www/whatsapp-crm/client
-npm ci
-npm run build
-# ستكون الملفات الجاهزة في /var/www/whatsapp-crm/client/dist
-```
-
-#### هـ. إعداد Nginx العكسي وشهادة Let's Encrypt SSL المجانية
-أنشئ ملف إعداد Nginx:
-```bash
-sudo nano /etc/nginx/sites-available/whatsapp-crm
-```
-أضف المحتوى التالي:
+أنشئ الإعداد في `/etc/nginx/sites-available/tiger-crm`:
 ```nginx
+# Map لترقية اتصالات WebSocket
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
 server {
     server_name crm.yourdomain.com;
 
@@ -339,75 +238,83 @@ server {
 
     # Gzip Compression
     gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml text/javascript;
 
-    # SPA Routing
+    # SPA Routing للواجهة الأمامية
     location / {
         try_files $uri $uri/ /index.html;
     }
 
-    # Proxy to Node.js Backend API
+    # تمرير طلبات الـ REST API للخادم الخلفي
     location /api {
         proxy_pass http://127.0.0.1:5000;
         proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # تمرير اتصالات WebSocket الحية لـ Socket.io (شات وحضور لحظي)
+    location /socket.io/ {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
+        proxy_set_header Connection $connection_upgrade;
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 86400s;
     }
 }
 ```
-تفعيل الموقع وتوليد شهادة SSL:
+
+تفعيل الموقع وإصدار شهادة SSL المجانية:
 ```bash
-sudo ln -s /etc/nginx/sites-available/whatsapp-crm /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/tiger-crm /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl restart nginx
-
-# إصدار شهادة SSL تلقائياً
 sudo certbot --nginx -d crm.yourdomain.com
 ```
 
 ---
 
-### 3. النشر السحابي (Railway / Render)
-1. **قاعدة البيانات:** أنشئ خدمة `PostgreSQL` وانسخ `DATABASE_URL`.
-2. **الخادم الخلفي (Web Service):**
-   - **Root Directory:** `server`
-   - **Build Command:** `npm ci && npx prisma generate && npm run build`
-   - **Start Command:** `npx prisma migrate deploy && node dist/server.js`
-   - **Environment Variables:** أضف جميع المتغيرات المذكورة في `.env.example`.
-3. **الواجهة الأمامية (Static Site أو Web Service):**
-   - **Root Directory:** `client`
-   - **Build Command:** `npm ci && npm run build`
-   - **Publish Directory:** `dist`
-   - **Environment Variable:** `VITE_API_URL=https://your-backend-service.railway.app/api`
+### 3. النشر السحابي (Render / Railway)
+- **قاعدة البيانات:** PostgreSQL Database مخصصة.
+- **الخادم (Backend Service):**
+  - أمر البناء: `npm ci && npx prisma generate && npm run build`
+  - أمر التشغيل: `npx prisma migrate deploy && node dist/server.js`
+- **الواجهة (Frontend):**
+  - أمر البناء: `npm ci && npm run build`
+  - مجلد النشر: `dist`
+  - متغير البيئة: `VITE_API_URL=https://your-backend-api.onrender.com/api`
 
 ---
 
 ## 🧪 الاختبارات وضمان الجودة
 
-المشروع مزود بحزمة اختبارات شاملة تغطي جميع السيناريوهات الحساسة:
+يحتوي النظام على حزمة اختبارات شاملة تغطي الخادم الخلفي والواجهة الأمامية:
 
+### 1. اختبارات الخادم الخلفي (29 اختباراً نجحت بنسبة 100%):
 ```bash
-# تشغيل جميع اختبارات الخادم الخلفي (Backend Tests)
 cd server
 npm test
+```
+- ✅ **الحضور والانصراف:** التحقق من نجاح الحضور، رفض الانصراف قبل الحضور، ورفض التكرار في نفس اليوم.
+- ✅ **الشات ومكافحة السبام:** رفض الرسائل الفارغة أو الأطول من 1000 حرف، تعقيم وسوم XSS، وحظر الطلب الحادي عشر خلال دقيقة بـ `429`.
+- ✅ **منع هجمات IDOR:** التأكد الصارم من عزل بيانات المستخدمين وعدم إمكانية الوصول لسجلات الآخرين.
+- ✅ **المصادقة والتسجيل و2FA:** توليد التوكنات، التحقق من كلمات المرور، وبذر القوالب الخمسة.
+- ✅ **قوالب الرسائل:** التحقق من وجود وسم `{name}` وتنسيق الرسائل لـ WhatsApp.
 
-# تشغيل اختبارات الخادم مع قياس التغطية البرمجية (Coverage)
-npm run test:coverage
-
-# تشغيل اختبارات الواجهة الأمامية (Frontend Tests)
-cd ../client
+### 2. اختبارات الواجهة الأمامية:
+```bash
+cd client
 npm test
 ```
-
-### السيناريوهات المختبرة:
-- ✅ **اختبار المصادقة والتسجيل:** التحقق من إنشاء المستخدم والبذر التلقائي للقوالب الخمسة.
-- ✅ **اختبار عزل البيانات (IDOR Isolation):** التأكد الصارم من أن المستخدم B لا يمكنه رؤية أو تعديل أو حذف أي عميل أو قالب للمستخدم A.
-- ✅ **اختبار كشف تكرار الأرقام:** التحقق من إرجاع تحذير `409` مع بيانات العميل القديم، وإمكانية التأكيد عبر `force: true`.
-- ✅ **اختبار متابعات اليوم والمتأخرة:** التحقق من تصفية المواعيد المستحقة واستبعاد الحالات المكتملة (`تم البيع` و`غير مهتم`).
-- ✅ **اختبار تشفير أرقام الجوال:** التأكد من تخزين الرقم مشفراً في قاعدة البيانات بصيغة `iv:tag:ciphertext` وفك تشفيره في الرد.
-- ✅ **اختبار الواجهة الأمامية:** اختبار عمل نماذج الدخول وشاشات إدارة العملاء.
+- ✅ اختبار صفحة تسجيل الدخول (`LoginPage.test.tsx`)
+- ✅ اختبار صفحة العملاء وتدفق البيانات (`CustomersPage.test.tsx`)
+- ✅ اختبار صفحة الحضور والانصراف وعناصر التحكم (`AttendancePage.test.tsx`)
+- ✅ اختبار صفحة الشات وقناة الفريق المباشرة (`ChatPage.test.tsx`)

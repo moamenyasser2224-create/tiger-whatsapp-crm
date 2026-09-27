@@ -8,6 +8,9 @@ const config: Config = {
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.json' }],
   },
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
   moduleFileExtensions: ['ts', 'js', 'json', 'node'],
   verbose: true,
   forceExit: true,

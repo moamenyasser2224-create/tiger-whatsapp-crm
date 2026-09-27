@@ -26,17 +26,16 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Security: run as non-root user
+COPY package*.json ./
+COPY prisma ./prisma/
+
+RUN npm ci --omit=dev
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+
 USER node
-
-COPY --chown=node:node package*.json ./
-COPY --chown=node:node prisma ./prisma/
-
-RUN npm ci --only=production
-
-COPY --chown=node:node --from=builder /app/dist ./dist
-COPY --chown=node:node --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --chown=node:node --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
 EXPOSE 5000
 
