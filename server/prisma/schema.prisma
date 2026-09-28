@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -12,8 +12,10 @@ model User {
   email                String               @unique
   password             String
   name                 String
-  role                 String               @default("employee") // [admin, employee]
+  role                 String               @default("employee") // [owner, admin, hr, manager, sales, employee]
   monthlySalary        String?              // Stored as AES-256-GCM encrypted string
+  departmentId         String?
+  branchId             String?
   isTwoFactorEnabled   Boolean              @default(false)
   twoFactorSecret      String?
   photoUrl             String?
@@ -26,50 +28,62 @@ model User {
   updatedAt            DateTime             @updatedAt
   deletedAt            DateTime?
 
-  customers                 Customer[]
-  messageTemplates          MessageTemplate[]
-  refreshTokens             RefreshToken[]
-  passwordResetTokens       PasswordResetToken[]
-  auditLogs                 AuditLog[]
-  attendances               Attendance[]
-  chatMessages              ChatMessage[]
-  workSchedules             WorkSchedule[]
-  leaveRequests             LeaveRequest[]          @relation("UserLeaveRequests")
-  reviewedLeaveRequests     LeaveRequest[]          @relation("AdminReviewedLeaves")
-  attendanceCorrections     AttendanceCorrection[]  @relation("UserAttendanceCorrections")
-  reviewedCorrections       AttendanceCorrection[]  @relation("AdminReviewedCorrections")
-  deductions                Deduction[]
-  adjustments               Adjustment[]
-  deductionDisputes         DeductionDispute[]      @relation("UserDisputes")
-  reviewedDisputes          DeductionDispute[]      @relation("AdminReviewedDisputes")
+  department           Department?          @relation(fields: [departmentId], references: [id])
+  branch               Branch?              @relation(fields: [branchId], references: [id])
+  customers            Customer[]
+  messageTemplates     MessageTemplate[]
+  refreshTokens        RefreshToken[]
+  passwordResetTokens  PasswordResetToken[]
+  auditLogs            AuditLog[]
+  attendances          Attendance[]
+  chatMessages         ChatMessage[]
+  workSchedules        WorkSchedule[]
+  leaveRequests        LeaveRequest[]          @relation("UserLeaveRequests")
+  reviewedLeaveRequests LeaveRequest[]         @relation("AdminReviewedLeaves")
+  attendanceCorrections AttendanceCorrection[] @relation("UserAttendanceCorrections")
+  reviewedCorrections  AttendanceCorrection[]  @relation("AdminReviewedCorrections")
+  deductions           Deduction[]
+  adjustments          Adjustment[]
+  deductionDisputes    DeductionDispute[]      @relation("UserDisputes")
+  reviewedDisputes     DeductionDispute[]      @relation("AdminReviewedDisputes")
+  customerActivities   CustomerActivity[]
+  customerTasks        CustomerTask[]
+  notifications        Notification[]
+  channelMemberships   ChannelMember[]
 
   @@map("users")
 }
 
 model Customer {
-  id          String    @id @default(uuid())
-  userId      String
-  name        String
-  company     String?
-  phone       String
-  phoneHash   String
-  city        String?
-  source      String?   @default("واتساب")
-  status      String?   @default("جديد")
-  sourceId    String?
-  statusId    String?
-  last        DateTime?
-  next        DateTime?
-  notes       String?   @db.Text
-  consent     Boolean   @default(true)
-  consentDate DateTime  @default(now())
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
+  id                String    @id @default(uuid())
+  userId            String
+  name              String
+  company           String?
+  phone             String
+  phoneHash         String
+  city              String?
+  source            String?   @default("واتساب")
+  status            String?   @default("جديد")
+  sourceId          String?
+  statusId          String?
+  dealValue         Decimal?  @default(0)
+  currency          String?   @default("EGP")
+  expectedCloseDate DateTime?
+  pipelineStage     String?   @default("جديد")
+  last              DateTime?
+  next              DateTime?
+  notes             String?
+  consent           Boolean   @default(true)
+  consentDate       DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
 
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sourceOption ListOption? @relation("CustomerSource", fields: [sourceId], references: [id])
-  statusOption ListOption? @relation("CustomerStatus", fields: [statusId], references: [id])
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceOption ListOption?        @relation("CustomerSource", fields: [sourceId], references: [id])
+  statusOption ListOption?        @relation("CustomerStatus", fields: [statusId], references: [id])
+  activities   CustomerActivity[]
+  tasks        CustomerTask[]
 
   @@index([userId, deletedAt])
   @@index([userId, phoneHash])
@@ -260,7 +274,7 @@ model Deduction {
   payrollPeriodId    String?
   type               String   // late, early_leave, absence, manual
   amount             Decimal
-  calculationDetails String   @db.Text // JSON explaining calculation
+  calculationDetails String   // JSON explaining calculation
   status             String   @default("proposed") // proposed, approved, disputed, cancelled, closed_in_payroll
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -320,7 +334,7 @@ model MessageTemplate {
   userId    String
   status    String?
   statusId  String?
-  body      String      @db.Text
+  body      String
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 
@@ -364,7 +378,7 @@ model AuditLog {
   action    String
   entity    String
   entityId  String?
-  details   Json?
+  details   String?  // JSON string
   ipAddress String?
   userAgent String?
   createdAt DateTime @default(now())
@@ -376,13 +390,138 @@ model AuditLog {
 }
 
 model ChatMessage {
-  id        String   @id @default(uuid())
-  senderId  String
-  text      String   @db.Text
-  createdAt DateTime @default(now())
+  id             String        @id @default(uuid())
+  senderId       String
+  channelId      String?
+  parentId       String?
+  text           String
+  attachmentUrl  String?
+  attachmentType String?
+  attachmentSize Int?
+  createdAt      DateTime      @default(now())
 
-  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  sender  User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  channel Channel?      @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  parent  ChatMessage?  @relation("ThreadReplies", fields: [parentId], references: [id])
+  replies ChatMessage[] @relation("ThreadReplies")
 
+  @@index([channelId, createdAt])
   @@index([createdAt])
   @@map("chat_messages")
+}
+
+model CustomerActivity {
+  id         String   @id @default(uuid())
+  customerId String
+  userId     String
+  type       String   // note, call, opened_whatsapp, status_change, task
+  content    String
+  metadata   String?  // JSON string
+  createdAt  DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, createdAt])
+  @@map("customer_activities")
+}
+
+model CustomerTask {
+  id         String    @id @default(uuid())
+  customerId String
+  assigneeId String
+  title      String
+  dueAt      DateTime
+  doneAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  assignee User     @relation(fields: [assigneeId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, dueAt])
+  @@index([assigneeId, dueAt])
+  @@map("customer_tasks")
+}
+
+model CommissionRule {
+  id           String   @id @default(uuid())
+  role         String   @unique // e.g. "sales", "manager", "all"
+  percent      Decimal  // e.g. 5.0%
+  clawbackDays Int      @default(30)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("commission_rules")
+}
+
+model Department {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  managerId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users    User[]
+  channels Channel[]
+
+  @@map("departments")
+}
+
+model Branch {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+
+  @@map("branches")
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  type      String    // deduction, dispute, attendance, chat, crm_deal, system
+  title     String
+  body      String
+  payload   String?   // JSON string
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model Channel {
+  id           String   @id @default(uuid())
+  name         String
+  type         String   @default("public") // public, department, private
+  departmentId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  department Department?     @relation(fields: [departmentId], references: [id])
+  members    ChannelMember[]
+  messages   ChatMessage[]
+
+  @@map("channels")
+}
+
+model ChannelMember {
+  id        String   @id @default(uuid())
+  channelId String
+  userId    String
+  role      String   @default("member") // admin, member
+  createdAt DateTime @default(now())
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])
+  @@map("channel_members")
 }

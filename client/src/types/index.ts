@@ -50,10 +50,27 @@ export interface Attendance {
   };
 }
 
+export interface Channel {
+  id: string;
+  name: string;
+  type: 'public' | 'department' | 'private';
+  departmentId?: string | null;
+  createdAt: string;
+  _count?: {
+    members: number;
+    messages: number;
+  };
+}
+
 export interface ChatMessage {
   id: string;
   senderId: string;
+  channelId?: string | null;
+  parentId?: string | null;
   text: string;
+  attachmentUrl?: string | null;
+  attachmentType?: string | null;
+  attachmentSize?: number | null;
   createdAt: string;
   sender: {
     id: string;
@@ -62,6 +79,11 @@ export interface ChatMessage {
     role?: string;
     photoUrl?: string | null;
   };
+  parent?: {
+    id: string;
+    text: string;
+    sender: { id: string; name: string };
+  } | null;
 }
 
 export interface ListOption {
@@ -78,6 +100,34 @@ export interface Settings {
   updatedAt: string;
 }
 
+export interface CustomerActivity {
+  id: string;
+  customerId: string;
+  userId: string;
+  type: 'note' | 'call' | 'whatsapp' | 'meeting' | 'status_change';
+  title: string;
+  details?: string | null;
+  createdAt: string;
+  user?: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface CustomerTask {
+  id: string;
+  customerId: string;
+  userId: string;
+  title: string;
+  dueAt: string;
+  doneAt?: string | null;
+  createdAt: string;
+  user?: {
+    id: string;
+    name: string;
+  };
+}
+
 export interface Customer {
   id: string;
   userId: string;
@@ -91,11 +141,17 @@ export interface Customer {
   statusId?: string | null;
   sourceOption?: ListOption | null;
   statusOption?: ListOption | null;
+  dealValue?: number | null;
+  currency?: string | null;
+  expectedCloseDate?: string | null;
+  pipelineStage?: string | null;
   last: string | null;
   next: string | null;
   notes: string | null;
   consent: boolean;
   consentDate: string;
+  activities?: CustomerActivity[];
+  tasks?: CustomerTask[];
   createdAt: string;
   updatedAt: string;
 }

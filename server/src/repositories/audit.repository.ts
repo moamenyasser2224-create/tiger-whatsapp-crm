@@ -7,25 +7,18 @@ export class AuditRepository {
     action: string;
     entity: string;
     entityId?: string;
-    details?: Prisma.InputJsonValue;
+    details?: any;
     ipAddress?: string;
     userAgent?: string;
   }): Promise<AuditLog | null> {
     try {
-      const dbUrl = process.env.DATABASE_URL || '';
-      const isPostgres = dbUrl.startsWith('postgres://') || dbUrl.startsWith('postgresql://');
-      let detailsVal: any = data.details;
-
-      if (detailsVal !== undefined && detailsVal !== null) {
-        if (!isPostgres && typeof detailsVal === 'object') {
-          try {
-            detailsVal = JSON.stringify(detailsVal);
-          } catch {
-            detailsVal = String(detailsVal);
-          }
+      let detailsVal: string | null = null;
+      if (data.details !== undefined && data.details !== null) {
+        try {
+          detailsVal = typeof data.details === 'string' ? data.details : JSON.stringify(data.details);
+        } catch {
+          detailsVal = String(data.details);
         }
-      } else {
-        detailsVal = null;
       }
 
       return await prisma.auditLog.create({

@@ -8,6 +8,7 @@ import { LedgerIcon, LedgerIconName } from '../icons/LedgerIcons.js';
 import { OdometerClock } from './OdometerClock.js';
 import { CommandPalette } from './CommandPalette.js';
 import { KeyboardShortcutsModal } from './KeyboardShortcutsModal.js';
+import { NotificationsCenter } from './NotificationsCenter.js';
 
 interface NavItem {
   id: string;
@@ -35,6 +36,18 @@ export const LedgerLayout: React.FC = () => {
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+  // Fetch unread notifications count
+  const { data: notifications = [] } = useQuery<{ id: string; readAt: string | null }[]>({
+    queryKey: ['notifications'],
+    queryFn: async () => {
+      const res = await api.get('/notifications');
+      return res.data.data || [];
+    },
+    refetchInterval: 30000,
+  });
+  const unreadCount = notifications.filter((n) => !n.readAt).length;
 
   // Global hotkeys listener
   useEffect(() => {
@@ -194,6 +207,21 @@ export const LedgerLayout: React.FC = () => {
                 <kbd className="hidden md:inline border border-neutral-400 dark:border-neutral-600 px-1 text-[10px]">⌘K</kbd>
               </button>
 
+              {/* Notifications Button */}
+              <button
+                type="button"
+                onClick={() => setIsNotificationsOpen(true)}
+                title="سجل التنبيهات والإشعارات"
+                className="relative flex items-center justify-center border border-neutral-900 dark:border-white p-1.5 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors font-mono"
+              >
+                <LedgerIcon name="bell" size={14} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-neutral-950 text-white dark:bg-white dark:text-black text-[9px] font-mono font-bold px-1 border border-white dark:border-black min-w-[16px] text-center">
+                    {unreadCount > 9 ? '+9' : unreadCount}
+                  </span>
+                )}
+              </button>
+
               {/* Theme Toggle, Help & Logout */}
               <div className="flex items-center border border-neutral-900 dark:border-white">
                 <button
@@ -339,6 +367,10 @@ export const LedgerLayout: React.FC = () => {
       <KeyboardShortcutsModal
         isOpen={isShortcutsOpen}
         onClose={() => setIsShortcutsOpen(false)}
+      />
+      <NotificationsCenter
+        isOpen={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
       />
     </div>
   );

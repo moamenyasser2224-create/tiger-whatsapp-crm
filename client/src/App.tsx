@@ -20,6 +20,7 @@ import { TemplatesPage } from './pages/TemplatesPage.js';
 import { SettingsPage } from './pages/SettingsPage.js';
 import { DeductionsPage } from './pages/DeductionsPage.js';
 import { DesignLabPage } from './pages/DesignLabPage.js';
+import { VerifyPayslipPage } from './pages/VerifyPayslipPage.js';
 
 import { ToastProvider } from './components/motion/Toast.js';
 
@@ -41,11 +42,12 @@ export const App: React.FC = () => {
             <ToastProvider>
               <BrowserRouter>
                 <Routes>
-                  {/* Public Auth Routes */}
+                  {/* Public Auth & Verification Routes */}
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
+                  <Route path="/verify-payslip" element={<VerifyPayslipPage />} />
 
                   {/* Protected App Routes with Company Ledger Layout */}
                   <Route element={<ProtectedRoute />}>

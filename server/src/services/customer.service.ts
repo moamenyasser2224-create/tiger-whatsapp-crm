@@ -14,6 +14,7 @@ const customerRepository = new CustomerRepository();
 const auditRepository = new AuditRepository();
 
 import { prisma } from '../config/prisma.js';
+import { crmService } from './crm.service.js';
 
 export interface FormattedCustomer {
   id: string;
@@ -242,6 +243,21 @@ export class CustomerService {
     }
 
     const updated = await customerRepository.update(id, userId, updatePayload);
+
+    // Automated CRM: record status change activity and commission on 'تم البيع'
+    if (updatePayload.status && updatePayload.status !== existing.status) {
+      crmService.createActivity({
+        customerId: id,
+        userId,
+        type: 'status_change',
+        content: `تم تغيير حالة القيد من "${existing.status}" إلى "${updatePayload.status}"`,
+      }).catch(() => {});
+
+      if (updatePayload.status === 'تم البيع') {
+        const dealVal = Number((data as any).dealValue || (existing as any).dealValue || 1000);
+        crmService.handleDealWon(id, userId, dealVal).catch((err) => console.error('Commission error:', err));
+      }
+    }
 
     await auditRepository.log({
       userId,

@@ -65,10 +65,21 @@ export function initSocket(httpServer: HttpServer): Server {
   });
 
   io.on('connection', (socket: AuthenticatedSocket) => {
-    // console.log(`🔌 Client connected via Socket.io: ${socket.data.user.email} (${socket.id})`);
+    // Join personal user room for direct notifications
+    const userId = socket.data.user.userId;
+    socket.join(`user:${userId}`);
+
+    // Join channel room
+    socket.on('join_channel', (channelId: string) => {
+      socket.join(`channel:${channelId}`);
+    });
+
+    socket.on('leave_channel', (channelId: string) => {
+      socket.leave(`channel:${channelId}`);
+    });
 
     socket.on('disconnect', () => {
-      // console.log(`🔌 Client disconnected: ${socket.id}`);
+      // client disconnected
     });
   });
 
@@ -92,10 +103,22 @@ export function broadcastAttendanceUpdate(data: any): void {
 }
 
 /**
- * Broadcast real-time chat message to all connected team members
+ * Broadcast real-time chat message to all connected team members or channel
  */
 export function broadcastChatMessage(message: any): void {
   if (io) {
+    if (message.channelId) {
+      io.to(`channel:${message.channelId}`).emit('channel_message', message);
+    }
     io.emit('new_message', message);
+  }
+}
+
+/**
+ * Emit real-time notification to a specific user
+ */
+export function emitNotification(userId: string, notification: any): void {
+  if (io) {
+    io.to(`user:${userId}`).emit('new_notification', notification);
   }
 }
