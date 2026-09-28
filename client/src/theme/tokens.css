@@ -160,3 +160,59 @@
   transform: translate(1px, 1px);
   box-shadow: 1px 1px 0px currentColor !important;
 }
+
+/* ==========================================================================
+   Industrial Tech & Engineering Precision Styles (Promot-inspired)
+   ========================================================================== */
+
+/* Industrial Blueprint Grid Background */
+.bg-industrial-grid {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+}
+
+.dark .bg-industrial-grid {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+}
+
+/* Industrial Precision Card */
+.industrial-card {
+  position: relative;
+  background: var(--paper-sheet);
+  border: 2px solid var(--ink-primary);
+  box-shadow: var(--shadow-solid-sm);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.industrial-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-solid-md);
+}
+
+/* Technical Specification Tag */
+.tech-spec-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border: 1.5px solid currentColor;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tech-spec-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  display: inline-block;
+}
+

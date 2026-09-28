@@ -21,6 +21,7 @@ import { SettingsPage } from './pages/SettingsPage.js';
 import { DeductionsPage } from './pages/DeductionsPage.js';
 import { DesignLabPage } from './pages/DesignLabPage.js';
 import { VerifyPayslipPage } from './pages/VerifyPayslipPage.js';
+import { CompanyPage } from './pages/CompanyPage.js';
 
 import { ToastProvider } from './components/motion/Toast.js';
 
@@ -48,6 +49,7 @@ export const App: React.FC = () => {
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
                   <Route path="/verify-payslip" element={<VerifyPayslipPage />} />
+                  <Route path="/about" element={<CompanyPage />} />
 
                   {/* Protected App Routes with Company Ledger Layout */}
                   <Route element={<ProtectedRoute />}>
@@ -57,6 +59,7 @@ export const App: React.FC = () => {
                       <Route path="/attendance" element={<AttendancePage />} />
                       <Route path="/deductions" element={<DeductionsPage />} />
                       <Route path="/chat" element={<ChatPage />} />
+                      <Route path="/company" element={<CompanyPage />} />
                       <Route path="/templates" element={<TemplatesPage />} />
                       <Route path="/design-lab" element={<DesignLabPage />} />
                       <Route path="/settings" element={<SettingsPage />} />

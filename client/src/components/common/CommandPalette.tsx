@@ -91,6 +91,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       },
     },
     {
+      id: 'action-company',
+      category: 'إجراءات سريعة',
+      title: 'استعراض ملف المنشأة والهندسة الصناعية',
+      subtitle: 'الرؤية والشركاء ومحفظة الحلول المتكاملة (Company Profile)',
+      icon: 'building',
+      action: () => {
+        navigate('/company');
+        onClose();
+      },
+    },
+    {
       id: 'action-theme',
       category: 'إجراءات سريعة',
       title: 'تبديل وضع الورقة (فاتح / حبر داكن)',

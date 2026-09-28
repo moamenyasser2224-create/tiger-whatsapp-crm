@@ -47,7 +47,12 @@ export type LedgerIconName =
   | 'sound-on'
   | 'sound-off'
   | 'help'
-  | 'more-horizontal';
+  | 'more-horizontal'
+  | 'building'
+  | 'globe'
+  | 'cpu'
+  | 'award'
+  | 'target';
 
 interface LedgerIconProps extends React.SVGProps<SVGSVGElement> {
   name: LedgerIconName;
@@ -452,6 +457,57 @@ export const LedgerIcon: React.FC<LedgerIconProps> = ({
             <circle cx="6" cy="12" r="1.5" fill="currentColor" />
             <circle cx="12" cy="12" r="1.5" fill="currentColor" />
             <circle cx="18" cy="12" r="1.5" fill="currentColor" />
+          </>
+        );
+      case 'building':
+        return (
+          <>
+            <rect x="4" y="2" width="16" height="20" />
+            <line x1="8" y1="6" x2="10" y2="6" />
+            <line x1="14" y1="6" x2="16" y2="6" />
+            <line x1="8" y1="10" x2="10" y2="10" />
+            <line x1="14" y1="10" x2="16" y2="10" />
+            <line x1="8" y1="14" x2="10" y2="14" />
+            <line x1="14" y1="14" x2="16" y2="14" />
+            <rect x="10" y="18" width="4" height="4" />
+          </>
+        );
+      case 'globe':
+        return (
+          <>
+            <circle cx="12" cy="12" r="10" />
+            <line x1="2" y1="12" x2="22" y2="12" />
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          </>
+        );
+      case 'cpu':
+        return (
+          <>
+            <rect x="4" y="4" width="16" height="16" />
+            <rect x="9" y="9" width="6" height="6" />
+            <line x1="9" y1="1" x2="9" y2="4" />
+            <line x1="15" y1="1" x2="15" y2="4" />
+            <line x1="9" y1="20" x2="9" y2="23" />
+            <line x1="15" y1="20" x2="15" y2="23" />
+            <line x1="1" y1="9" x2="4" y2="9" />
+            <line x1="1" y1="15" x2="4" y2="15" />
+            <line x1="20" y1="9" x2="23" y2="9" />
+            <line x1="20" y1="15" x2="23" y2="15" />
+          </>
+        );
+      case 'award':
+        return (
+          <>
+            <circle cx="12" cy="8" r="6" />
+            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+          </>
+        );
+      case 'target':
+        return (
+          <>
+            <circle cx="12" cy="12" r="10" />
+            <circle cx="12" cy="12" r="6" />
+            <circle cx="12" cy="12" r="2" fill="currentColor" />
           </>
         );
       default:
