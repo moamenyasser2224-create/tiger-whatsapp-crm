@@ -1,0 +1,162 @@
+/* ==========================================================================
+   دفتر الشركة (Company Ledger System) — Design Tokens & Core Rules
+   Strict Monochrome, Office Stationery, Rubber Stamps, Ledger Rules
+   ========================================================================== */
+
+:root {
+  /* Colors: Pure Black & White with Ink Levels */
+  --ink-primary: #111111;
+  --ink-secondary: #4a4a4a;
+  --ink-tertiary: #717171;
+  --ink-faint: #a3a3a3;
+  --ink-ruled-line: #d4d4d4;
+  --paper-bg: #fafafa;
+  --paper-sheet: #ffffff;
+  --paper-edge: #e5e5e5;
+  --paper-warmth: #f5f5f4;
+  --stamp-red-dark: #111111; /* 100% Monochrome strictly! */
+  
+  /* Typography */
+  --font-display: 'Reem Kufi', sans-serif;
+  --font-body: 'IBM Plex Sans Arabic', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* Strokes & Borders */
+  --rule-hairline: 1px solid var(--ink-ruled-line);
+  --rule-standard: 1.5px solid var(--ink-primary);
+  --rule-thick: 2px solid var(--ink-primary);
+  --rule-double: 4px double var(--ink-primary);
+
+  /* Elevation: Solid Offset Shadows ONLY (No blur, no glow) */
+  --shadow-solid-sm: 2px 2px 0px #111111;
+  --shadow-solid-md: 4px 4px 0px #111111;
+  --shadow-solid-lg: 6px 6px 0px #111111;
+
+  /* Radii: Sharp edges for containers, max 2px for inputs */
+  --radius-container: 0px;
+  --radius-input: 2px;
+}
+
+.dark {
+  --ink-primary: #f5f5f5;
+  --ink-secondary: #b8b8b8;
+  --ink-tertiary: #8a8a8a;
+  --ink-faint: #525252;
+  --ink-ruled-line: #262626;
+  --paper-bg: #0d0d0d;
+  --paper-sheet: #171717;
+  --paper-edge: #262626;
+  --paper-warmth: #1c1c1c;
+
+  --rule-hairline: 1px solid var(--ink-ruled-line);
+  --rule-standard: 1.5px solid var(--ink-primary);
+  --rule-thick: 2px solid var(--ink-primary);
+  --rule-double: 4px double var(--ink-primary);
+
+  --shadow-solid-sm: 2px 2px 0px #f5f5f5;
+  --shadow-solid-md: 4px 4px 0px #f5f5f5;
+  --shadow-solid-lg: 6px 6px 0px #f5f5f5;
+}
+
+/* Tabular Numbers everywhere where figures/dates are presented */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' on;
+}
+
+/* Double-ruled Ledger Line (Accounting total line) */
+.border-double-bottom {
+  border-bottom: 3px double currentColor;
+}
+
+.border-double-top {
+  border-top: 3px double currentColor;
+}
+
+/* Margin on the start edge of the notebook */
+.ledger-notebook-spine {
+  border-inline-start: 5px double var(--ink-primary);
+  padding-inline-start: 1.5rem;
+}
+
+/* Diagonal Crosshatch Background Pattern (For Modals & Backdrops) */
+.bg-diagonal-hatch {
+  background-color: rgba(0, 0, 0, 0.45);
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.15) 0,
+    rgba(255, 255, 255, 0.15) 1px,
+    transparent 0,
+    transparent 6px
+  );
+}
+
+.dark .bg-diagonal-hatch {
+  background-color: rgba(0, 0, 0, 0.75);
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.08) 0,
+    rgba(255, 255, 255, 0.08) 1px,
+    transparent 0,
+    transparent 6px
+  );
+}
+
+/* Subtle SVG Paper Texture (Toggleable) */
+.paper-texture {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.035'/%3E%3C/svg%3E");
+}
+
+/* Rubber Stamp Styling */
+.rubber-stamp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid currentColor;
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 10px;
+  line-height: 1.2;
+  filter: url('#stampDistressFilter');
+  user-select: none;
+}
+
+/* Punch Hole for Attendance Card */
+.punch-hole {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--paper-bg);
+  border: 1.5px solid var(--ink-primary);
+  box-shadow: inset 1px 1px 2px rgba(0,0,0,0.4);
+}
+
+/* Perforated receipt edge effect */
+.perforated-edge-b {
+  position: relative;
+}
+.perforated-edge-b::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background-image: radial-gradient(circle at 6px 0, transparent 4px, var(--paper-sheet) 4.5px);
+  background-size: 12px 6px;
+  background-repeat: repeat-x;
+}
+
+/* Index Card Cutout File Tab (clip-path) */
+.index-card-tab {
+  clip-path: polygon(0% 100%, 0% 0%, 80% 0%, 100% 100%);
+}
+
+/* Mechanical Depress on Button Click */
+.btn-mechanical:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px currentColor !important;
+}

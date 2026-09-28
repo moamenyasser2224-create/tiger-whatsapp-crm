@@ -3,32 +3,20 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
 import { useSocket } from '../contexts/SocketContext.js';
 import { useAuth } from '../contexts/AuthContext.js';
-import { MotionPage } from '../components/motion/MotionPage.js';
-import { FlipClock } from '../components/motion/FlipClock.js';
-import { SpotlightCard } from '../components/motion/SpotlightCard.js';
-import { CountUp } from '../components/motion/CountUp.js';
 import { useToast } from '../components/motion/Toast.js';
 import { FaceBiometricsModal } from '../components/FaceBiometricsModal.js';
-import type { Attendance, LeaveRequest, AttendanceCorrection } from '../types/index.js';
 import {
-  Clock,
-  LogOut,
-  LogIn,
-  AlertCircle,
-  Users,
-  Calendar,
-  Briefcase,
-  ScanFace,
-  CheckCircle2,
-  XCircle,
-  FileText,
-  CalendarDays,
-  Play,
-  RotateCcw,
-  Sparkles,
-} from 'lucide-react';
+  LedgerButton,
+  LedgerInput,
+  LedgerTable,
+  LedgerModal,
+  PunchedCard,
+} from '../components/common/LedgerComponents.js';
+import { RubberStamp } from '../components/common/RubberStamp.js';
+import { OdometerClock } from '../components/common/OdometerClock.js';
+import { LedgerIcon } from '../components/icons/LedgerIcons.js';
+import type { Attendance, LeaveRequest, AttendanceCorrection } from '../types/index.js';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from 'date-fns';
-import { ar } from 'date-fns/locale';
 
 export const AttendancePage: React.FC = () => {
   const { user } = useAuth();
@@ -36,9 +24,10 @@ export const AttendancePage: React.FC = () => {
   const { addToast } = useToast();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<'attendance' | 'requests' | 'admin'>('attendance');
+  const [activeTab, setActiveTab] = useState<'card' | 'monthly' | 'requests' | 'admin'>('card');
   const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
   const [isFaceModalOpen, setIsFaceModalOpen] = useState(false);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(false);
 
   // Leave Modal State
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
@@ -72,7 +61,7 @@ export const AttendancePage: React.FC = () => {
     },
   });
 
-  // 3. My monthly attendance records (for calendar heatmap)
+  // 3. My monthly attendance records (for calendar ledger)
   const { data: monthlyRecords = [] } = useQuery<Attendance[]>({
     queryKey: ['attendance', 'monthly', selectedMonth],
     queryFn: async () => {
@@ -111,6 +100,27 @@ export const AttendancePage: React.FC = () => {
     };
   }, [socket, queryClient]);
 
+  // Subtle punch sound synthesis using Web Audio API (No external sound file needed)
+  const playPunchSound = () => {
+    if (!isSoundEnabled) return;
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(320, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.08);
+    } catch {
+      // Audio context disabled or unavailable
+    }
+  };
+
   // Check-In Mutation
   const checkInMutation = useMutation({
     mutationFn: async () => {
@@ -118,7 +128,8 @@ export const AttendancePage: React.FC = () => {
       return res.data;
     },
     onSuccess: (data) => {
-      addToast(data.message || 'تم تسجيل حضورك بنجاح!', 'success');
+      playPunchSound();
+      addToast(data.message || 'تم تسجيل الحضور وتثقيب البطاقة', 'success');
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
     },
     onError: (err: any) => {
@@ -133,7 +144,8 @@ export const AttendancePage: React.FC = () => {
       return res.data;
     },
     onSuccess: (data) => {
-      addToast(data.message || 'تم تسجيل انصرافك بنجاح!', 'success');
+      playPunchSound();
+      addToast(data.message || 'تم تسجيل الانصراف وتثقيب البطاقة', 'success');
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
     },
     onError: (err: any) => {
@@ -153,7 +165,7 @@ export const AttendancePage: React.FC = () => {
       return res.data;
     },
     onSuccess: () => {
-      addToast('تم تقديم طلب الإجازة بنجاح وهو قيد المراجعة', 'success');
+      addToast('تم تقديم طلب الإجازة وقيده في السجلات', 'success');
       setIsLeaveModalOpen(false);
       setLeaveReason('');
       queryClient.invalidateQueries({ queryKey: ['attendance', 'leaves'] });
@@ -175,7 +187,7 @@ export const AttendancePage: React.FC = () => {
       return res.data;
     },
     onSuccess: () => {
-      addToast('تم إرسال طلب تصحيح البصمة بنجاح', 'success');
+      addToast('تم رفع طلب تصحيح البصمة للمراجعة الإدارية', 'success');
       setIsCorrectionModalOpen(false);
       setCorrectionReason('');
       queryClient.invalidateQueries({ queryKey: ['attendance', 'corrections'] });
@@ -224,7 +236,7 @@ export const AttendancePage: React.FC = () => {
       return res.data;
     },
     onSuccess: (data) => {
-      addToast(`اكتمل فحص الغياب! تم تسجيل ${data.data?.absencesRecorded || 0} غياب`, 'success');
+      addToast(`اكتمل فحص الغياب: رُصد ${data.data?.absencesRecorded || 0} غياب`, 'success');
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
     },
     onError: (err: any) => {
@@ -236,14 +248,12 @@ export const AttendancePage: React.FC = () => {
   const hasCheckedOut = Boolean(myStatus?.checkOut);
 
   const formatTime = (isoString?: string | null) => {
-    if (!isoString) return '—';
+    if (!isoString) return '';
     try {
-      return new Date(isoString).toLocaleTimeString('ar-EG', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
+      const d = new Date(isoString);
+      return d.toTimeString().split(' ')[0];
     } catch {
-      return '—';
+      return '';
     }
   };
 
@@ -254,416 +264,215 @@ export const AttendancePage: React.FC = () => {
     end: endOfMonth(currentMonthDate),
   });
 
-  // Metrics summary
-  const totalDaysPresent = monthlyRecords.filter((r) => r.checkIn).length;
-  const totalWorkedMinutes = monthlyRecords.reduce((sum: number, r: any) => sum + (r.workedMinutes || 0), 0);
-  const totalLateMinutes = monthlyRecords.reduce((sum: number, r: any) => sum + (r.lateMinutes || 0), 0);
-
   return (
-    <MotionPage className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-200 pb-6 dark:border-neutral-800">
+    <div className="space-y-8">
+      {/* Page Header (ترويسة السجل) */}
+      <div className="border-b-2 border-neutral-900 dark:border-white pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-            <span>العمليات والدوام</span>
-            <span>/</span>
-            <span>الحضور والانصراف</span>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-mono font-bold uppercase tracking-widest px-1.5 py-0.5 border border-neutral-900 dark:border-white">
+              دفتر الحضور والانصراف الرسمي
+            </span>
+            <span className="text-xs font-mono text-neutral-500">سجل الدوام #ATT-2026</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white mt-1 flex items-center gap-3">
-            <Clock className="h-8 w-8 text-neutral-900 dark:text-white" />
-            <span>نظام الحضور والانصراف المتقدم</span>
-          </h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1 max-w-2xl">
-            ساعة رقمية حية، تقويم الحضور الشهري، تقديم الإجازات وتصحيح البصمة، مع كشف الحضور المباشر للفريق.
+          <h2 className="text-2xl sm:text-3xl font-display font-bold text-neutral-950 dark:text-white">
+            نظام الحضور والانصراف والورديات
+          </h2>
+          <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+            كارت دوام مثقوب، توثيق فوري بالبصمة البيومترية، وإدارة شاملة لطلبات الإجازات وتصحيح القيود.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {/* Live Flip Clock */}
-          <div className="rounded-2xl border border-neutral-300 bg-white p-2 dark:border-neutral-800 dark:bg-neutral-900 shadow-xs">
-            <FlipClock />
-          </div>
+          {/* Sound Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsSoundEnabled(!isSoundEnabled)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono font-bold border-2 border-neutral-900 dark:border-white transition-colors ${
+              isSoundEnabled ? 'bg-neutral-900 text-white dark:bg-white dark:text-black' : 'bg-white dark:bg-neutral-900'
+            }`}
+            title="تشغيل/إيقاف صوت تثقيب الكارت الميكانيكي"
+          >
+            <LedgerIcon name={isSoundEnabled ? 'sound-on' : 'sound-off'} size={14} />
+            <span>صوت التثقيب: {isSoundEnabled ? 'مفعل' : 'مطفأ'}</span>
+          </button>
 
-          {/* Tab Switcher */}
-          <div className="flex rounded-xl border border-neutral-300 bg-neutral-100 p-1 dark:border-neutral-700 dark:bg-neutral-900">
+          {/* View Tab Switchers */}
+          <div className="flex border-2 border-neutral-900 dark:border-white font-mono text-xs">
             <button
-              onClick={() => setActiveTab('attendance')}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                activeTab === 'attendance'
-                  ? 'bg-white text-neutral-900 shadow-xs dark:bg-neutral-800 dark:text-white'
-                  : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+              onClick={() => setActiveTab('card')}
+              className={`px-3 py-1 font-bold ${
+                activeTab === 'card'
+                  ? 'bg-neutral-900 text-white dark:bg-white dark:text-black'
+                  : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
               }`}
             >
-              تسجيل الحضور
+              كارت الدوام
+            </button>
+            <button
+              onClick={() => setActiveTab('monthly')}
+              className={`px-3 py-1 font-bold border-r border-neutral-900 dark:border-white ${
+                activeTab === 'monthly'
+                  ? 'bg-neutral-900 text-white dark:bg-white dark:text-black'
+                  : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
+              }`}
+            >
+              سجل الشهر
             </button>
             <button
               onClick={() => setActiveTab('requests')}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+              className={`px-3 py-1 font-bold border-r border-neutral-900 dark:border-white ${
                 activeTab === 'requests'
-                  ? 'bg-white text-neutral-900 shadow-xs dark:bg-neutral-800 dark:text-white'
-                  : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                  ? 'bg-neutral-900 text-white dark:bg-white dark:text-black'
+                  : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
               }`}
             >
-              طلباتي ({leaves.length + corrections.length})
+              الطلبات ({leaves.length + corrections.length})
             </button>
             {user?.role === 'admin' && (
               <button
                 onClick={() => setActiveTab('admin')}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                className={`px-3 py-1 font-bold border-r border-neutral-900 dark:border-white ${
                   activeTab === 'admin'
-                    ? 'bg-neutral-900 text-white shadow-xs dark:bg-white dark:text-neutral-900'
-                    : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                    ? 'bg-neutral-900 text-white dark:bg-white dark:text-black'
+                    : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
                 }`}
               >
-                لوحة المشرف
+                رقابة المشرف
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* TAB 1: ATTENDANCE & HEATMAP */}
-      {activeTab === 'attendance' && (
-        <div className="space-y-8">
-          {/* Main Action Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Quick Actions Card */}
-            <div className="lg:col-span-1 rounded-2xl border border-neutral-300 bg-white p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900 flex flex-col justify-between">
-              <div>
-                <h2 className="text-base font-bold text-neutral-900 dark:text-white mb-2 flex items-center gap-2">
-                  <Briefcase className="h-5 w-5" />
-                  <span>إجراءات الدوام</span>
-                </h2>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-6">
-                  سجل حضورك اليومي بنقرة زر أو عبر التعرف على الوجه، وقدم طلبات الإجازات والتصحيح.
-                </p>
+      {/* VIEW 1: PUNCH CARD & TEAM LEDGER */}
+      {activeTab === 'card' && (
+        <div className="space-y-10">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            {/* The Punched Card */}
+            <div className="lg:col-span-1 space-y-4">
+              <PunchedCard
+                employeeName={user?.name || 'الموظف'}
+                employeeId={user?.id || 'EMP-001'}
+                date={format(new Date(), 'yyyy-MM-dd')}
+                shiftHours="09:00 - 17:00"
+                punches={[
+                  {
+                    type: 'حضور',
+                    time: formatTime(myStatus?.checkIn),
+                    isPunched: hasCheckedIn,
+                    statusBadge: (myStatus as any)?.lateMinutes && (myStatus as any).lateMinutes > 0 ? `متأخر ${(myStatus as any).lateMinutes}د` : hasCheckedIn ? 'في الموعد' : undefined,
+                  },
+                  {
+                    type: 'انصراف',
+                    time: formatTime(myStatus?.checkOut),
+                    isPunched: hasCheckedOut,
+                    statusBadge: hasCheckedOut ? 'تم الانصراف' : undefined,
+                  },
+                ]}
+                onPunchClick={() => {
+                  if (!hasCheckedIn) {
+                    checkInMutation.mutate();
+                  } else if (!hasCheckedOut) {
+                    checkOutMutation.mutate();
+                  }
+                }}
+                isPunching={checkInMutation.isPending || checkOutMutation.isPending || isMyStatusLoading}
+              />
 
-                <div className="space-y-3">
-                  {/* Check-In Button */}
-                  <button
-                    onClick={() => checkInMutation.mutate()}
-                    disabled={hasCheckedIn || checkInMutation.isPending || isMyStatusLoading}
-                    className={`w-full flex items-center justify-center gap-3 rounded-xl py-3.5 px-4 text-sm font-bold transition-all ${
-                      hasCheckedIn
-                        ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed border border-neutral-300 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-500'
-                        : 'bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white'
-                    }`}
-                  >
-                    <LogIn className="h-5 w-5" />
-                    <span>
-                      {checkInMutation.isPending
-                        ? 'جاري التسجيل...'
-                        : hasCheckedIn
-                        ? 'تم تسجيل الحضور اليوم'
-                        : 'تسجيل حضور الآن'}
-                    </span>
-                  </button>
-
-                  {/* Check-Out Button */}
-                  <button
-                    onClick={() => checkOutMutation.mutate()}
-                    disabled={!hasCheckedIn || hasCheckedOut || checkOutMutation.isPending || isMyStatusLoading}
-                    className={`w-full flex items-center justify-center gap-3 rounded-xl py-3.5 px-4 text-sm font-bold transition-all ${
-                      !hasCheckedIn || hasCheckedOut
-                        ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed border border-neutral-300 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-500'
-                        : 'bg-white text-neutral-900 border-2 border-neutral-900 hover:bg-neutral-100 dark:bg-neutral-900 dark:text-white dark:border-white dark:hover:bg-neutral-800'
-                    }`}
-                  >
-                    <LogOut className="h-5 w-5" />
-                    <span>
-                      {checkOutMutation.isPending
-                        ? 'جاري التسجيل...'
-                        : hasCheckedOut
-                        ? 'تم تسجيل الانصراف اليوم'
-                        : 'تسجيل انصراف الآن'}
-                    </span>
-                  </button>
-
-                  {/* Face Biometrics Modal Button */}
-                  <button
-                    type="button"
-                    onClick={() => setIsFaceModalOpen(true)}
-                    className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 px-4 text-xs font-black uppercase tracking-wider border-2 border-dashed border-neutral-900 dark:border-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-                  >
-                    <ScanFace className="h-4 w-4" />
-                    <span>تسجيل سريع بالوجه (Face Kiosk)</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Sub Actions */}
-              <div className="mt-6 pt-4 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between gap-2">
-                <button
-                  onClick={() => setIsLeaveModalOpen(true)}
-                  className="flex-1 rounded-xl border border-neutral-300 px-3 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 text-center"
+              {/* Action Buttons: Face Scan, Leave, Correction */}
+              <div className="flex flex-col gap-2 max-w-sm font-mono text-xs">
+                <LedgerButton
+                  variant="secondary"
+                  icon="camera"
+                  onClick={() => setIsFaceModalOpen(true)}
+                  className="w-full text-center"
                 >
-                  طلب إجازة
-                </button>
-                <button
-                  onClick={() => setIsCorrectionModalOpen(true)}
-                  className="flex-1 rounded-xl border border-neutral-300 px-3 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 text-center"
-                >
-                  تصحيح بصمة
-                </button>
-              </div>
-            </div>
+                  بصمة سريعة بالوجه (Face Kiosk)
+                </LedgerButton>
 
-            {/* My Status Details Card */}
-            <div className="lg:col-span-2 rounded-2xl border border-neutral-300 bg-white p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                    <span>بطاقة حالتي اليوم</span>
-                    <span className="text-xs font-normal text-neutral-500">({user?.name})</span>
-                  </h2>
-
-                  {/* Status Badge */}
-                  {hasCheckedOut ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-400 bg-neutral-100 px-3 py-1 text-xs font-bold text-neutral-700 dark:bg-neutral-800 dark:border-neutral-600 dark:text-neutral-300">
-                      <span className="h-2 w-2 rounded-full bg-neutral-400" />
-                      مغادر (تم الانصراف)
-                    </span>
-                  ) : hasCheckedIn ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-neutral-900 bg-black px-3 py-1 text-xs font-black text-white dark:border-white dark:bg-white dark:text-black">
-                      <span className="h-2 w-2 rounded-full bg-white dark:bg-black animate-pulse" />
-                      متواجد في الدوام
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-neutral-500 bg-transparent px-3 py-1 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
-                      <span className="h-2 w-2 rounded-full bg-neutral-500" />
-                      لم يحضر بعد
-                    </span>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
-                  {/* Check-In */}
-                  <div className="rounded-xl border border-neutral-300 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/40">
-                    <div className="text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1 flex items-center gap-1.5">
-                      <LogIn className="h-4 w-4" />
-                      <span>وقت الحضور المسجل</span>
-                    </div>
-                    <div className="font-mono text-2xl font-black text-neutral-900 dark:text-white">
-                      {formatTime(myStatus?.checkIn)}
-                    </div>
-                  </div>
-
-                  {/* Check-Out */}
-                  <div className="rounded-xl border border-neutral-300 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/40">
-                    <div className="text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1 flex items-center gap-1.5">
-                      <LogOut className="h-4 w-4" />
-                      <span>وقت الانصراف المسجل</span>
-                    </div>
-                    <div className="font-mono text-2xl font-black text-neutral-900 dark:text-white">
-                      {formatTime(myStatus?.checkOut)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Metrics Breakdown */}
-                <div className="grid grid-cols-3 gap-3 pt-2">
-                  <div className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-800 text-center">
-                    <div className="text-[11px] text-neutral-500 font-bold">ساعات العمل اليوم</div>
-                    <div className="font-mono font-black text-lg text-neutral-900 dark:text-white">
-                      {myStatus ? Math.floor(((myStatus as any).workedMinutes || 0) / 60) : 0} س
-                    </div>
-                  </div>
-                  <div className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-800 text-center">
-                    <div className="text-[11px] text-neutral-500 font-bold">التأخير المسجل</div>
-                    <div className="font-mono font-black text-lg text-neutral-900 dark:text-white">
-                      {myStatus ? (myStatus as any).lateMinutes || 0 : 0} د
-                    </div>
-                  </div>
-                  <div className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-800 text-center">
-                    <div className="text-[11px] text-neutral-500 font-bold">الانصراف المبكر</div>
-                    <div className="font-mono font-black text-lg text-neutral-900 dark:text-white">
-                      {myStatus ? (myStatus as any).earlyLeaveMinutes || 0 : 0} د
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
-                <span>تاريخ اليوم: {format(new Date(), 'yyyy-MM-dd')}</span>
-                <span>نظام التوثيق: IP + بصمة بيومترية</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Monthly Heatmap Calendar */}
-          <div className="rounded-2xl border border-neutral-300 bg-white p-6 shadow-xs dark:border-neutral-800 dark:bg-neutral-900 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                  <CalendarDays className="h-5 w-5" />
-                  <span>تقويم الحضور الشهري (Heatmap) لشهر {selectedMonth}</span>
-                </h3>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                  تدرج لوني أبيض وأسود يعبر عن التزام الحضور، الغياب، والتأخيرات على مدار الشهر.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <input
-                  type="month"
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="rounded-xl border border-neutral-300 bg-transparent px-3 py-1.5 text-xs font-bold text-neutral-900 dark:border-neutral-700 dark:text-white"
-                />
-
-                <div className="flex items-center gap-2 text-xs font-bold text-neutral-600 dark:text-neutral-400">
-                  <span className="flex items-center gap-1">
-                    <span className="h-3 w-3 rounded-xs bg-black dark:bg-white" /> حضور
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="h-3 w-3 rounded-xs bg-neutral-400" /> تأخير
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="h-3 w-3 rounded-xs border border-dashed border-neutral-400" /> غياب
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Heatmap Grid */}
-            <div className="grid grid-cols-7 gap-2 pt-2">
-              {['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'].map((d) => (
-                <div key={d} className="text-center text-[11px] font-bold text-neutral-400 pb-1">
-                  {d}
-                </div>
-              ))}
-
-              {daysInMonth.map((dayDate) => {
-                const dateStr = format(dayDate, 'yyyy-MM-dd');
-                const rec = monthlyRecords.find((r) => r.date === dateStr);
-                const isPresent = Boolean(rec?.checkIn);
-                const isLate = Boolean((rec as any)?.lateMinutes && (rec as any).lateMinutes > 0);
-                const isAbsent = (rec as any)?.status === 'absent';
-                const isToday = isSameDay(dayDate, new Date());
-
-                return (
-                  <div
-                    key={dateStr}
-                    className={`h-16 rounded-xl p-2 border flex flex-col justify-between transition-all ${
-                      isToday ? 'ring-2 ring-neutral-900 dark:ring-white' : ''
-                    } ${
-                      isPresent && !isLate
-                        ? 'border-neutral-900 bg-black text-white dark:border-white dark:bg-white dark:text-black font-bold'
-                        : isLate
-                        ? 'border-neutral-500 bg-neutral-200 text-neutral-900 dark:bg-neutral-800 dark:text-white font-bold'
-                        : isAbsent
-                        ? 'border-dashed border-neutral-400 bg-neutral-50 text-neutral-400 dark:bg-neutral-950/40'
-                        : 'border-neutral-200 bg-white text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900/60'
-                    }`}
+                <div className="grid grid-cols-2 gap-2">
+                  <LedgerButton
+                    variant="ghost"
+                    icon="calendar"
+                    size="sm"
+                    onClick={() => setIsLeaveModalOpen(true)}
                   >
-                    <div className="flex items-center justify-between text-xs">
-                      <span>{format(dayDate, 'd')}</span>
-                      {isLate && <span className="text-[10px] font-mono">{(rec as any).lateMinutes}د</span>}
-                    </div>
-
-                    <div className="text-[10px] truncate">
-                      {isPresent ? (isLate ? 'متأخر' : 'حاضر') : isAbsent ? 'غائب' : '—'}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Team Live Attendance Table */}
-          <div className="rounded-2xl border border-neutral-300 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
-            <div className="p-6 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-black">
-                  <Users className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-neutral-900 dark:text-white">
-                    حالة تواجد أعضاء الفريق اليوم (مباشر)
-                  </h2>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                    تحديث لحظي عبر WebSocket يوضح من سجّل حضوره وانصرافه اليوم من كل الفريق.
-                  </p>
+                    طلب إجازة
+                  </LedgerButton>
+                  <LedgerButton
+                    variant="ghost"
+                    icon="edit"
+                    size="sm"
+                    onClick={() => setIsCorrectionModalOpen(true)}
+                  >
+                    تصحيح بصمة
+                  </LedgerButton>
                 </div>
               </div>
-
-              <span className="rounded-full border border-neutral-900 bg-neutral-100 dark:border-white dark:bg-neutral-800 text-neutral-900 dark:text-white font-bold px-3 py-1 text-xs">
-                {teamAttendance.length} مسجلين اليوم
-              </span>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-right text-sm">
-                <thead className="bg-neutral-50 text-xs font-semibold uppercase text-neutral-500 dark:bg-neutral-800/50 dark:text-neutral-400 border-b border-neutral-200 dark:border-neutral-700">
-                  <tr>
-                    <th className="px-6 py-4">اسم الموظف</th>
-                    <th className="px-6 py-4">الدور</th>
-                    <th className="px-6 py-4">وقت الحضور</th>
-                    <th className="px-6 py-4">وقت الانصراف</th>
-                    <th className="px-6 py-4">الحالة الحالية</th>
+            {/* Today's Presence Ledger Table */}
+            <div className="lg:col-span-2 space-y-3">
+              <div className="flex items-center justify-between border-b border-neutral-300 dark:border-neutral-700 pb-2">
+                <div className="flex items-center gap-2">
+                  <LedgerIcon name="users" size={16} />
+                  <h3 className="font-display font-bold text-base text-neutral-950 dark:text-white">
+                    دفتر حضور الفريق اليوم (بث لحظي)
+                  </h3>
+                </div>
+                <span className="text-xs font-mono font-bold border border-neutral-900 dark:border-white px-2 py-0.5">
+                  {teamAttendance.length} مسجلين
+                </span>
+              </div>
+
+              <LedgerTable>
+                <thead>
+                  <tr className="border-b-2 border-neutral-900 dark:border-white font-bold bg-neutral-100 dark:bg-neutral-900">
+                    <th className="p-3">الموظف</th>
+                    <th className="p-3">وقت الحضور</th>
+                    <th className="p-3">وقت الانصراف</th>
+                    <th className="p-3">دقائق التأخير</th>
+                    <th className="p-3">ختم الحالة</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 font-mono">
                   {teamAttendance.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-12 text-center text-neutral-400">
-                        لم يقم أي موظف بتسجيل الحضور اليوم بعد.
+                      <td colSpan={5} className="p-8 text-center text-xs text-neutral-500 font-ledger">
+                        لم يقم أي موظف بتثقيب كارت الحضور اليوم بعد.
                       </td>
                     </tr>
                   ) : (
                     teamAttendance.map((record) => {
                       const isPresent = record.checkIn && !record.checkOut;
                       const isDeparted = Boolean(record.checkOut);
+                      const isLate = Boolean((record as any).lateMinutes && (record as any).lateMinutes > 0);
 
                       return (
-                        <tr key={record.id} className="hover:bg-neutral-50/70 dark:hover:bg-neutral-800/50 transition-colors">
-                          <td className="px-6 py-4 font-bold text-neutral-900 dark:text-white flex items-center gap-2.5">
-                            {record.user?.photoUrl ? (
-                              <img
-                                src={record.user.photoUrl}
-                                alt={record.user.name}
-                                className="h-8 w-8 rounded-full object-cover border border-neutral-300 dark:border-neutral-600 grayscale shrink-0"
-                              />
+                        <tr key={record.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-900/50">
+                          <td className="p-3 font-ledger font-bold text-neutral-900 dark:text-white">
+                            <div>{record.user?.name || 'موظف'}</div>
+                            <div className="text-[10px] font-mono text-neutral-500">{record.user?.email}</div>
+                          </td>
+                          <td className="p-3 font-mono font-bold tabular-nums">
+                            {formatTime(record.checkIn) || '—'}
+                          </td>
+                          <td className="p-3 font-mono tabular-nums text-neutral-600 dark:text-neutral-400">
+                            {formatTime(record.checkOut) || '—'}
+                          </td>
+                          <td className="p-3 font-mono tabular-nums">
+                            {isLate ? `${(record as any).lateMinutes} دقيقة` : '—'}
+                          </td>
+                          <td className="p-3">
+                            {isDeparted ? (
+                              <RubberStamp label="انصرف" recordId={record.id} />
+                            ) : isLate ? (
+                              <RubberStamp label={`متأخر ${(record as any).lateMinutes}د`} recordId={record.id} />
+                            ) : isPresent ? (
+                              <RubberStamp label="حاضر" recordId={record.id} subtext="على رأس العمل" />
                             ) : (
-                              <div className="h-8 w-8 rounded-full border border-neutral-300 dark:border-neutral-600 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white flex items-center justify-center font-bold text-xs shrink-0">
-                                {record.user?.name ? record.user.name.charAt(0) : '؟'}
-                              </div>
-                            )}
-                            <div>
-                              <div>{record.user?.name || 'موظف'}</div>
-                              <div className="text-xs text-neutral-400 font-normal">{record.user?.email}</div>
-                            </div>
-                          </td>
-
-                          <td className="px-6 py-4 text-neutral-600 dark:text-neutral-300">
-                            <span className="rounded-md border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 px-2 py-1 text-xs font-medium">
-                              {record.user?.role === 'admin' ? 'مدير' : 'موظف'}
-                            </span>
-                          </td>
-
-                          <td className="px-6 py-4 font-mono font-bold text-neutral-900 dark:text-neutral-100">
-                            {formatTime(record.checkIn)}
-                          </td>
-
-                          <td className="px-6 py-4 font-mono text-neutral-600 dark:text-neutral-400">
-                            {formatTime(record.checkOut)}
-                          </td>
-
-                          <td className="px-6 py-4">
-                            {isPresent && (
-                              <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-900 bg-black text-white dark:border-white dark:bg-white dark:text-black px-2.5 py-1 text-xs font-bold">
-                                <span className="h-2 w-2 rounded-full bg-white dark:bg-black animate-pulse" />
-                                حاضر الآن
-                              </span>
-                            )}
-                            {isDeparted && (
-                              <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-400 bg-neutral-100 px-2.5 py-1 text-xs font-bold text-neutral-600 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300">
-                                <span className="h-2 w-2 rounded-full bg-neutral-400" />
-                                انصرف
-                              </span>
-                            )}
-                            {!isPresent && !isDeparted && (
-                              <span className="text-xs text-neutral-400">غير محدد</span>
+                              <span className="text-xs text-neutral-400">—</span>
                             )}
                           </td>
                         </tr>
@@ -671,425 +480,367 @@ export const AttendancePage: React.FC = () => {
                     })
                   )}
                 </tbody>
-              </table>
+              </LedgerTable>
             </div>
           </div>
         </div>
       )}
 
-      {/* TAB 2: MY REQUESTS (Leaves + Corrections) */}
+      {/* VIEW 2: MONTHLY ATTENDANCE LEDGER */}
+      {activeTab === 'monthly' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-neutral-300 dark:border-neutral-700 pb-2">
+            <div className="flex items-center gap-2">
+              <LedgerIcon name="calendar" size={16} />
+              <h3 className="font-display font-bold text-base text-neutral-950 dark:text-white">
+                سجل دوامي لشهر {selectedMonth}
+              </h3>
+            </div>
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="bg-white dark:bg-neutral-900 border-2 border-neutral-900 dark:border-white px-2.5 py-1 text-xs font-mono font-bold"
+            />
+          </div>
+
+          <LedgerTable>
+            <thead>
+              <tr className="border-b-2 border-neutral-900 dark:border-white font-bold bg-neutral-100 dark:bg-neutral-900">
+                <th className="p-3">التاريخ</th>
+                <th className="p-3">وقت الحضور</th>
+                <th className="p-3">وقت الانصراف</th>
+                <th className="p-3">ساعات العمل</th>
+                <th className="p-3">التأخير المسجل</th>
+                <th className="p-3">ختم الحالة</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 font-mono">
+              {daysInMonth.map((dayDate) => {
+                const dateStr = format(dayDate, 'yyyy-MM-dd');
+                const rec = monthlyRecords.find((r) => r.date === dateStr);
+                const isPresent = Boolean(rec?.checkIn);
+                const isLate = Boolean((rec as any)?.lateMinutes && (rec as any).lateMinutes > 0);
+                const isAbsent = (rec as any)?.status === 'absent_unexcused' || (rec as any)?.status === 'absent';
+                const isExcused = (rec as any)?.status === 'absent_excused';
+                const isToday = isSameDay(dayDate, new Date());
+
+                return (
+                  <tr
+                    key={dateStr}
+                    className={`hover:bg-neutral-50 dark:hover:bg-neutral-900/50 ${
+                      isToday ? 'bg-neutral-100 dark:bg-neutral-900 font-bold' : ''
+                    }`}
+                  >
+                    <td className="p-3 tabular-nums">{dateStr}</td>
+                    <td className="p-3 tabular-nums">{formatTime(rec?.checkIn) || '—'}</td>
+                    <td className="p-3 tabular-nums">{formatTime(rec?.checkOut) || '—'}</td>
+                    <td className="p-3 tabular-nums">
+                      {(rec as any)?.workedMinutes ? `${Math.floor((rec as any).workedMinutes / 60)} س ${(rec as any).workedMinutes % 60} د` : '—'}
+                    </td>
+                    <td className="p-3 tabular-nums">
+                      {isLate ? `${(rec as any).lateMinutes} دقيقة` : '—'}
+                    </td>
+                    <td className="p-3">
+                      {isPresent && !isLate ? (
+                        <RubberStamp label="حاضر" recordId={dateStr} />
+                      ) : isLate ? (
+                        <RubberStamp label={`متأخر ${(rec as any).lateMinutes}د`} recordId={dateStr} />
+                      ) : isAbsent ? (
+                        <RubberStamp label="غياب" recordId={dateStr} subtext="غير مبرر" />
+                      ) : isExcused ? (
+                        <RubberStamp label="إجازة" recordId={dateStr} subtext="معتمدة" />
+                      ) : (
+                        <span className="text-xs text-neutral-400">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </LedgerTable>
+        </div>
+      )}
+
+      {/* VIEW 3: REQUESTS (Leaves & Corrections) */}
       {activeTab === 'requests' && (
         <div className="space-y-8">
-          {/* Leaves Table */}
-          <div className="rounded-2xl border border-neutral-300 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
-            <div className="p-5 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  <span>طلبات الإجازات ({leaves.length})</span>
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsLeaveModalOpen(true)}
-                className="rounded-xl bg-neutral-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-neutral-800 dark:bg-white dark:text-black"
-              >
-                تقديم طلب إجازة جديد
-              </button>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-neutral-300 dark:border-neutral-700 pb-2">
+              <h3 className="font-display font-bold text-base">سجل طلبات الإجازات ({leaves.length})</h3>
+              <LedgerButton size="sm" icon="plus" onClick={() => setIsLeaveModalOpen(true)}>
+                تقديم طلب إجازة
+              </LedgerButton>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-right text-sm">
-                <thead className="bg-neutral-50 text-xs font-bold uppercase text-neutral-500 dark:bg-neutral-800/50 dark:text-neutral-400 border-b border-neutral-200 dark:border-neutral-700">
+            <LedgerTable>
+              <thead>
+                <tr className="border-b-2 border-neutral-900 dark:border-white font-bold bg-neutral-100 dark:bg-neutral-900">
+                  <th className="p-3">النوع</th>
+                  <th className="p-3">من تاريخ</th>
+                  <th className="p-3">إلى تاريخ</th>
+                  <th className="p-3">السبب والبيان</th>
+                  <th className="p-3">الحالة الرسمية</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 font-mono">
+                {leaves.length === 0 ? (
                   <tr>
-                    <th className="px-5 py-3.5">النوع</th>
-                    <th className="px-5 py-3.5">من تاريخ</th>
-                    <th className="px-5 py-3.5">إلى تاريخ</th>
-                    <th className="px-5 py-3.5">السبب</th>
-                    <th className="px-5 py-3.5">الحالة</th>
+                    <td colSpan={5} className="p-6 text-center text-xs text-neutral-500 font-ledger">
+                      لا توجد طلبات إجازة مسجلة.
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                  {leaves.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="py-12 text-center text-neutral-400">
-                        لم تقم بتقديم أي طلبات إجازة حتى الآن.
+                ) : (
+                  leaves.map((l) => (
+                    <tr key={l.id}>
+                      <td className="p-3 font-ledger font-bold">
+                        {l.type === 'annual' ? 'إجازة سنوية' : l.type === 'sick' ? 'إجازة مرضية' : l.type === 'unpaid' ? 'إجازة غير مدفوعة' : 'إجازة اضطرارية'}
+                      </td>
+                      <td className="p-3 tabular-nums">{l.startDate}</td>
+                      <td className="p-3 tabular-nums">{l.endDate}</td>
+                      <td className="p-3 font-ledger text-xs">{l.reason || '—'}</td>
+                      <td className="p-3">
+                        <RubberStamp
+                          label={l.status === 'approved' ? 'مقبول' : l.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}
+                          recordId={l.id}
+                        />
                       </td>
                     </tr>
-                  ) : (
-                    leaves.map((leave) => (
-                      <tr key={leave.id}>
-                        <td className="px-5 py-4 font-bold text-neutral-900 dark:text-white">
-                          {leave.type === 'annual'
-                            ? 'إجازة سنوية'
-                            : leave.type === 'sick'
-                            ? 'إجازة مرضية'
-                            : leave.type === 'unpaid'
-                            ? 'إجازة غير مدفوعة'
-                            : 'إجازة اضطرارية'}
-                        </td>
-                        <td className="px-5 py-4 font-mono text-xs">{leave.startDate}</td>
-                        <td className="px-5 py-4 font-mono text-xs">{leave.endDate}</td>
-                        <td className="px-5 py-4 text-xs text-neutral-600 dark:text-neutral-300">{leave.reason || '—'}</td>
-                        <td className="px-5 py-4">
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold border ${
-                              leave.status === 'approved'
-                                ? 'border-neutral-900 bg-black text-white dark:border-white dark:bg-white dark:text-black'
-                                : leave.status === 'rejected'
-                                ? 'border-neutral-300 bg-neutral-100 text-neutral-400 line-through dark:border-neutral-700 dark:bg-neutral-800'
-                                : 'border-dashed border-neutral-400 text-neutral-700 dark:text-neutral-300'
-                            }`}
-                          >
-                            {leave.status === 'approved' ? 'مقبول' : leave.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                )}
+              </tbody>
+            </LedgerTable>
           </div>
 
-          {/* Corrections Table */}
-          <div className="rounded-2xl border border-neutral-300 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
-            <div className="p-5 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                  <RotateCcw className="h-5 w-5" />
-                  <span>طلبات تصحيح البصمة ({corrections.length})</span>
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsCorrectionModalOpen(true)}
-                className="rounded-xl bg-neutral-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-neutral-800 dark:bg-white dark:text-black"
-              >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-neutral-300 dark:border-neutral-700 pb-2">
+              <h3 className="font-display font-bold text-base">سجل تصحيحات البصمة ({corrections.length})</h3>
+              <LedgerButton size="sm" icon="plus" onClick={() => setIsCorrectionModalOpen(true)}>
                 تقديم طلب تصحيح بصمة
-              </button>
+              </LedgerButton>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-right text-sm">
-                <thead className="bg-neutral-50 text-xs font-bold uppercase text-neutral-500 dark:bg-neutral-800/50 dark:text-neutral-400 border-b border-neutral-200 dark:border-neutral-700">
+            <LedgerTable>
+              <thead>
+                <tr className="border-b-2 border-neutral-900 dark:border-white font-bold bg-neutral-100 dark:bg-neutral-900">
+                  <th className="p-3">التاريخ</th>
+                  <th className="p-3">الحضور المطلوب</th>
+                  <th className="p-3">الانصراف المطلوب</th>
+                  <th className="p-3">السبب</th>
+                  <th className="p-3">القرار</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 font-mono">
+                {corrections.length === 0 ? (
                   <tr>
-                    <th className="px-5 py-3.5">تاريخ الحركة</th>
-                    <th className="px-5 py-3.5">وقت الحضور المطلوب</th>
-                    <th className="px-5 py-3.5">وقت الانصراف المطلوب</th>
-                    <th className="px-5 py-3.5">سبب التصحيح</th>
-                    <th className="px-5 py-3.5">الحالة</th>
+                    <td colSpan={5} className="p-6 text-center text-xs text-neutral-500 font-ledger">
+                      لا توجد طلبات تصحيح بصمة مسجلة.
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                  {corrections.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="py-12 text-center text-neutral-400">
-                        لا توجد طلبات تصحيح بصمة مقدمة.
+                ) : (
+                  corrections.map((c) => (
+                    <tr key={c.id}>
+                      <td className="p-3 tabular-nums font-bold">{c.date}</td>
+                      <td className="p-3 tabular-nums">{c.requestedCheckIn || '—'}</td>
+                      <td className="p-3 tabular-nums">{c.requestedCheckOut || '—'}</td>
+                      <td className="p-3 font-ledger text-xs">{c.reason}</td>
+                      <td className="p-3">
+                        <RubberStamp
+                          label={c.status === 'approved' ? 'معتمد' : c.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}
+                          recordId={c.id}
+                        />
                       </td>
                     </tr>
-                  ) : (
-                    corrections.map((corr) => (
-                      <tr key={corr.id}>
-                        <td className="px-5 py-4 font-mono text-xs">{corr.date}</td>
-                        <td className="px-5 py-4 font-mono text-xs">{corr.requestedCheckIn || '—'}</td>
-                        <td className="px-5 py-4 font-mono text-xs">{corr.requestedCheckOut || '—'}</td>
-                        <td className="px-5 py-4 text-xs text-neutral-600 dark:text-neutral-300">{corr.reason}</td>
-                        <td className="px-5 py-4">
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold border ${
-                              corr.status === 'approved'
-                                ? 'border-neutral-900 bg-black text-white dark:border-white dark:bg-white dark:text-black'
-                                : corr.status === 'rejected'
-                                ? 'border-neutral-300 bg-neutral-100 text-neutral-400 line-through dark:border-neutral-700 dark:bg-neutral-800'
-                                : 'border-dashed border-neutral-400 text-neutral-700 dark:text-neutral-300'
-                            }`}
-                          >
-                            {corr.status === 'approved' ? 'معتمد' : corr.status === 'rejected' ? 'مرفوض' : 'قيد المراجعة'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                )}
+              </tbody>
+            </LedgerTable>
           </div>
         </div>
       )}
 
-      {/* TAB 3: ADMIN PANEL */}
+      {/* VIEW 4: ADMIN AUDIT & APPROVALS */}
       {activeTab === 'admin' && user?.role === 'admin' && (
-        <div className="space-y-8">
-          {/* Admin Fast Actions */}
-          <div className="p-5 rounded-2xl border border-neutral-300 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900/50 flex flex-wrap items-center justify-between gap-4">
+        <div className="space-y-6">
+          <div className="p-4 border-2 border-neutral-900 dark:border-white bg-[#fafafa] dark:bg-[#151515] flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h3 className="text-sm font-bold text-neutral-900 dark:text-white">
-                إجراءات الرقابة الإدارية اليومية
-              </h3>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                تشغيل محرك الغياب الآلي Idempotent ومراجعة طلبات الإجازات وتصحيحات الدوام.
-              </p>
+              <h3 className="font-display font-bold text-base">إجراءات الرقابة الإدارية</h3>
+              <p className="text-xs text-neutral-500 font-mono">تشغيل محرك رصد الغياب الآلي (Idempotent Cron Job)</p>
             </div>
-
-            <button
+            <LedgerButton
               onClick={() => triggerAbsenceJobMutation.mutate()}
               disabled={triggerAbsenceJobMutation.isPending}
-              className="flex items-center gap-2 rounded-xl bg-neutral-900 px-4 py-2 text-xs font-bold text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black"
+              icon="punch-card"
             >
-              <Play className="h-4 w-4" />
-              <span>{triggerAbsenceJobMutation.isPending ? 'جاري الفحص...' : 'تشغيل فحص الغياب الآلي اليوم'}</span>
-            </button>
+              {triggerAbsenceJobMutation.isPending ? 'جاري الفحص...' : 'تشغيل فحص الغياب الآلي الآن'}
+            </LedgerButton>
           </div>
 
           {/* Pending Leaves Review */}
-          <div className="rounded-2xl border border-neutral-300 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
-            <div className="p-5 border-b border-neutral-200 dark:border-neutral-800">
-              <h3 className="text-base font-bold text-neutral-900 dark:text-white">
-                مراجعة طلبات الإجازات المعلقة
-              </h3>
-            </div>
-            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-              {leaves.filter((l) => l.status === 'pending').length === 0 ? (
-                <div className="p-8 text-center text-xs text-neutral-400">لا توجد طلبات إجازة معلقة للمراجعة.</div>
-              ) : (
-                leaves
-                  .filter((l) => l.status === 'pending')
-                  .map((leave) => (
-                    <div key={leave.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="space-y-1">
-                        <div className="font-bold text-sm text-neutral-900 dark:text-white">
-                          {leave.user?.name} — {leave.type} ({leave.startDate} إلى {leave.endDate})
-                        </div>
-                        <div className="text-xs text-neutral-600 dark:text-neutral-300">السبب: {leave.reason || '—'}</div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => reviewLeaveMutation.mutate({ id: leave.id, decision: 'approved' })}
-                          className="rounded-lg bg-black px-3 py-1.5 text-xs font-bold text-white hover:bg-neutral-800 dark:bg-white dark:text-black"
-                        >
-                          موافقة
-                        </button>
-                        <button
-                          onClick={() => reviewLeaveMutation.mutate({ id: leave.id, decision: 'rejected' })}
-                          className="rounded-lg border border-neutral-900 px-3 py-1.5 text-xs font-bold text-neutral-900 hover:bg-neutral-100 dark:border-white dark:text-white"
-                        >
-                          رفض
-                        </button>
-                      </div>
-                    </div>
-                  ))
-              )}
-            </div>
-          </div>
-
-          {/* Pending Corrections Review */}
-          <div className="rounded-2xl border border-neutral-300 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
-            <div className="p-5 border-b border-neutral-200 dark:border-neutral-800">
-              <h3 className="text-base font-bold text-neutral-900 dark:text-white">
-                مراجعة طلبات تصحيح البصمة المعلقة
-              </h3>
-            </div>
-            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-              {corrections.filter((c) => c.status === 'pending').length === 0 ? (
-                <div className="p-8 text-center text-xs text-neutral-400">لا توجد طلبات تصحيح بصمة معلقة.</div>
-              ) : (
-                corrections
-                  .filter((c) => c.status === 'pending')
-                  .map((corr) => (
-                    <div key={corr.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="space-y-1">
-                        <div className="font-bold text-sm text-neutral-900 dark:text-white">
-                          {corr.user?.name} — تاريخ: {corr.date}
-                        </div>
-                        <div className="text-xs text-neutral-600 dark:text-neutral-300">
-                          حضور: {corr.requestedCheckIn || '—'} | انصراف: {corr.requestedCheckOut || '—'} <br />
-                          السبب: {corr.reason}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => reviewCorrectionMutation.mutate({ id: corr.id, decision: 'approved' })}
-                          className="rounded-lg bg-black px-3 py-1.5 text-xs font-bold text-white hover:bg-neutral-800 dark:bg-white dark:text-black"
-                        >
-                          موافقة وتحديث
-                        </button>
-                        <button
-                          onClick={() => reviewCorrectionMutation.mutate({ id: corr.id, decision: 'rejected' })}
-                          className="rounded-lg border border-neutral-900 px-3 py-1.5 text-xs font-bold text-neutral-900 hover:bg-neutral-100 dark:border-white dark:text-white"
-                        >
-                          رفض
-                        </button>
-                      </div>
-                    </div>
-                  ))
-              )}
-            </div>
+          <div className="space-y-3">
+            <h4 className="font-display font-bold text-sm">طلبات إجازة تنتظر المراجعة</h4>
+            <LedgerTable>
+              <thead>
+                <tr className="border-b-2 border-neutral-900 dark:border-white font-bold bg-neutral-100 dark:bg-neutral-900">
+                  <th className="p-3">الموظف</th>
+                  <th className="p-3">النوع</th>
+                  <th className="p-3">المدة</th>
+                  <th className="p-3">السبب</th>
+                  <th className="p-3 text-left">الإجراء</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 font-mono text-xs">
+                {leaves.filter((l) => l.status === 'pending').length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-6 text-center text-neutral-500 font-ledger">لا توجد طلبات إجازة معلقة.</td>
+                  </tr>
+                ) : (
+                  leaves
+                    .filter((l) => l.status === 'pending')
+                    .map((l) => (
+                      <tr key={l.id}>
+                        <td className="p-3 font-ledger font-bold">{l.user?.name}</td>
+                        <td className="p-3">{l.type}</td>
+                        <td className="p-3 tabular-nums">{l.startDate} إلى {l.endDate}</td>
+                        <td className="p-3 font-ledger">{l.reason || '—'}</td>
+                        <td className="p-3 text-left space-x-2 space-x-reverse">
+                          <LedgerButton size="sm" onClick={() => reviewLeaveMutation.mutate({ id: l.id, decision: 'approved' })}>
+                            اعتماد
+                          </LedgerButton>
+                          <LedgerButton size="sm" variant="danger" onClick={() => reviewLeaveMutation.mutate({ id: l.id, decision: 'rejected' })}>
+                            رفض
+                          </LedgerButton>
+                        </td>
+                      </tr>
+                    ))
+                )}
+              </tbody>
+            </LedgerTable>
           </div>
         </div>
       )}
 
-      {/* MODAL: Request Leave */}
-      {isLeaveModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl border border-neutral-300 bg-white p-6 shadow-2xl dark:border-neutral-700 dark:bg-neutral-900 animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-black text-neutral-900 dark:text-white mb-4">
-              تقديم طلب إجازة
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
-                  نوع الإجازة
-                </label>
-                <select
-                  value={leaveType}
-                  onChange={(e) => setLeaveType(e.target.value as any)}
-                  className="w-full rounded-xl border border-neutral-300 bg-transparent p-2.5 text-sm font-bold text-neutral-900 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:text-white dark:bg-neutral-800"
-                >
-                  <option value="annual">إجازة سنوية</option>
-                  <option value="sick">إجازة مرضية</option>
-                  <option value="unpaid">إجازة غير مدفوعة (خصم من الراتب)</option>
-                  <option value="emergency">إجازة اضطرارية</option>
-                </select>
-              </div>
+      {/* MODAL: Leave Request */}
+      <LedgerModal
+        isOpen={isLeaveModalOpen}
+        onClose={() => setIsLeaveModalOpen(false)}
+        title="تقديم طلب إجازة رسمي"
+      >
+        <div className="space-y-4 font-ledger">
+          <div>
+            <label className="block text-xs font-bold mb-1">نوع الإجازة</label>
+            <select
+              value={leaveType}
+              onChange={(e) => setLeaveType(e.target.value as any)}
+              className="w-full bg-white dark:bg-neutral-900 border-2 border-neutral-900 dark:border-white p-2 text-xs sm:text-sm font-bold"
+            >
+              <option value="annual">إجازة سنوية</option>
+              <option value="sick">إجازة مرضية</option>
+              <option value="unpaid">إجازة غير مدفوعة (خصم من الراتب)</option>
+              <option value="emergency">إجازة اضطرارية</option>
+            </select>
+          </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
-                    من تاريخ
-                  </label>
-                  <input
-                    type="date"
-                    value={leaveStartDate}
-                    onChange={(e) => setLeaveStartDate(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-300 bg-transparent p-2.5 text-xs font-mono font-bold text-neutral-900 outline-none dark:border-neutral-700 dark:text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
-                    إلى تاريخ
-                  </label>
-                  <input
-                    type="date"
-                    value={leaveEndDate}
-                    onChange={(e) => setLeaveEndDate(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-300 bg-transparent p-2.5 text-xs font-mono font-bold text-neutral-900 outline-none dark:border-neutral-700 dark:text-white"
-                  />
-                </div>
-              </div>
+          <div className="grid grid-cols-2 gap-3">
+            <LedgerInput
+              label="من تاريخ"
+              type="date"
+              value={leaveStartDate}
+              onChange={(e) => setLeaveStartDate(e.target.value)}
+              isMono
+            />
+            <LedgerInput
+              label="إلى تاريخ"
+              type="date"
+              value={leaveEndDate}
+              onChange={(e) => setLeaveEndDate(e.target.value)}
+              isMono
+            />
+          </div>
 
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
-                  السبب أو البيان
-                </label>
-                <textarea
-                  rows={3}
-                  value={leaveReason}
-                  onChange={(e) => setLeaveReason(e.target.value)}
-                  placeholder="بيان سبب طلب الإجازة..."
-                  className="w-full rounded-xl border border-neutral-300 bg-transparent p-2.5 text-sm text-neutral-900 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:text-white"
-                />
-              </div>
+          <div>
+            <label className="block text-xs font-bold mb-1">السبب أو البيان</label>
+            <textarea
+              rows={3}
+              value={leaveReason}
+              onChange={(e) => setLeaveReason(e.target.value)}
+              placeholder="اكتب بيان سبب الإجازة..."
+              className="w-full bg-white dark:bg-neutral-900 border-2 border-neutral-900 dark:border-white p-2 text-xs sm:text-sm outline-none"
+            />
+          </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsLeaveModalOpen(false)}
-                  className="rounded-xl px-4 py-2 text-xs font-bold text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
-                >
-                  إلغاء
-                </button>
-                <button
-                  type="button"
-                  disabled={leaveMutation.isPending}
-                  onClick={() => leaveMutation.mutate()}
-                  className="rounded-xl bg-neutral-900 px-4 py-2 text-xs font-bold text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black"
-                >
-                  {leaveMutation.isPending ? 'جاري الإرسال...' : 'إرسال الطلب'}
-                </button>
-              </div>
-            </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+            <LedgerButton variant="ghost" size="sm" onClick={() => setIsLeaveModalOpen(false)}>
+              إلغاء
+            </LedgerButton>
+            <LedgerButton
+              size="sm"
+              disabled={leaveMutation.isPending}
+              onClick={() => leaveMutation.mutate()}
+            >
+              {leaveMutation.isPending ? 'جاري القيد...' : 'توثيق الطلب'}
+            </LedgerButton>
           </div>
         </div>
-      )}
+      </LedgerModal>
 
-      {/* MODAL: Request Correction */}
-      {isCorrectionModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl border border-neutral-300 bg-white p-6 shadow-2xl dark:border-neutral-700 dark:bg-neutral-900 animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-black text-neutral-900 dark:text-white mb-4">
-              طلب تصحيح بصمة دوام
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
-                  تاريخ اليوم المطلوب تصحيحه
-                </label>
-                <input
-                  type="date"
-                  value={correctionDate}
-                  onChange={(e) => setCorrectionDate(e.target.value)}
-                  className="w-full rounded-xl border border-neutral-300 bg-transparent p-2.5 text-xs font-mono font-bold text-neutral-900 outline-none dark:border-neutral-700 dark:text-white"
-                />
-              </div>
+      {/* MODAL: Attendance Correction */}
+      <LedgerModal
+        isOpen={isCorrectionModalOpen}
+        onClose={() => setIsCorrectionModalOpen(false)}
+        title="طلب تصحيح بصمة في الدفتر"
+      >
+        <div className="space-y-4 font-ledger">
+          <LedgerInput
+            label="تاريخ اليوم المراد تصحيحه"
+            type="date"
+            value={correctionDate}
+            onChange={(e) => setCorrectionDate(e.target.value)}
+            isMono
+          />
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
-                    وقت الحضور الصحيح
-                  </label>
-                  <input
-                    type="time"
-                    value={correctionCheckIn}
-                    onChange={(e) => setCorrectionCheckIn(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-300 bg-transparent p-2.5 text-xs font-mono font-bold text-neutral-900 outline-none dark:border-neutral-700 dark:text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
-                    وقت الانصراف الصحيح
-                  </label>
-                  <input
-                    type="time"
-                    value={correctionCheckOut}
-                    onChange={(e) => setCorrectionCheckOut(e.target.value)}
-                    className="w-full rounded-xl border border-neutral-300 bg-transparent p-2.5 text-xs font-mono font-bold text-neutral-900 outline-none dark:border-neutral-700 dark:text-white"
-                  />
-                </div>
-              </div>
+          <div className="grid grid-cols-2 gap-3">
+            <LedgerInput
+              label="وقت الحضور الفعلي"
+              type="time"
+              value={correctionCheckIn}
+              onChange={(e) => setCorrectionCheckIn(e.target.value)}
+              isMono
+            />
+            <LedgerInput
+              label="وقت الانصراف الفعلي"
+              type="time"
+              value={correctionCheckOut}
+              onChange={(e) => setCorrectionCheckOut(e.target.value)}
+              isMono
+            />
+          </div>
 
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
-                  سبب الخطأ في التسجيل (إلزامي للرقابة)
-                </label>
-                <textarea
-                  rows={3}
-                  value={correctionReason}
-                  onChange={(e) => setCorrectionReason(e.target.value)}
-                  placeholder="مثال: عطل في شبكة الإنترنت بالفرع أثناء البصمة..."
-                  className="w-full rounded-xl border border-neutral-300 bg-transparent p-2.5 text-sm text-neutral-900 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:text-white"
-                />
-              </div>
+          <div>
+            <label className="block text-xs font-bold mb-1">سبب الخطأ في التسجيل (إلزامي للرقابة)</label>
+            <textarea
+              rows={3}
+              value={correctionReason}
+              onChange={(e) => setCorrectionReason(e.target.value)}
+              placeholder="بيان سبب تعذر البصمة في وقتها..."
+              className="w-full bg-white dark:bg-neutral-900 border-2 border-neutral-900 dark:border-white p-2 text-xs sm:text-sm outline-none"
+            />
+          </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsCorrectionModalOpen(false)}
-                  className="rounded-xl px-4 py-2 text-xs font-bold text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
-                >
-                  إلغاء
-                </button>
-                <button
-                  type="button"
-                  disabled={!correctionReason.trim() || correctionMutation.isPending}
-                  onClick={() => correctionMutation.mutate()}
-                  className="rounded-xl bg-neutral-900 px-4 py-2 text-xs font-bold text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black"
-                >
-                  {correctionMutation.isPending ? 'جاري الإرسال...' : 'إرسال طلب التصحيح'}
-                </button>
-              </div>
-            </div>
+          <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+            <LedgerButton variant="ghost" size="sm" onClick={() => setIsCorrectionModalOpen(false)}>
+              إلغاء
+            </LedgerButton>
+            <LedgerButton
+              size="sm"
+              disabled={!correctionReason.trim() || correctionMutation.isPending}
+              onClick={() => correctionMutation.mutate()}
+            >
+              {correctionMutation.isPending ? 'جاري الإرسال...' : 'رفع طلب التصحيح'}
+            </LedgerButton>
           </div>
         </div>
-      )}
+      </LedgerModal>
 
       {/* Face Biometrics Modal */}
       <FaceBiometricsModal
@@ -1098,10 +849,11 @@ export const AttendancePage: React.FC = () => {
         mode="verify_attendance"
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['attendance'] });
-          addToast('تم تسجيل الحركة بنجاح بالتعرف على الوجه', 'success');
+          playPunchSound();
+          addToast('تم توثيق الحضور ببصمة الوجه المعتمدة', 'success');
         }}
       />
-    </MotionPage>
+    </div>
   );
 };
 

@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext.js';
 import { ThemeProvider } from './contexts/ThemeContext.js';
 import { SocketProvider } from './contexts/SocketContext.js';
-import { Layout } from './components/Layout.js';
+import { LedgerLayout } from './components/common/LedgerLayout.js';
 import { ProtectedRoute } from './components/ProtectedRoute.js';
 
 import { LoginPage } from './pages/LoginPage.js';
@@ -19,6 +19,7 @@ import { ChatPage } from './pages/ChatPage.js';
 import { TemplatesPage } from './pages/TemplatesPage.js';
 import { SettingsPage } from './pages/SettingsPage.js';
 import { DeductionsPage } from './pages/DeductionsPage.js';
+import { DesignLabPage } from './pages/DesignLabPage.js';
 
 import { ToastProvider } from './components/motion/Toast.js';
 
@@ -46,15 +47,16 @@ export const App: React.FC = () => {
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-                  {/* Protected App Routes */}
+                  {/* Protected App Routes with Company Ledger Layout */}
                   <Route element={<ProtectedRoute />}>
-                    <Route element={<Layout />}>
+                    <Route element={<LedgerLayout />}>
                       <Route path="/" element={<DashboardPage />} />
                       <Route path="/customers" element={<CustomersPage />} />
                       <Route path="/attendance" element={<AttendancePage />} />
                       <Route path="/deductions" element={<DeductionsPage />} />
                       <Route path="/chat" element={<ChatPage />} />
                       <Route path="/templates" element={<TemplatesPage />} />
+                      <Route path="/design-lab" element={<DesignLabPage />} />
                       <Route path="/settings" element={<SettingsPage />} />
                     </Route>
                   </Route>

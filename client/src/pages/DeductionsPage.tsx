@@ -3,28 +3,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
 import { useAuth } from '../contexts/AuthContext.js';
 import { MotionPage } from '../components/motion/MotionPage.js';
-import { CountUp } from '../components/motion/CountUp.js';
-import { SpotlightCard } from '../components/motion/SpotlightCard.js';
 import { useToast } from '../components/motion/Toast.js';
 import type { Deduction, Adjustment, UserPayrollSummary, PayrollPeriod } from '../types/index.js';
-import {
-  DollarSign,
-  TrendingDown,
-  Gift,
-  AlertTriangle,
-  Receipt,
-  FileSpreadsheet,
-  Lock,
-  CheckCircle2,
-  XCircle,
-  HelpCircle,
-  Calendar,
-  PlusCircle,
-  Layers,
-  ArrowRight,
-  ShieldCheck,
-} from 'lucide-react';
 import { format } from 'date-fns';
+import {
+  LedgerButton,
+  LedgerInput,
+  LedgerTable,
+  LedgerModal,
+} from '../components/common/LedgerComponents.js';
+import { RubberStamp } from '../components/common/RubberStamp.js';
+import { PayslipReceipt } from '../components/common/PayslipReceipt.js';
+import { LedgerIcon } from '../components/icons/LedgerIcons.js';
 
 export const DeductionsPage: React.FC = () => {
   const { user } = useAuth();
@@ -33,6 +23,7 @@ export const DeductionsPage: React.FC = () => {
 
   const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
   const [activeTab, setActiveTab] = useState<'my' | 'admin'>('my');
+  const [employeeSubView, setEmployeeSubView] = useState<'receipt' | 'table'>('receipt');
 
   // Modals state
   const [disputeDeduction, setDisputeDeduction] = useState<Deduction | null>(null);
@@ -52,7 +43,7 @@ export const DeductionsPage: React.FC = () => {
   const [reviewNotes, setReviewNotes] = useState('');
 
   // 1. Fetch My Deductions
-  const { data: myDeductions = [], isLoading: isMyDeductionsLoading } = useQuery<Deduction[]>({
+  const { data: myDeductions = [] } = useQuery<Deduction[]>({
     queryKey: ['deductions', 'my', selectedMonth],
     queryFn: async () => {
       const res = await api.get(`/deductions/my?period=${selectedMonth}`);
@@ -79,7 +70,7 @@ export const DeductionsPage: React.FC = () => {
   });
 
   // 4. Admin: Fetch Payroll Summary
-  const { data: payrollSummary = [], isLoading: isPayrollLoading } = useQuery<UserPayrollSummary[]>({
+  const { data: payrollSummary = [] } = useQuery<UserPayrollSummary[]>({
     queryKey: ['deductions', 'admin', 'summary', selectedMonth],
     queryFn: async () => {
       const res = await api.get(`/deductions/admin/payroll-summary?period=${selectedMonth}`);
@@ -157,20 +148,6 @@ export const DeductionsPage: React.FC = () => {
     },
     onError: (err: any) => {
       addToast(err.response?.data?.error || 'فشلت معالجة الاعتراض', 'error');
-    },
-  });
-
-  const approveDeductionMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await api.post(`/deductions/${id}/approve`);
-      return res.data;
-    },
-    onSuccess: () => {
-      addToast('تم اعتماد الخصم بنجاح', 'success');
-      queryClient.invalidateQueries({ queryKey: ['deductions'] });
-    },
-    onError: (err: any) => {
-      addToast(err.response?.data?.error || 'فشل اعتماد الخصم', 'error');
     },
   });
 
@@ -264,400 +241,360 @@ export const DeductionsPage: React.FC = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusStampLabel = (status: string) => {
     switch (status) {
       case 'approved':
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full border border-neutral-900 bg-neutral-900 text-white px-2.5 py-0.5 text-xs font-bold dark:border-white dark:bg-white dark:text-neutral-900">
-            <CheckCircle2 className="h-3 w-3" />
-            معتمد
-          </span>
-        );
+        return 'معتمد';
       case 'proposed':
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-neutral-600 bg-neutral-100 text-neutral-800 px-2.5 py-0.5 text-xs font-bold dark:border-neutral-400 dark:bg-neutral-800 dark:text-neutral-200">
-            <HelpCircle className="h-3 w-3" />
-            مقترح
-          </span>
-        );
+        return 'مقترح';
       case 'disputed':
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full border-2 border-neutral-900 bg-transparent text-neutral-900 px-2.5 py-0.5 text-xs font-black dark:border-white dark:text-white">
-            <AlertTriangle className="h-3 w-3" />
-            محل نزاع
-          </span>
-        );
+        return 'محل نزاع';
       case 'cancelled':
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full border border-neutral-300 bg-neutral-100 text-neutral-400 line-through px-2.5 py-0.5 text-xs font-medium dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-500">
-            <XCircle className="h-3 w-3" />
-            ملغي
-          </span>
-        );
+        return 'ملغي';
       case 'closed_in_payroll':
-        return (
-          <span className="inline-flex items-center gap-1 rounded-full border border-neutral-900 bg-neutral-200 text-neutral-900 px-2.5 py-0.5 text-xs font-black dark:border-white dark:bg-neutral-800 dark:text-white">
-            <Lock className="h-3 w-3" />
-            مغلق نهائياً
-          </span>
-        );
+        return 'مغلق نهائياً';
       default:
-        return null;
+        return status;
     }
   };
 
+  const serialNumber = `${selectedMonth.replace('-', '')}-${(user?.id || '0').slice(-4).toUpperCase()}`;
+
   return (
-    <MotionPage className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-200 pb-6 dark:border-neutral-800">
+    <MotionPage className="space-y-6">
+      {/* 1. Header (ترويسة السجل المالي) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-neutral-900 dark:border-neutral-100 pb-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
-            <span>النظام المالي</span>
+          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-neutral-500">
+            <span>النظام المحاسبي والمالي</span>
             <span>/</span>
-            <span>الرواتب والخصومات</span>
+            <span>مسير الرواتب والخصومات</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-white mt-1 flex items-center gap-3">
-            <Receipt className="h-8 w-8 text-neutral-900 dark:text-white" />
-            <span>نظام الخصومات ومسير الرواتب</span>
+          <h1 className="text-2xl sm:text-3xl font-black font-display text-neutral-950 dark:text-white mt-1 flex items-center gap-2.5">
+            <LedgerIcon name="dollar" size={26} />
+            <span>دفتر الرواتب والخصومات الرسمية</span>
           </h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1 max-w-2xl">
-            شفافية كاملة بمعادلة الحساب لكل خصم، إمكانية الاعتراض المباشر، وضمان الحد الأقصى التأديبي القانوني.
+          <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5 font-ledger">
+            معادلات حساب دقيقة، إمكانية الاعتراض، التحقق من السقف التأديبي، وقسائم رواتب مثقوبة ومعتمدة.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Month Selector */}
-          <div className="flex items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900">
-            <Calendar className="h-4 w-4 text-neutral-500" />
-            <span className="text-xs font-bold text-neutral-500">الشهر:</span>
+        {/* Month Selector & Controls */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex items-center gap-2 border-2 border-neutral-900 dark:border-white bg-white dark:bg-black px-2.5 py-1 text-xs font-mono">
+            <LedgerIcon name="calendar" size={14} />
+            <span className="font-bold">الشهر:</span>
             <input
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="bg-transparent font-mono text-sm font-bold text-neutral-900 outline-none dark:text-white"
+              className="bg-transparent font-bold tabular-nums outline-none text-neutral-950 dark:text-white"
             />
           </div>
 
-          {/* Period Locked Badge */}
-          {isPeriodClosed ? (
-            <div className="flex items-center gap-1.5 rounded-xl border border-neutral-900 bg-neutral-900 px-3 py-2 text-xs font-black text-white dark:border-white dark:bg-white dark:text-neutral-900">
-              <Lock className="h-3.5 w-3.5" />
-              <span>الشهر مغلق نهائياً</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5 rounded-xl border border-dashed border-neutral-400 bg-neutral-50 px-3 py-2 text-xs font-bold text-neutral-700 dark:border-neutral-600 dark:bg-neutral-900 dark:text-neutral-300">
-              <span className="h-2 w-2 rounded-full bg-neutral-900 dark:bg-white animate-pulse" />
-              <span>الشهر المالي مفتوح</span>
-            </div>
-          )}
+          {/* Period Status Stamp */}
+          <div className="inline-block">
+            {isPeriodClosed ? (
+              <RubberStamp label="الشهر مغلق" recordId={`period-${selectedMonth}`} subtext="محمي من التعديل" />
+            ) : (
+              <RubberStamp label="الشهر مفتوح" recordId={`period-${selectedMonth}`} subtext="قيد التسويات" />
+            )}
+          </div>
 
           {/* Tab Switcher if Admin */}
           {user?.role === 'admin' && (
-            <div className="flex rounded-xl border border-neutral-300 bg-neutral-100 p-1 dark:border-neutral-700 dark:bg-neutral-900">
+            <div className="inline-flex border-2 border-neutral-900 dark:border-white bg-white dark:bg-black p-0.5">
               <button
+                type="button"
                 onClick={() => setActiveTab('my')}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                className={`px-3 py-1 text-xs font-bold font-ledger transition-colors ${
                   activeTab === 'my'
-                    ? 'bg-white text-neutral-900 shadow-xs dark:bg-neutral-800 dark:text-white'
-                    : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                    ? 'bg-neutral-900 text-white dark:bg-white dark:text-black'
+                    : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900'
                 }`}
               >
-                خصوماتي
+                مسير راتبي
               </button>
               <button
+                type="button"
                 onClick={() => setActiveTab('admin')}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                className={`px-3 py-1 text-xs font-bold font-ledger transition-colors ${
                   activeTab === 'admin'
-                    ? 'bg-neutral-900 text-white shadow-xs dark:bg-white dark:text-neutral-900'
-                    : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-white'
+                    ? 'bg-neutral-900 text-white dark:bg-white dark:text-black'
+                    : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900'
                 }`}
               >
-                لوحة إدارة الرواتب
+                لوحة الرقابة والرواتب
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* VIEW: EMPLOYEE TAB */}
+      {/* 2. EMPLOYEE VIEW */}
       {activeTab === 'my' && (
-        <div className="space-y-8">
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <SpotlightCard className="p-5">
-              <div className="flex items-center justify-between text-neutral-500 mb-2">
-                <span className="text-xs font-bold">الراتب الأساسي</span>
-                <DollarSign className="h-4 w-4" />
-              </div>
-              <div className="text-2xl font-black text-neutral-900 dark:text-white font-mono">
-                <CountUp end={baseSalary} duration={800} /> {salaryData?.currency || 'ر.س'}
-              </div>
-              <p className="text-[11px] text-neutral-400 mt-1">
-                أجر اليوم المعتمد: {salaryData?.dayWage ? Number(salaryData.dayWage).toFixed(2) : '—'} {salaryData?.currency || 'ر.س'}
-              </p>
-            </SpotlightCard>
-
-            <SpotlightCard className="p-5">
-              <div className="flex items-center justify-between text-neutral-500 mb-2">
-                <span className="text-xs font-bold">إجمالي الخصومات المعتمدة</span>
-                <TrendingDown className="h-4 w-4" />
-              </div>
-              <div className="text-2xl font-black text-neutral-900 dark:text-white font-mono">
-                <CountUp end={totalApprovedDeductions + totalManualDeductions} duration={800} /> {salaryData?.currency || 'ر.س'}
-              </div>
-              <p className="text-[11px] text-neutral-400 mt-1">
-                {totalProposedDeductions > 0 && `(+ ${totalProposedDeductions} ر.س معلقة قيد المراجعة)`}
-              </p>
-            </SpotlightCard>
-
-            <SpotlightCard className="p-5">
-              <div className="flex items-center justify-between text-neutral-500 mb-2">
-                <span className="text-xs font-bold">المكافآت والتسويات</span>
-                <Gift className="h-4 w-4" />
-              </div>
-              <div className="text-2xl font-black text-neutral-900 dark:text-white font-mono">
-                +<CountUp end={totalBonuses} duration={800} /> {salaryData?.currency || 'ر.س'}
-              </div>
-              <p className="text-[11px] text-neutral-400 mt-1">
-                {myAdjustments.length} حركة تسوية هذا الشهر
-              </p>
-            </SpotlightCard>
-
-            <SpotlightCard className="p-5 border-2 border-neutral-900 dark:border-white">
-              <div className="flex items-center justify-between text-neutral-500 mb-2">
-                <span className="text-xs font-black text-neutral-900 dark:text-white">صافي الراتب المتوقع</span>
-                <ShieldCheck className="h-4 w-4 text-neutral-900 dark:text-white" />
-              </div>
-              <div className="text-2xl font-black text-neutral-900 dark:text-white font-mono">
-                <CountUp end={netEstimatedPay} duration={900} /> {salaryData?.currency || 'ر.س'}
-              </div>
-              <p className="text-[11px] text-neutral-400 mt-1">
-                المبلغ النهائي القابل للصرف بنهاية الشهر
-              </p>
-            </SpotlightCard>
-          </div>
-
-          {/* Deductions Table */}
-          <div className="rounded-2xl border border-neutral-300 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
-            <div className="p-5 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-              <div>
-                <h2 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                  <Receipt className="h-5 w-5" />
-                  <span>جدول الخصومات لشهر {selectedMonth}</span>
-                </h2>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                  تفصيل كامل لمعادلة حساب الخصم. يمكنك تقديم اعتراض خلال 7 أيام من تاريخ الخصم.
-                </p>
-              </div>
-
-              <span className="rounded-full border border-neutral-900 bg-neutral-100 dark:border-white dark:bg-neutral-800 text-neutral-900 dark:text-white font-mono font-bold px-3 py-1 text-xs">
-                {myDeductions.length} سجلات
-              </span>
+        <div className="space-y-6">
+          {/* Sub-view switcher: Receipt vs Details Table */}
+          <div className="flex items-center justify-between border-b border-dashed border-neutral-300 dark:border-neutral-700 pb-2">
+            <div className="inline-flex border border-neutral-900 dark:border-white bg-neutral-100 dark:bg-neutral-900 p-0.5 text-xs font-ledger">
+              <button
+                type="button"
+                onClick={() => setEmployeeSubView('receipt')}
+                className={`px-3 py-1 font-bold transition-colors ${
+                  employeeSubView === 'receipt'
+                    ? 'bg-white text-neutral-950 dark:bg-neutral-800 dark:text-white shadow-xs'
+                    : 'text-neutral-600 dark:text-neutral-400'
+                }`}
+              >
+                قسيمة الراتب المثقوبة (إيصال)
+              </button>
+              <button
+                type="button"
+                onClick={() => setEmployeeSubView('table')}
+                className={`px-3 py-1 font-bold transition-colors ${
+                  employeeSubView === 'table'
+                    ? 'bg-white text-neutral-950 dark:bg-neutral-800 dark:text-white shadow-xs'
+                    : 'text-neutral-600 dark:text-neutral-400'
+                }`}
+              >
+                دفتر تفاصيل الخصومات ({myDeductions.length})
+              </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-right text-sm">
-                <thead className="bg-neutral-50 text-xs font-bold uppercase text-neutral-500 dark:bg-neutral-800/50 dark:text-neutral-400 border-b border-neutral-200 dark:border-neutral-700">
-                  <tr>
-                    <th className="px-5 py-3.5">تاريخ الخصم</th>
-                    <th className="px-5 py-3.5">نوع الخصم</th>
-                    <th className="px-5 py-3.5">السبب والبيان</th>
-                    <th className="px-5 py-3.5">معادلة الحساب المطبقة</th>
-                    <th className="px-5 py-3.5">المبلغ</th>
-                    <th className="px-5 py-3.5">الحالة</th>
-                    <th className="px-5 py-3.5 text-center">الإجراء</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                  {myDeductions.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="py-12 text-center text-neutral-400">
-                        لا توجد أي خصومات مسجلة عليك خلال هذا الشهر. دمت منتظماً!
-                      </td>
-                    </tr>
-                  ) : (
-                    myDeductions.map((ded) => {
-                      const canDispute = !isPeriodClosed && ['proposed', 'approved'].includes(ded.status) && !ded.dispute;
-                      return (
-                        <tr key={ded.id} className="hover:bg-neutral-50/70 dark:hover:bg-neutral-800/40 transition-colors">
-                          <td className="px-5 py-4 font-mono text-xs text-neutral-600 dark:text-neutral-300">
-                            {format(new Date(ded.createdAt), 'yyyy-MM-dd')}
-                          </td>
-                          <td className="px-5 py-4 font-bold text-neutral-900 dark:text-white">
-                            {getTypeLabel(ded.type)}
-                          </td>
-                          <td className="px-5 py-4 text-xs text-neutral-600 dark:text-neutral-300 max-w-xs">
-                            {ded.reason}
-                          </td>
-                          <td className="px-5 py-4 text-xs font-mono text-neutral-700 dark:text-neutral-300">
-                            {ded.calculationDetails?.explanation ? (
-                              <span className="rounded-md border border-neutral-200 bg-neutral-100 px-2 py-1 dark:border-neutral-700 dark:bg-neutral-800">
-                                {ded.calculationDetails.explanation}
-                              </span>
-                            ) : (
-                              '—'
-                            )}
-                          </td>
-                          <td className="px-5 py-4 font-mono font-black text-neutral-900 dark:text-white">
-                            {Number(ded.amount).toFixed(2)} ر.س
-                          </td>
-                          <td className="px-5 py-4">{getStatusBadge(ded.status)}</td>
-                          <td className="px-5 py-4 text-center">
-                            {canDispute ? (
-                              <button
-                                onClick={() => {
-                                  setDisputeDeduction(ded);
-                                  setDisputeReason('');
-                                }}
-                                className="rounded-lg border border-neutral-900 px-2.5 py-1 text-xs font-bold text-neutral-900 hover:bg-neutral-900 hover:text-white dark:border-white dark:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
-                              >
-                                تقديم اعتراض
-                              </button>
-                            ) : ded.dispute ? (
-                              <div className="text-[11px] font-bold">
-                                {ded.dispute.status === 'pending' && <span className="text-neutral-500">اعتراض قيد الدراسة</span>}
-                                {ded.dispute.status === 'accepted' && <span className="text-neutral-900 dark:text-white">تم قبول الاعتراض</span>}
-                                {ded.dispute.status === 'rejected' && <span className="text-neutral-500 line-through">تم رفض الاعتراض</span>}
-                              </div>
-                            ) : (
-                              <span className="text-xs text-neutral-400">—</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+            <div className="text-xs font-mono text-neutral-500">
+              دورة: <span className="font-bold tabular-nums">{selectedMonth}</span>
             </div>
           </div>
 
-          {/* Adjustments Table */}
-          {myAdjustments.length > 0 && (
-            <div className="rounded-2xl border border-neutral-300 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
-              <div className="p-5 border-b border-neutral-200 dark:border-neutral-800">
-                <h2 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                  <Gift className="h-5 w-5" />
-                  <span>المكافآت والتسويات الإدارية المباشرة</span>
-                </h2>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-right text-sm">
-                  <thead className="bg-neutral-50 text-xs font-bold text-neutral-500 dark:bg-neutral-800/50 dark:text-neutral-400 border-b border-neutral-200 dark:border-neutral-700">
-                    <tr>
-                      <th className="px-5 py-3">التاريخ</th>
-                      <th className="px-5 py-3">النوع</th>
-                      <th className="px-5 py-3">البيان والسبب</th>
-                      <th className="px-5 py-3">المبلغ</th>
+          {/* VIEW A: Perforated Payslip Receipt */}
+          {employeeSubView === 'receipt' && (
+            <div className="py-2">
+              <PayslipReceipt
+                serialNumber={serialNumber}
+                employeeName={user?.name || 'الموظف'}
+                employeeEmail={user?.email || ''}
+                period={selectedMonth}
+                baseSalary={baseSalary}
+                dayWage={Number(salaryData?.dayWage || 0)}
+                deductions={totalApprovedDeductions + totalManualDeductions}
+                bonuses={totalBonuses}
+                netPay={netEstimatedPay}
+                isClosed={isPeriodClosed}
+                currency={salaryData?.currency || 'ر.س'}
+                onPrint={() => window.print()}
+              />
+            </div>
+          )}
+
+          {/* VIEW B: Ruled Ledger Table for Deductions */}
+          {employeeSubView === 'table' && (
+            <div className="space-y-6">
+              <LedgerTable>
+                <div className="p-3 border-b-2 border-neutral-900 dark:border-neutral-100 bg-neutral-100 dark:bg-neutral-900 flex items-center justify-between">
+                  <div className="font-bold font-display text-sm">
+                    سجل الخصومات لشهر {selectedMonth}
+                  </div>
+                  <span className="font-mono text-xs font-bold border border-neutral-900 dark:border-white px-2 py-0.5 bg-white dark:bg-black">
+                    {myDeductions.length} قيود
+                  </span>
+                </div>
+
+                <table className="w-full text-right text-xs">
+                  <thead>
+                    <tr className="bg-neutral-50 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
+                      <th className="px-4 py-3 font-bold font-mono">تاريخ الخصم</th>
+                      <th className="px-4 py-3 font-bold">النوع</th>
+                      <th className="px-4 py-3 font-bold">البيان والسبب</th>
+                      <th className="px-4 py-3 font-bold font-mono">المعادلة المطبقة</th>
+                      <th className="px-4 py-3 font-bold font-mono">المبلغ</th>
+                      <th className="px-4 py-3 font-bold text-center">الحالة</th>
+                      <th className="px-4 py-3 font-bold text-center">إجراء</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                    {myAdjustments.map((adj) => (
-                      <tr key={adj.id}>
-                        <td className="px-5 py-3 font-mono text-xs text-neutral-500">
-                          {format(new Date(adj.createdAt), 'yyyy-MM-dd')}
-                        </td>
-                        <td className="px-5 py-3 font-bold text-neutral-900 dark:text-white">
-                          {adj.type === 'bonus' ? 'مكافأة / حافز' : 'تسوية خصم'}
-                        </td>
-                        <td className="px-5 py-3 text-xs text-neutral-600 dark:text-neutral-300">{adj.reason}</td>
-                        <td className="px-5 py-3 font-mono font-bold">
-                          {adj.type === 'bonus' ? '+' : '-'}
-                          {Number(adj.amount).toFixed(2)} ر.س
+                  <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                    {myDeductions.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-4 py-12 text-center text-neutral-500 font-mono">
+                          لا توجد خصومات مقيدة بحسابك خلال دورة هذا الشهر. سجل ممتاز!
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      myDeductions.map((ded) => {
+                        const canDispute = !isPeriodClosed && ['proposed', 'approved'].includes(ded.status) && !ded.dispute;
+
+                        return (
+                          <tr key={ded.id} className="hover:bg-neutral-100/50 dark:hover:bg-neutral-900/50 transition-colors">
+                            <td className="px-4 py-3 font-mono tabular-nums text-neutral-700 dark:text-neutral-300">
+                              {format(new Date(ded.createdAt), 'yyyy-MM-dd')}
+                            </td>
+                            <td className="px-4 py-3 font-bold text-neutral-950 dark:text-white font-ledger">
+                              {getTypeLabel(ded.type)}
+                            </td>
+                            <td className="px-4 py-3 text-neutral-700 dark:text-neutral-300 max-w-xs font-ledger">
+                              {ded.reason}
+                            </td>
+                            <td className="px-4 py-3 font-mono text-[11px] text-neutral-600 dark:text-neutral-400">
+                              {ded.calculationDetails?.explanation ? (
+                                <span className="border border-neutral-300 dark:border-neutral-700 px-1 py-0.5 bg-neutral-50 dark:bg-neutral-900">
+                                  {ded.calculationDetails.explanation}
+                                </span>
+                              ) : (
+                                '—'
+                              )}
+                            </td>
+                            <td className="px-4 py-3 font-mono font-bold tabular-nums text-neutral-950 dark:text-white">
+                              {Number(ded.amount).toFixed(2)} ر.س
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <RubberStamp
+                                label={getStatusStampLabel(ded.status)}
+                                recordId={ded.id}
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {canDispute ? (
+                                <LedgerButton
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() => {
+                                    setDisputeDeduction(ded);
+                                    setDisputeReason('');
+                                  }}
+                                >
+                                  اعتراض
+                                </LedgerButton>
+                              ) : ded.dispute ? (
+                                <div className="text-[10px] font-mono font-bold">
+                                  {ded.dispute.status === 'pending' && <span>قيد المراجعة</span>}
+                                  {ded.dispute.status === 'accepted' && <span>تم القبول ✓</span>}
+                                  {ded.dispute.status === 'rejected' && <span className="line-through">مرفوض</span>}
+                                </div>
+                              ) : (
+                                <span className="text-neutral-400">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
-              </div>
+              </LedgerTable>
+
+              {/* Adjustments Table */}
+              {myAdjustments.length > 0 && (
+                <LedgerTable>
+                  <div className="p-3 border-b-2 border-neutral-900 dark:border-neutral-100 bg-neutral-100 dark:bg-neutral-900 font-bold font-display text-sm">
+                    المكافآت والتسويات الإدارية المباشرة
+                  </div>
+                  <table className="w-full text-right text-xs">
+                    <thead>
+                      <tr className="bg-neutral-50 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
+                        <th className="px-4 py-3 font-bold font-mono">التاريخ</th>
+                        <th className="px-4 py-3 font-bold">النوع</th>
+                        <th className="px-4 py-3 font-bold">البيان</th>
+                        <th className="px-4 py-3 font-bold font-mono">المبلغ</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 font-mono">
+                      {myAdjustments.map((adj) => (
+                        <tr key={adj.id}>
+                          <td className="px-4 py-3 tabular-nums">{format(new Date(adj.createdAt), 'yyyy-MM-dd')}</td>
+                          <td className="px-4 py-3 font-bold font-ledger">
+                            {adj.type === 'bonus' ? 'مكافأة / حافز' : 'تسوية خصم'}
+                          </td>
+                          <td className="px-4 py-3 font-ledger text-neutral-700 dark:text-neutral-300">{adj.reason}</td>
+                          <td className="px-4 py-3 font-bold tabular-nums">
+                            {adj.type === 'bonus' ? '+' : '-'}
+                            {Number(adj.amount).toFixed(2)} ر.س
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </LedgerTable>
+              )}
             </div>
           )}
         </div>
       )}
 
-      {/* VIEW: ADMIN TAB */}
+      {/* 3. ADMIN VIEW */}
       {activeTab === 'admin' && user?.role === 'admin' && (
-        <div className="space-y-8">
-          {/* Admin Control Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-2xl border border-neutral-300 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900/50">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-black flex items-center justify-center">
-                <Layers className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-neutral-900 dark:text-white">
-                  إدارة الدورة المالية لشهر {selectedMonth}
-                </h3>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                  {isPeriodClosed
-                    ? 'الشهر مغلق ومحمي من التعديل. الرواتب مجمدة في السجلات التاريخية.'
-                    : 'يمكنك اعتماد الخصومات المقترحة، معالجة النزاعات، أو إغلاق الشهر نهائياً.'}
-                </p>
-              </div>
+        <div className="space-y-6">
+          {/* Admin Command Bar */}
+          <div className="border-2 border-neutral-900 dark:border-white bg-[#faf9f5] dark:bg-[#141414] p-4 shadow-solid-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-bold font-display text-neutral-950 dark:text-white flex items-center gap-2">
+                <LedgerIcon name="shield" size={16} />
+                <span>إدارة الدورة المالية لشهر {selectedMonth}</span>
+              </h3>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5 font-ledger">
+                {isPeriodClosed
+                  ? 'الشهر مغلق ومجمد في السجلات المحاسبية الرسمية. لا يمكن قبول تسويات جديدة.'
+                  : 'اعتماد الخصومات المقترحة آلياً، مراجعة النزاعات، وإغلاق المسير المالي نهائياً.'}
+              </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsAdjustmentModalOpen(true)}
+            <div className="flex flex-wrap items-center gap-2">
+              <LedgerButton
+                variant="secondary"
+                size="sm"
+                icon="plus"
                 disabled={isPeriodClosed}
-                className="flex items-center gap-1.5 rounded-xl border border-neutral-900 px-3.5 py-2 text-xs font-bold text-neutral-900 hover:bg-neutral-100 disabled:opacity-50 dark:border-white dark:text-white dark:hover:bg-neutral-800 transition-colors"
+                onClick={() => setIsAdjustmentModalOpen(true)}
               >
-                <PlusCircle className="h-4 w-4" />
-                <span>إضافة مكافأة / تسوية</span>
-              </button>
+                إضافة مكافأة / تسوية
+              </LedgerButton>
 
-              <button
-                onClick={() => batchApproveMutation.mutate()}
+              <LedgerButton
+                variant="primary"
+                size="sm"
+                icon="check"
                 disabled={isPeriodClosed || proposedDeductions.length === 0 || batchApproveMutation.isPending}
-                className="flex items-center gap-1.5 rounded-xl bg-neutral-900 px-3.5 py-2 text-xs font-bold text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200 transition-colors"
+                onClick={() => batchApproveMutation.mutate()}
               >
-                <CheckCircle2 className="h-4 w-4" />
-                <span>اعتماد الكل ({proposedDeductions.length})</span>
-              </button>
+                اعتماد الكل ({proposedDeductions.length})
+              </LedgerButton>
 
               {!isPeriodClosed && (
-                <button
+                <LedgerButton
+                  variant="danger"
+                  size="sm"
+                  icon="lock"
                   onClick={() => setIsClosePeriodConfirmOpen(true)}
-                  className="flex items-center gap-1.5 rounded-xl border-2 border-neutral-900 bg-white px-3.5 py-2 text-xs font-black text-neutral-900 hover:bg-neutral-100 dark:border-white dark:bg-neutral-900 dark:text-white dark:hover:bg-neutral-800 transition-colors"
                 >
-                  <Lock className="h-4 w-4" />
-                  <span>إغلاق الشهر المالي نهائياً</span>
-                </button>
+                  إغلاق الشهر نهائياً
+                </LedgerButton>
               )}
             </div>
           </div>
 
           {/* Pending Disputes Queue */}
           {disputedDeductions.length > 0 && (
-            <div className="rounded-2xl border-2 border-neutral-900 bg-white shadow-xs dark:border-white dark:bg-neutral-900 overflow-hidden">
-              <div className="p-5 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-neutral-900 dark:text-white" />
-                  <h3 className="text-base font-bold text-neutral-900 dark:text-white">
-                    طلبات الاعتراض المعلقة من الموظفين ({disputedDeductions.length})
-                  </h3>
-                </div>
+            <LedgerTable>
+              <div className="p-3 border-b-2 border-neutral-900 dark:border-neutral-100 bg-neutral-100 dark:bg-neutral-900 font-bold font-display text-sm flex items-center justify-between">
+                <span>طلبات الاعتراض المعلقة من الموظفين ({disputedDeductions.length})</span>
               </div>
-
-              <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
+              <div className="divide-y divide-neutral-200 dark:divide-neutral-800 p-3 space-y-3">
                 {disputedDeductions.map((ded) => (
-                  <div key={ded.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-neutral-900 dark:text-white">{ded.user?.name}</span>
-                        <span className="text-xs text-neutral-400 font-mono">({ded.user?.email})</span>
-                        <span className="text-xs font-bold rounded bg-neutral-100 px-2 py-0.5 dark:bg-neutral-800">
-                          {getTypeLabel(ded.type)}
-                        </span>
-                        <span className="text-xs font-black font-mono">{Number(ded.amount).toFixed(2)} ر.س</span>
+                  <div key={ded.id} className="border border-neutral-900 dark:border-white p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white dark:bg-black">
+                    <div className="space-y-1 font-ledger text-xs">
+                      <div className="flex items-center gap-2 font-mono">
+                        <span className="font-bold text-neutral-950 dark:text-white font-ledger">{ded.user?.name}</span>
+                        <span className="text-neutral-500">({ded.user?.email})</span>
+                        <span className="border border-neutral-400 px-1">{getTypeLabel(ded.type)}</span>
+                        <span className="font-bold tabular-nums">{Number(ded.amount).toFixed(2)} ر.س</span>
                       </div>
-                      <div className="text-xs text-neutral-600 dark:text-neutral-300">
-                        <strong>سبب الاعتراض:</strong> {ded.dispute?.reason || '—'}
-                      </div>
+                      <p className="text-neutral-700 dark:text-neutral-300">
+                        <strong>بيان الاعتراض:</strong> {ded.dispute?.reason || '—'}
+                      </p>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <button
+                      <LedgerButton
+                        variant="primary"
+                        size="sm"
                         onClick={() => {
                           setReviewingDispute({
                             id: ded.id,
@@ -667,11 +604,13 @@ export const DeductionsPage: React.FC = () => {
                           });
                           setReviewAction('accept');
                         }}
-                        className="rounded-lg bg-black px-3 py-1.5 text-xs font-bold text-white hover:bg-neutral-800 dark:bg-white dark:text-black transition-colors"
                       >
                         قبول (إلغاء الخصم)
-                      </button>
-                      <button
+                      </LedgerButton>
+
+                      <LedgerButton
+                        variant="secondary"
+                        size="sm"
                         onClick={() => {
                           setReviewingDispute({
                             id: ded.id,
@@ -681,385 +620,334 @@ export const DeductionsPage: React.FC = () => {
                           });
                           setReviewAction('reject');
                         }}
-                        className="rounded-lg border border-neutral-900 px-3 py-1.5 text-xs font-bold text-neutral-900 hover:bg-neutral-100 dark:border-white dark:text-white transition-colors"
                       >
-                        رفض الاعتراض
-                      </button>
+                        رفض وتثبيت
+                      </LedgerButton>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </LedgerTable>
           )}
 
           {/* All Employees Payroll Summary Table */}
-          <div className="rounded-2xl border border-neutral-300 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
-            <div className="p-5 border-b border-neutral-200 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <LedgerTable>
+            <div className="p-3 border-b-2 border-neutral-900 dark:border-neutral-100 bg-neutral-100 dark:bg-neutral-900 flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                  <FileSpreadsheet className="h-5 w-5" />
-                  <span>مسير رواتب الموظفين لشهر {selectedMonth}</span>
+                <h3 className="font-bold font-display text-sm text-neutral-950 dark:text-white">
+                  مسير رواتب الموظفين لشهر {selectedMonth}
                 </h3>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                  كشف رواتب تفصيلي متصل مباشرة بقاعدة البيانات مع التدقيق على سقف الخصم التأديبي القانوني.
+                <p className="text-xs text-neutral-500 font-ledger">
+                  كشف رواتب تفصيلي مع التدقيق التلقائي على سقف الخصم التأديبي القانوني.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    const csvRows = [
-                      ['اسم الموظف', 'البريد', 'الراتب الأساسي', 'الخصومات', 'المكافآت', 'صافي الراتب'],
-                      ...payrollSummary.map((p) => [
-                        p.user.name,
-                        p.user.email,
-                        p.monthlySalary,
-                        p.totalDeductions,
-                        p.bonuses,
-                        p.netPay,
-                      ]),
-                    ];
-                    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + csvRows.map((e) => e.join(',')).join('\n');
-                    const encodedUri = encodeURI(csvContent);
-                    const link = document.createElement('a');
-                    link.setAttribute('href', encodedUri);
-                    link.setAttribute('download', `payroll_${selectedMonth}.csv`);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                  }}
-                  className="flex items-center gap-1.5 rounded-xl border border-neutral-300 bg-white px-3 py-1.5 text-xs font-bold text-neutral-800 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
-                >
-                  <FileSpreadsheet className="h-4 w-4" />
-                  <span>تصدير CSV</span>
-                </button>
-              </div>
+              <LedgerButton
+                variant="secondary"
+                size="sm"
+                icon="download"
+                onClick={() => {
+                  const csvRows = [
+                    ['اسم الموظف', 'البريد', 'الراتب الأساسي', 'الخصومات', 'المكافآت', 'صافي الراتب'],
+                    ...payrollSummary.map((p) => [
+                      p.user.name,
+                      p.user.email,
+                      p.monthlySalary,
+                      p.totalDeductions,
+                      p.bonuses,
+                      p.netPay,
+                    ]),
+                  ];
+                  const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + csvRows.map((e) => e.join(',')).join('\n');
+                  const encodedUri = encodeURI(csvContent);
+                  const link = document.createElement('a');
+                  link.setAttribute('href', encodedUri);
+                  link.setAttribute('download', `payroll_${selectedMonth}.csv`);
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+              >
+                تصدير مسير CSV
+              </LedgerButton>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-right text-sm">
-                <thead className="bg-neutral-50 text-xs font-bold uppercase text-neutral-500 dark:bg-neutral-800/50 dark:text-neutral-400 border-b border-neutral-200 dark:border-neutral-700">
+            <table className="w-full text-right text-xs">
+              <thead>
+                <tr className="bg-neutral-50 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
+                  <th className="px-4 py-3 font-bold">الموظف</th>
+                  <th className="px-4 py-3 font-bold font-mono">الأساسي</th>
+                  <th className="px-4 py-3 font-bold font-mono">أجر اليوم</th>
+                  <th className="px-4 py-3 font-bold font-mono">إجمالي الخصم</th>
+                  <th className="px-4 py-3 font-bold text-center">السقف التأديبي</th>
+                  <th className="px-4 py-3 font-bold font-mono">المكافآت</th>
+                  <th className="px-4 py-3 font-bold font-mono">الصافي المستحق</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 font-mono">
+                {payrollSummary.length === 0 ? (
                   <tr>
-                    <th className="px-5 py-3.5">الموظف</th>
-                    <th className="px-5 py-3.5">الراتب الأساسي</th>
-                    <th className="px-5 py-3.5">أجر اليوم</th>
-                    <th className="px-5 py-3.5">إجمالي الخصومات</th>
-                    <th className="px-5 py-3.5">حالة السقف التأديبي</th>
-                    <th className="px-5 py-3.5">المكافآت</th>
-                    <th className="px-5 py-3.5">صافي الراتب المستحق</th>
+                    <td colSpan={7} className="px-4 py-12 text-center text-neutral-500 font-mono">
+                      لا توجد بيانات موظفين مسجلة لهذا الشهر.
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                  {payrollSummary.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="py-12 text-center text-neutral-400">
-                        لا توجد بيانات موظفين لهذا الشهر.
+                ) : (
+                  payrollSummary.map((item) => (
+                    <tr key={item.user.id} className="hover:bg-neutral-100/50 dark:hover:bg-neutral-900/50 transition-colors">
+                      <td className="px-4 py-3 font-bold font-ledger text-neutral-950 dark:text-white">
+                        <div>{item.user.name}</div>
+                        <div className="text-[10px] text-neutral-500 font-mono">{item.user.email}</div>
+                      </td>
+                      <td className="px-4 py-3 tabular-nums">{Number(item.monthlySalary).toFixed(2)} ر.س</td>
+                      <td className="px-4 py-3 tabular-nums text-neutral-500">{Number(item.dayWage).toFixed(2)} ر.س</td>
+                      <td className="px-4 py-3 tabular-nums font-bold text-neutral-900 dark:text-white">
+                        -{Number(item.totalDeductions).toFixed(2)} ر.س
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {item.capExceeded ? (
+                          <span className="border border-neutral-900 dark:border-white px-1 py-0.5 bg-neutral-200 dark:bg-neutral-800 font-bold text-[10px]">
+                            بلغ السقف ({Number(item.disciplinaryCapAmount).toFixed(0)} ر.س)
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-neutral-400">ضمن الحد النظامي</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 tabular-nums text-neutral-800 dark:text-neutral-200">
+                        +{Number(item.bonuses).toFixed(2)} ر.س
+                      </td>
+                      <td className="px-4 py-3 tabular-nums font-black text-sm text-neutral-950 dark:text-white border-b-2 border-neutral-900 dark:border-white">
+                        {Number(item.netPay).toFixed(2)} ر.س
                       </td>
                     </tr>
-                  ) : (
-                    payrollSummary.map((item) => (
-                      <tr key={item.user.id} className="hover:bg-neutral-50/70 dark:hover:bg-neutral-800/40 transition-colors">
-                        <td className="px-5 py-4 font-bold text-neutral-900 dark:text-white flex items-center gap-2.5">
-                          {item.user.photoUrl ? (
-                            <img
-                              src={item.user.photoUrl}
-                              alt={item.user.name}
-                              className="h-8 w-8 rounded-full object-cover border border-neutral-300 grayscale"
-                            />
-                          ) : (
-                            <div className="h-8 w-8 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center font-bold text-xs">
-                              {item.user.name.charAt(0)}
-                            </div>
-                          )}
-                          <div>
-                            <div>{item.user.name}</div>
-                            <div className="text-xs text-neutral-400 font-normal">{item.user.email}</div>
-                          </div>
-                        </td>
-
-                        <td className="px-5 py-4 font-mono font-bold text-neutral-900 dark:text-white">
-                          {Number(item.monthlySalary).toFixed(2)} ر.س
-                        </td>
-
-                        <td className="px-5 py-4 font-mono text-xs text-neutral-500">
-                          {Number(item.dayWage).toFixed(2)} ر.س
-                        </td>
-
-                        <td className="px-5 py-4 font-mono font-bold text-neutral-900 dark:text-white">
-                          {Number(item.totalDeductions).toFixed(2)} ر.س
-                        </td>
-
-                        <td className="px-5 py-4">
-                          {item.capExceeded ? (
-                            <span className="inline-flex items-center gap-1 rounded-md border border-neutral-900 bg-neutral-100 px-2 py-0.5 text-xs font-black dark:border-white dark:bg-neutral-800">
-                              <AlertTriangle className="h-3 w-3" />
-                              بلغ السقف ({Number(item.disciplinaryCapAmount).toFixed(0)} ر.س)
-                            </span>
-                          ) : (
-                            <span className="text-xs text-neutral-400">ضمن الحد المسموح</span>
-                          )}
-                        </td>
-
-                        <td className="px-5 py-4 font-mono text-xs font-bold text-neutral-900 dark:text-white">
-                          +{Number(item.bonuses).toFixed(2)} ر.س
-                        </td>
-
-                        <td className="px-5 py-4 font-mono font-black text-base text-neutral-900 dark:text-white">
-                          {Number(item.netPay).toFixed(2)} ر.س
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </LedgerTable>
         </div>
       )}
 
-      {/* MODAL: Dispute Submit */}
-      {disputeDeduction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl border border-neutral-300 bg-white p-6 shadow-2xl dark:border-neutral-700 dark:bg-neutral-900 animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-black text-neutral-900 dark:text-white mb-2">
-              تقديم اعتراض على الخصم
-            </h3>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
-              الخصم: {getTypeLabel(disputeDeduction.type)} بقيمة {Number(disputeDeduction.amount).toFixed(2)} ر.س بتاريخ {format(new Date(disputeDeduction.createdAt), 'yyyy-MM-dd')}
-            </p>
+      {/* 4. MODALS */}
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
-                  سبب الاعتراض والتوضيح (إلزامي)
-                </label>
-                <textarea
-                  rows={4}
-                  value={disputeReason}
-                  onChange={(e) => setDisputeReason(e.target.value)}
-                  placeholder="اكتب التوضيح أو الظرف الطارئ الذي أدى إلى هذا الخصم..."
-                  className="w-full rounded-xl border border-neutral-300 bg-transparent p-3 text-sm text-neutral-900 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:text-white dark:focus:border-white"
-                />
-              </div>
+      {/* Dispute Modal */}
+      <LedgerModal
+        isOpen={Boolean(disputeDeduction)}
+        onClose={() => setDisputeDeduction(null)}
+        title="تقديم اعتراض رسمي على الخصم"
+      >
+        {disputeDeduction && (
+          <div className="space-y-4 font-ledger text-xs">
+            <div className="border border-neutral-900 dark:border-white p-3 font-mono space-y-1">
+              <p>
+                <strong>الخصم:</strong> {getTypeLabel(disputeDeduction.type)}
+              </p>
+              <p>
+                <strong>المبلغ:</strong> {Number(disputeDeduction.amount).toFixed(2)} ر.س
+              </p>
+              <p>
+                <strong>تاريخ الخصم:</strong> {format(new Date(disputeDeduction.createdAt), 'yyyy-MM-dd')}
+              </p>
+            </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setDisputeDeduction(null)}
-                  className="rounded-xl px-4 py-2 text-xs font-bold text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
-                >
-                  إلغاء
-                </button>
-                <button
-                  type="button"
-                  disabled={!disputeReason.trim() || disputeMutation.isPending}
-                  onClick={() => disputeMutation.mutate({ id: disputeDeduction.id, reason: disputeReason.trim() })}
-                  className="rounded-xl bg-neutral-900 px-4 py-2 text-xs font-bold text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
-                >
-                  {disputeMutation.isPending ? 'جاري الإرسال...' : 'إرسال الاعتراض للإدارة'}
-                </button>
-              </div>
+            <div>
+              <label className="block text-xs font-bold mb-1">سبب وظروف الاعتراض (إلزامي للتوثيق):</label>
+              <textarea
+                rows={4}
+                value={disputeReason}
+                onChange={(e) => setDisputeReason(e.target.value)}
+                placeholder="وضح الظرف الطارئ أو العذر المرفق..."
+                className="w-full border-1.5 border-neutral-900 dark:border-white p-2.5 bg-white dark:bg-black outline-none"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+              <LedgerButton variant="secondary" size="sm" onClick={() => setDisputeDeduction(null)}>
+                إلغاء
+              </LedgerButton>
+              <LedgerButton
+                variant="primary"
+                size="sm"
+                disabled={!disputeReason.trim() || disputeMutation.isPending}
+                onClick={() => disputeMutation.mutate({ id: disputeDeduction.id, reason: disputeReason.trim() })}
+              >
+                {disputeMutation.isPending ? 'جاري الإرسال...' : 'إرسال الاعتراض'}
+              </LedgerButton>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </LedgerModal>
 
-      {/* MODAL: Review Dispute (Admin) */}
-      {reviewingDispute && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl border border-neutral-300 bg-white p-6 shadow-2xl dark:border-neutral-700 dark:bg-neutral-900 animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-black text-neutral-900 dark:text-white mb-2">
-              {reviewAction === 'accept' ? 'قبول الاعتراض وإلغاء الخصم' : 'رفض الاعتراض وتثبيت الخصم'}
-            </h3>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-4">
-              الموظف: {reviewingDispute.name} | القيمة: {reviewingDispute.amount} ر.س <br />
-              سبب الموظف: "{reviewingDispute.reason}"
-            </p>
+      {/* Review Dispute Modal */}
+      <LedgerModal
+        isOpen={Boolean(reviewingDispute)}
+        onClose={() => setReviewingDispute(null)}
+        title={reviewAction === 'accept' ? 'قرار قبول الاعتراض (إلغاء الخصم)' : 'قرار رفض الاعتراض (تثبيت الخصم)'}
+      >
+        {reviewingDispute && (
+          <div className="space-y-4 font-ledger text-xs">
+            <div className="border border-neutral-900 dark:border-white p-3 font-mono space-y-1">
+              <p>
+                <strong>الموظف:</strong> {reviewingDispute.name}
+              </p>
+              <p>
+                <strong>المبلغ:</strong> {reviewingDispute.amount} ر.س
+              </p>
+              <p>
+                <strong>بيان الموظف:</strong> {reviewingDispute.reason}
+              </p>
+            </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
-                  ملاحظات الإدارة
-                </label>
-                <textarea
-                  rows={3}
-                  value={reviewNotes}
-                  onChange={(e) => setReviewNotes(e.target.value)}
-                  placeholder="أدخل ملاحظات القرار للإشعار..."
-                  className="w-full rounded-xl border border-neutral-300 bg-transparent p-3 text-sm text-neutral-900 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:text-white dark:focus:border-white"
-                />
-              </div>
+            <div>
+              <label className="block text-xs font-bold mb-1">ملاحظات وقرار الإدارة:</label>
+              <textarea
+                rows={3}
+                value={reviewNotes}
+                onChange={(e) => setReviewNotes(e.target.value)}
+                placeholder="أدخل ملاحظات القرار الرسمي..."
+                className="w-full border-1.5 border-neutral-900 dark:border-white p-2.5 bg-white dark:bg-black outline-none"
+              />
+            </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setReviewingDispute(null)}
-                  className="rounded-xl px-4 py-2 text-xs font-bold text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
-                >
-                  إلغاء
-                </button>
-                <button
-                  type="button"
-                  disabled={reviewDisputeMutation.isPending}
-                  onClick={() =>
-                    reviewDisputeMutation.mutate({
-                      id: reviewingDispute.id,
-                      action: reviewAction,
-                      reviewNotes: reviewNotes.trim(),
-                    })
-                  }
-                  className="rounded-xl bg-neutral-900 px-4 py-2 text-xs font-bold text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
-                >
-                  {reviewDisputeMutation.isPending ? 'جاري التنفيذ...' : 'تأكيد القرار'}
-                </button>
-              </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+              <LedgerButton variant="secondary" size="sm" onClick={() => setReviewingDispute(null)}>
+                إلغاء
+              </LedgerButton>
+              <LedgerButton
+                variant="primary"
+                size="sm"
+                disabled={reviewDisputeMutation.isPending}
+                onClick={() =>
+                  reviewDisputeMutation.mutate({
+                    id: reviewingDispute.id,
+                    action: reviewAction,
+                    reviewNotes: reviewNotes.trim(),
+                  })
+                }
+              >
+                {reviewDisputeMutation.isPending ? 'جاري التنفيذ...' : 'تأكيد القرار الدفتري'}
+              </LedgerButton>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </LedgerModal>
 
-      {/* MODAL: Add Manual Adjustment (Admin) */}
-      {isAdjustmentModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl border border-neutral-300 bg-white p-6 shadow-2xl dark:border-neutral-700 dark:bg-neutral-900 animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-black text-neutral-900 dark:text-white mb-4 flex items-center gap-2">
-              <PlusCircle className="h-5 w-5" />
-              <span>إضافة تسوية مالية / مكافأة لشهر {selectedMonth}</span>
-            </h3>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
-                  الموظف المستهدف
-                </label>
-                <select
-                  value={adjustmentUserId}
-                  onChange={(e) => setAdjustmentUserId(e.target.value)}
-                  className="w-full rounded-xl border border-neutral-300 bg-transparent p-2.5 text-sm font-bold text-neutral-900 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:text-white dark:bg-neutral-800"
-                >
-                  <option value="">اختر موظفاً...</option>
-                  {allUsers.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name} ({u.email})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
-                  نوع الحركة
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setAdjustmentType('bonus')}
-                    className={`rounded-xl py-2 px-3 text-xs font-bold border transition-colors ${
-                      adjustmentType === 'bonus'
-                        ? 'border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-black'
-                        : 'border-neutral-300 text-neutral-600 dark:border-neutral-700 dark:text-neutral-400'
-                    }`}
-                  >
-                    مكافأة / حافز إضافي (+)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAdjustmentType('manual_deduction')}
-                    className={`rounded-xl py-2 px-3 text-xs font-bold border transition-colors ${
-                      adjustmentType === 'manual_deduction'
-                        ? 'border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-black'
-                        : 'border-neutral-300 text-neutral-600 dark:border-neutral-700 dark:text-neutral-400'
-                    }`}
-                  >
-                    خصم يدوي مباشر (-)
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
-                  المبلغ (ر.س)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={adjustmentAmount}
-                  onChange={(e) => setAdjustmentAmount(e.target.value)}
-                  placeholder="مثال: 250"
-                  className="w-full rounded-xl border border-neutral-300 bg-transparent p-2.5 text-sm font-mono font-bold text-neutral-900 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1.5">
-                  السبب المكتوب (إلزامي للرقابة)
-                </label>
-                <textarea
-                  rows={2}
-                  value={adjustmentReason}
-                  onChange={(e) => setAdjustmentReason(e.target.value)}
-                  placeholder="مثال: إنجاز متفوق في إغلاق الصفقات..."
-                  className="w-full rounded-xl border border-neutral-300 bg-transparent p-2.5 text-sm text-neutral-900 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:text-white"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsAdjustmentModalOpen(false)}
-                  className="rounded-xl px-4 py-2 text-xs font-bold text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
-                >
-                  إلغاء
-                </button>
-                <button
-                  type="button"
-                  disabled={!adjustmentUserId || !adjustmentAmount || !adjustmentReason.trim() || createAdjustmentMutation.isPending}
-                  onClick={() => createAdjustmentMutation.mutate()}
-                  className="rounded-xl bg-neutral-900 px-4 py-2 text-xs font-bold text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
-                >
-                  {createAdjustmentMutation.isPending ? 'جاري الحفظ...' : 'حفظ التسوية'}
-                </button>
-              </div>
-            </div>
+      {/* Manual Adjustment Modal */}
+      <LedgerModal
+        isOpen={isAdjustmentModalOpen}
+        onClose={() => setIsAdjustmentModalOpen(false)}
+        title={`إضافة تسوية مالية / مكافأة لشهر ${selectedMonth}`}
+      >
+        <div className="space-y-4 font-ledger text-xs">
+          <div>
+            <label className="block text-xs font-bold mb-1">الموظف المعني:</label>
+            <select
+              value={adjustmentUserId}
+              onChange={(e) => setAdjustmentUserId(e.target.value)}
+              className="w-full border-1.5 border-neutral-900 dark:border-white p-2 bg-white dark:bg-black outline-none font-bold"
+            >
+              <option value="">اختر موظفاً...</option>
+              {allUsers.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name} ({u.email})
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
-      )}
 
-      {/* MODAL: Close Period Confirmation */}
-      {isClosePeriodConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-2xl border-2 border-neutral-900 bg-white p-6 shadow-2xl dark:border-white dark:bg-neutral-900 animate-in fade-in zoom-in-95 duration-200">
-            <div className="h-12 w-12 rounded-2xl border-2 border-neutral-900 dark:border-white flex items-center justify-center mb-4">
-              <Lock className="h-6 w-6 text-neutral-900 dark:text-white" />
-            </div>
-            <h3 className="text-lg font-black text-neutral-900 dark:text-white mb-2">
-              تأكيد إغلاق مسير الرواتب لشهر {selectedMonth}
-            </h3>
-            <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-6 leading-relaxed">
-              تحذير مالي رقابي: إغلاق الشهر المالي إجراء <strong>دائم وغير قابل للتراجع</strong>. سيتم تحويل جميع الخصومات والتسويات إلى حالة <code className="font-bold">closed_in_payroll</code>، ولن يُسمح بعدها بإضافة أو تعديل أي خصومات أو قبول أي اعتراضات لهذا الشهر.
-            </p>
-
-            <div className="flex items-center justify-end gap-2">
+          <div>
+            <label className="block text-xs font-bold mb-1">نوع الحركة:</label>
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setIsClosePeriodConfirmOpen(false)}
-                className="rounded-xl px-4 py-2 text-xs font-bold text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
+                onClick={() => setAdjustmentType('bonus')}
+                className={`py-2 px-3 text-xs font-bold border-2 transition-colors ${
+                  adjustmentType === 'bonus'
+                    ? 'border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-black'
+                    : 'border-neutral-400 text-neutral-600 dark:text-neutral-400'
+                }`}
               >
-                تراجع
+                مكافأة / حافز (+)
               </button>
               <button
                 type="button"
-                disabled={closePeriodMutation.isPending}
-                onClick={() => closePeriodMutation.mutate()}
-                className="rounded-xl bg-neutral-900 px-4 py-2 text-xs font-black text-white hover:bg-neutral-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+                onClick={() => setAdjustmentType('manual_deduction')}
+                className={`py-2 px-3 text-xs font-bold border-2 transition-colors ${
+                  adjustmentType === 'manual_deduction'
+                    ? 'border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-black'
+                    : 'border-neutral-400 text-neutral-600 dark:text-neutral-400'
+                }`}
               >
-                {closePeriodMutation.isPending ? 'جاري الإغلاق...' : 'نعم، إغلاق الشهر نهائياً'}
+                خصم يدوي مباشر (-)
               </button>
             </div>
           </div>
+
+          <div>
+            <LedgerInput
+              label="المبلغ (ر.س):"
+              type="number"
+              min="0"
+              step="0.01"
+              value={adjustmentAmount}
+              onChange={(e) => setAdjustmentAmount(e.target.value)}
+              placeholder="مثال: 250"
+              isMono
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold mb-1">السبب المكتوب (إلزامي للرقابة):</label>
+            <textarea
+              rows={2}
+              value={adjustmentReason}
+              onChange={(e) => setAdjustmentReason(e.target.value)}
+              placeholder="مثال: تميز في إنجاز المهام الاستثنائية..."
+              className="w-full border-1.5 border-neutral-900 dark:border-white p-2.5 bg-white dark:bg-black outline-none"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+            <LedgerButton variant="secondary" size="sm" onClick={() => setIsAdjustmentModalOpen(false)}>
+              إلغاء
+            </LedgerButton>
+            <LedgerButton
+              variant="primary"
+              size="sm"
+              disabled={!adjustmentUserId || !adjustmentAmount || !adjustmentReason.trim() || createAdjustmentMutation.isPending}
+              onClick={() => createAdjustmentMutation.mutate()}
+            >
+              {createAdjustmentMutation.isPending ? 'جاري القيد...' : 'حفظ الحركة المالية'}
+            </LedgerButton>
+          </div>
         </div>
-      )}
+      </LedgerModal>
+
+      {/* Close Period Confirmation Modal */}
+      <LedgerModal
+        isOpen={isClosePeriodConfirmOpen}
+        onClose={() => setIsClosePeriodConfirmOpen(false)}
+        title={`إغلاق مسير الرواتب لشهر ${selectedMonth} نهائياً`}
+      >
+        <div className="space-y-4 font-ledger text-xs">
+          <p className="leading-relaxed border border-neutral-900 dark:border-white p-3 font-mono bg-neutral-100 dark:bg-neutral-900">
+            تحذير مالي: إغلاق الشهر المالي إجراء <strong>دائم وغير قابل للتراجع</strong>. سيتم تحويل كافة الخصومات والتسويات إلى حالة <code className="font-bold">closed_in_payroll</code>، ولن يُسمح بأي تعديل إضافي لهذا الشهر.
+          </p>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+            <LedgerButton variant="secondary" size="sm" onClick={() => setIsClosePeriodConfirmOpen(false)}>
+              تراجع
+            </LedgerButton>
+            <LedgerButton
+              variant="danger"
+              size="sm"
+              disabled={closePeriodMutation.isPending}
+              onClick={() => closePeriodMutation.mutate()}
+            >
+              {closePeriodMutation.isPending ? 'جاري الإغلاق...' : 'نعم، إغلاق الشهر نهائياً'}
+            </LedgerButton>
+          </div>
+        </div>
+      </LedgerModal>
     </MotionPage>
   );
 };

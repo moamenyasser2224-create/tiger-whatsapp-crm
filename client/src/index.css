@@ -1,13 +1,15 @@
+@import './theme/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply bg-white text-[#111111] dark:bg-[#0a0a0a] dark:text-[#f5f5f5] font-cairo antialiased;
+    @apply bg-[#fafafa] text-[#111111] dark:bg-[#0d0d0d] dark:text-[#f5f5f5] font-ledger antialiased paper-texture;
   }
 
-  /* Custom scrollbar in monochrome */
+  /* Custom square scrollbar in monochrome ledger style */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -16,9 +18,9 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-neutral-300 dark:bg-neutral-800 rounded-full;
+    @apply bg-neutral-400 dark:bg-neutral-700 rounded-none;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-neutral-400 dark:bg-neutral-700;
+    @apply bg-neutral-900 dark:bg-neutral-400;
   }
 }

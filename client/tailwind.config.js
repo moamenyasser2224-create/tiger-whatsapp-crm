@@ -41,7 +41,20 @@ export default {
         }
       },
       fontFamily: {
-        cairo: ['Cairo', 'sans-serif'],
+        ledger: ['"IBM Plex Sans Arabic"', 'sans-serif'],
+        display: ['"Reem Kufi"', 'sans-serif'],
+        mono: ['"IBM Plex Mono"', 'monospace'],
+      },
+      boxShadow: {
+        'solid-sm': '2px 2px 0px 0px #111111',
+        'solid': '4px 4px 0px 0px #111111',
+        'solid-lg': '6px 6px 0px 0px #111111',
+        'solid-dark': '4px 4px 0px 0px #ffffff',
+      },
+      borderRadius: {
+        'none': '0px',
+        'sharp': '0px',
+        'control': '2px',
       },
     },
   },

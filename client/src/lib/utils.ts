@@ -90,3 +90,37 @@ export const SOURCE_COLORS: Record<string, string> = {
   'أخرى': '#d4d4d4',
 };
 
+/**
+ * Normalizes Arabic text for smart invariant search:
+ * - Strips tashkeel (diacritics)
+ * - Strips tatweel (kashida)
+ * - Normalizes alifs (أ إ آ ٱ -> ا)
+ * - Normalizes taa marbuta (ة -> ه)
+ * - Normalizes yaa and alif maqsura (ى -> ي)
+ */
+export function normalizeArabic(text: string): string {
+  if (!text) return '';
+  return text
+    .trim()
+    .toLowerCase()
+    // Strip diacritics
+    .replace(/[\u064B-\u0652\u0656-\u065F\u0670]/g, '')
+    // Strip tatweel
+    .replace(/\u0640/g, '')
+    // Unify alifs
+    .replace(/[أإآٱ]/g, 'ا')
+    // Unify taa marbuta
+    .replace(/ة/g, 'ه')
+    // Unify yaa / alif maqsura
+    .replace(/ى/g, 'ي');
+}
+
+/**
+ * Checks if search query matches target text using normalized Arabic
+ */
+export function matchesArabicSearch(target: string, query: string): boolean {
+  if (!query) return true;
+  if (!target) return false;
+  return normalizeArabic(target).includes(normalizeArabic(query));
+}
+
