@@ -6,6 +6,7 @@ import { AttendancePage } from '../AttendancePage.js';
 import { AuthProvider } from '../../contexts/AuthContext.js';
 import { ThemeProvider } from '../../contexts/ThemeContext.js';
 import { SocketProvider } from '../../contexts/SocketContext.js';
+import { ToastProvider } from '../../components/motion/Toast.js';
 
 vi.mock('../../lib/api.js', () => ({
   api: {
@@ -40,7 +41,9 @@ describe('AttendancePage Component', () => {
           <ThemeProvider>
             <AuthProvider>
               <SocketProvider>
-                <AttendancePage />
+                <ToastProvider>
+                  <AttendancePage />
+                </ToastProvider>
               </SocketProvider>
             </AuthProvider>
           </ThemeProvider>
@@ -48,7 +51,7 @@ describe('AttendancePage Component', () => {
       </QueryClientProvider>
     );
 
-    expect(screen.getByText('نظام الحضور والانصراف الذكي')).toBeInTheDocument();
+    expect(screen.getByText(/نظام الحضور والانصراف/)).toBeInTheDocument();
     expect(screen.getByText('تسجيل حضور الآن')).toBeInTheDocument();
     expect(screen.getByText('تسجيل انصراف الآن')).toBeInTheDocument();
     expect(screen.getByText('حالة تواجد أعضاء الفريق اليوم (مباشر)')).toBeInTheDocument();

@@ -8,11 +8,12 @@ generator client {
 }
 
 model User {
-  id                 String               @id @default(uuid())
-  email              String               @unique
-  password           String
-  name               String
-  role               String               @default("employee") // [admin, employee]
+  id                   String               @id @default(uuid())
+  email                String               @unique
+  password             String
+  name                 String
+  role                 String               @default("employee") // [admin, employee]
+  monthlySalary        String?              // Stored as AES-256-GCM encrypted string
   isTwoFactorEnabled   Boolean              @default(false)
   twoFactorSecret      String?
   photoUrl             String?
@@ -22,16 +23,25 @@ model User {
   biometricConsentDate DateTime?
   mustChangePassword   Boolean              @default(false)
   createdAt            DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  deletedAt          DateTime?
+  updatedAt            DateTime             @updatedAt
+  deletedAt            DateTime?
 
-  customers           Customer[]
-  messageTemplates    MessageTemplate[]
-  refreshTokens       RefreshToken[]
-  passwordResetTokens PasswordResetToken[]
-  auditLogs           AuditLog[]
-  attendances         Attendance[]
-  chatMessages        ChatMessage[]
+  customers                 Customer[]
+  messageTemplates          MessageTemplate[]
+  refreshTokens             RefreshToken[]
+  passwordResetTokens       PasswordResetToken[]
+  auditLogs                 AuditLog[]
+  attendances               Attendance[]
+  chatMessages              ChatMessage[]
+  workSchedules             WorkSchedule[]
+  leaveRequests             LeaveRequest[]          @relation("UserLeaveRequests")
+  reviewedLeaveRequests     LeaveRequest[]          @relation("AdminReviewedLeaves")
+  attendanceCorrections     AttendanceCorrection[]  @relation("UserAttendanceCorrections")
+  reviewedCorrections       AttendanceCorrection[]  @relation("AdminReviewedCorrections")
+  deductions                Deduction[]
+  adjustments               Adjustment[]
+  deductionDisputes         DeductionDispute[]      @relation("UserDisputes")
+  reviewedDisputes          DeductionDispute[]      @relation("AdminReviewedDisputes")
 
   @@map("users")
 }
@@ -41,8 +51,8 @@ model Customer {
   userId      String
   name        String
   company     String?
-  phone       String    // Stored as AES-256-GCM encrypted string
-  phoneHash   String    // SHA-256 HMAC or Hash for fast indexing & duplicate detection per user
+  phone       String
+  phoneHash   String
   city        String?
   source      String?   @default("واتساب")
   status      String?   @default("جديد")
@@ -85,11 +95,224 @@ model ListOption {
 }
 
 model Settings {
-  id        String   @id @default(uuid())
-  orgName   String   @default("تايجر CRM")
-  updatedAt DateTime @updatedAt
+  id                           String   @id @default(uuid())
+  orgName                      String   @default("تايجر CRM")
+  orgTimezone                  String   @default("Africa/Cairo")
+  currency                     String   @default("EGP")
+  dayWageCalculation           String   @default("fixed_30") // "fixed_30" (salary/30) or "working_days" (salary/actual_working_days)
+  disciplinaryMonthlyCapPercent Decimal  @default(20.0)
+  disputeWindowDays            Int      @default(3)
+  updatedAt                    DateTime @updatedAt
 
   @@map("settings")
+}
+
+model Shift {
+  id           String   @id @default(uuid())
+  name         String
+  startTime    String   // HH:mm (e.g. 09:00)
+  endTime      String   // HH:mm (e.g. 17:00)
+  graceMinutes Int      @default(15)
+  breakMinutes Int      @default(60)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workSchedules WorkSchedule[]
+  attendances   Attendance[]
+
+  @@map("shifts")
+}
+
+model WorkSchedule {
+  id        String   @id @default(uuid())
+  userId    String
+  shiftId   String?
+  dayOfWeek Int      // 0=Sunday, 1=Monday, ..., 5=Friday, 6=Saturday
+  isWeekend Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shift Shift? @relation(fields: [shiftId], references: [id])
+
+  @@unique([userId, dayOfWeek])
+  @@index([userId])
+  @@map("work_schedules")
+}
+
+model Holiday {
+  id        String   @id @default(uuid())
+  date      String   @unique // YYYY-MM-DD
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("holidays")
+}
+
+model LeaveRequest {
+  id           String    @id @default(uuid())
+  userId       String
+  type         String    // annual, sick, unpaid, emergency
+  fromDate     String    // YYYY-MM-DD
+  toDate       String    // YYYY-MM-DD
+  reason       String
+  status       String    @default("pending") // pending, approved, rejected
+  reviewedBy   String?
+  reviewedAt   DateTime?
+  adminComment String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user     User  @relation("UserLeaveRequests", fields: [userId], references: [id], onDelete: Cascade)
+  reviewer User? @relation("AdminReviewedLeaves", fields: [reviewedBy], references: [id])
+
+  @@index([userId, fromDate, toDate])
+  @@map("leave_requests")
+}
+
+model Attendance {
+  id                 String    @id @default(uuid())
+  userId             String
+  date               String    // YYYY-MM-DD
+  checkIn            DateTime?
+  checkOut           DateTime?
+  status             String    @default("present") // present, late, absent_unexcused, absent_excused, holiday, weekend, early_leave, missed_checkout
+  lateMinutes        Int       @default(0)
+  earlyLeaveMinutes  Int       @default(0)
+  workedMinutes      Int       @default(0)
+  overtimeMinutes    Int       @default(0)
+  source             String    @default("manual") // manual, face, admin_correction
+  shiftId            String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shift       Shift?                 @relation(fields: [shiftId], references: [id])
+  corrections AttendanceCorrection[]
+  deductions  Deduction[]
+
+  @@unique([userId, date])
+  @@index([date])
+  @@map("attendances")
+}
+
+model AttendanceCorrection {
+  id                 String    @id @default(uuid())
+  userId             String
+  attendanceId       String?
+  date               String    // YYYY-MM-DD
+  requestedCheckIn   DateTime?
+  requestedCheckOut  DateTime?
+  reason             String
+  status             String    @default("pending") // pending, approved, rejected
+  reviewedBy         String?
+  reviewedAt         DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  user       User        @relation("UserAttendanceCorrections", fields: [userId], references: [id], onDelete: Cascade)
+  attendance Attendance? @relation(fields: [attendanceId], references: [id])
+  reviewer   User?       @relation("AdminReviewedCorrections", fields: [reviewedBy], references: [id])
+
+  @@index([userId, date])
+  @@map("attendance_corrections")
+}
+
+model DeductionRule {
+  id            String   @id @default(uuid())
+  ruleType      String   // late, early_leave, unexcused_absence, unpaid_leave
+  name          String
+  minMinutes    Int?
+  maxMinutes    Int?
+  deductionType String   // fixed_amount, percentage_day_wage, multiplier_day_wage, per_minute
+  value         Decimal
+  order         Int      @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  deductions Deduction[]
+
+  @@map("deduction_rules")
+}
+
+model PayrollPeriod {
+  id        String    @id @default(uuid())
+  month     String    @unique // YYYY-MM
+  status    String    @default("open") // open, closed
+  closedAt  DateTime?
+  closedBy  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  deductions  Deduction[]
+  adjustments Adjustment[]
+
+  @@map("payroll_periods")
+}
+
+model Deduction {
+  id                 String   @id @default(uuid())
+  userId             String
+  attendanceId       String?
+  ruleId             String?
+  payrollPeriodId    String?
+  type               String   // late, early_leave, absence, manual
+  amount             Decimal
+  calculationDetails String   @db.Text // JSON explaining calculation
+  status             String   @default("proposed") // proposed, approved, disputed, cancelled, closed_in_payroll
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attendance    Attendance?        @relation(fields: [attendanceId], references: [id])
+  rule          DeductionRule?     @relation(fields: [ruleId], references: [id])
+  payrollPeriod PayrollPeriod?     @relation(fields: [payrollPeriodId], references: [id])
+  disputes      DeductionDispute[]
+
+  @@index([userId, payrollPeriodId, status])
+  @@map("deductions")
+}
+
+model Adjustment {
+  id              String   @id @default(uuid())
+  userId          String
+  payrollPeriodId String?
+  type            String   // bonus, manual_deduction
+  amount          Decimal
+  reason          String
+  createdBy       String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payrollPeriod PayrollPeriod? @relation(fields: [payrollPeriodId], references: [id])
+
+  @@index([userId, payrollPeriodId])
+  @@map("adjustments")
+}
+
+model DeductionDispute {
+  id            String    @id @default(uuid())
+  deductionId   String
+  userId        String
+  reason        String
+  attachmentUrl String?
+  status        String    @default("pending") // pending, accepted, rejected
+  reviewedBy    String?
+  reviewNotes   String?
+  reviewedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  deduction Deduction @relation(fields: [deductionId], references: [id], onDelete: Cascade)
+  user      User      @relation("UserDisputes", fields: [userId], references: [id], onDelete: Cascade)
+  reviewer  User?     @relation("AdminReviewedDisputes", fields: [reviewedBy], references: [id])
+
+  @@index([deductionId])
+  @@index([userId])
+  @@map("deduction_disputes")
 }
 
 model MessageTemplate {
@@ -115,7 +338,7 @@ model RefreshToken {
   revoked   Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("refresh_tokens")
@@ -129,7 +352,7 @@ model PasswordResetToken {
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("password_reset_tokens")
@@ -138,34 +361,18 @@ model PasswordResetToken {
 model AuditLog {
   id        String   @id @default(uuid())
   userId    String
-  action    String   // CREATE, UPDATE, DELETE, EXPORT, LOGIN, 2FA_ENABLE, etc.
-  entity    String   // CUSTOMER, TEMPLATE, USER, AUTH
+  action    String
+  entity    String
   entityId  String?
   details   Json?
   ipAddress String?
   userAgent String?
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@map("audit_logs")
-}
-
-model Attendance {
-  id        String    @id @default(uuid())
-  userId    String
-  date      String    // YYYY-MM-DD
-  checkIn   DateTime?
-  checkOut  DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, date])
-  @@index([date])
-  @@map("attendances")
 }
 
 model ChatMessage {
@@ -174,9 +381,8 @@ model ChatMessage {
   text      String   @db.Text
   createdAt DateTime @default(now())
 
-  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
   @@map("chat_messages")
 }
-

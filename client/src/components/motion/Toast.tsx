@@ -13,6 +13,7 @@ export interface ToastMessage {
 
 interface ToastContextType {
   toast: (options: { type?: ToastType; title: string; description?: string }) => void;
+  addToast: (title: string, type?: ToastType, description?: string) => void;
   success: (title: string, description?: string) => void;
   error: (title: string, description?: string) => void;
   info: (title: string, description?: string) => void;
@@ -27,7 +28,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const addToast = useCallback((options: { type?: ToastType; title: string; description?: string }) => {
+  const triggerToast = useCallback((options: { type?: ToastType; title: string; description?: string }) => {
     const id = Math.random().toString(36).substring(2, 9);
     const newToast: ToastMessage = {
       id,
@@ -43,20 +44,24 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, 4000);
   }, [removeToast]);
 
+  const addToast = useCallback((title: string, type?: ToastType, description?: string) => {
+    triggerToast({ title, type, description });
+  }, [triggerToast]);
+
   const success = useCallback((title: string, description?: string) => {
-    addToast({ type: 'success', title, description });
-  }, [addToast]);
+    triggerToast({ type: 'success', title, description });
+  }, [triggerToast]);
 
   const error = useCallback((title: string, description?: string) => {
-    addToast({ type: 'error', title, description });
-  }, [addToast]);
+    triggerToast({ type: 'error', title, description });
+  }, [triggerToast]);
 
   const info = useCallback((title: string, description?: string) => {
-    addToast({ type: 'info', title, description });
-  }, [addToast]);
+    triggerToast({ type: 'info', title, description });
+  }, [triggerToast]);
 
   return (
-    <ToastContext.Provider value={{ toast: addToast, success, error, info }}>
+    <ToastContext.Provider value={{ toast: triggerToast, addToast, success, error, info }}>
       {children}
       <LazyMotion features={domAnimation}>
         <div

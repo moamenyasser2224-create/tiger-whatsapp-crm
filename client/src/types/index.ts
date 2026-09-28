@@ -124,3 +124,142 @@ export interface PaginatedCustomers {
   limit: number;
   totalPages: number;
 }
+
+export interface Shift {
+  id: string;
+  name: string;
+  startTime: string; // HH:mm
+  endTime: string;   // HH:mm
+  gracePeriodMinutes: number;
+  isDefault: boolean;
+}
+
+export interface LeaveRequest {
+  id: string;
+  userId: string;
+  type: 'annual' | 'sick' | 'unpaid' | 'emergency';
+  startDate: string;
+  endDate: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  reason?: string | null;
+  reviewedBy?: string | null;
+  reviewNotes?: string | null;
+  createdAt: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    photoUrl?: string | null;
+  };
+}
+
+export interface AttendanceCorrection {
+  id: string;
+  userId: string;
+  date: string;
+  requestedCheckIn?: string | null;
+  requestedCheckOut?: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  reason: string;
+  reviewedBy?: string | null;
+  reviewNotes?: string | null;
+  createdAt: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    photoUrl?: string | null;
+  };
+}
+
+export interface HeatmapDay {
+  date: string;
+  status: 'present' | 'late' | 'absent' | 'leave' | 'holiday' | 'weekend' | 'future';
+  lateMinutes?: number;
+  workedMinutes?: number;
+  hasDeduction?: boolean;
+}
+
+export interface Deduction {
+  id: string;
+  userId: string;
+  attendanceId?: string | null;
+  period: string; // YYYY-MM
+  type: 'late' | 'early_leave' | 'unexcused_absence' | 'unpaid_leave' | 'other';
+  reason: string;
+  amount: number;
+  status: 'proposed' | 'approved' | 'disputed' | 'cancelled' | 'closed_in_payroll';
+  calculationDetails?: {
+    salary?: number;
+    dayWage?: number;
+    lateMinutes?: number;
+    tier?: string;
+    multiplier?: number;
+    explanation?: string;
+    capApplied?: boolean;
+  };
+  approvedAt?: string | null;
+  createdAt: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    photoUrl?: string | null;
+  };
+  dispute?: DeductionDispute | null;
+}
+
+export interface DeductionDispute {
+  id: string;
+  deductionId: string;
+  userId: string;
+  reason: string;
+  attachmentUrl?: string | null;
+  status: 'pending' | 'accepted' | 'rejected';
+  adminNotes?: string | null;
+  createdAt: string;
+}
+
+export interface Adjustment {
+  id: string;
+  userId: string;
+  period: string; // YYYY-MM
+  type: 'bonus' | 'manual_deduction';
+  amount: number;
+  reason: string;
+  createdAt: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    photoUrl?: string | null;
+  };
+}
+
+export interface PayrollPeriod {
+  id: string;
+  period: string;
+  status: 'open' | 'closed';
+  closedAt?: string | null;
+  closedBy?: string | null;
+}
+
+export interface UserPayrollSummary {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    photoUrl?: string | null;
+  };
+  monthlySalary: number;
+  dayWage: number;
+  totalDeductions: number;
+  disciplinaryDeductions: number;
+  disciplinaryCapAmount: number;
+  capExceeded: boolean;
+  bonuses: number;
+  manualDeductions: number;
+  netPay: number;
+  deductionsCount: number;
+}
+
