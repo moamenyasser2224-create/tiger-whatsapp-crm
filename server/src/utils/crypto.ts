@@ -76,3 +76,48 @@ export function decryptPhone(encryptedPayload: string): string {
 
   return decrypted;
 }
+
+/**
+ * Encrypts employee monthly salary with AES-256-GCM
+ */
+export function encryptSalary(salary: string | number): string {
+  const str = String(salary);
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const key = getKeyBuffer();
+  const cipher = crypto.createCipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH });
+
+  let encrypted = cipher.update(str, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+
+  const tag = cipher.getAuthTag();
+
+  return `${iv.toString('hex')}:${tag.toString('hex')}:${encrypted}`;
+}
+
+/**
+ * Decrypts employee monthly salary
+ */
+export function decryptSalary(encryptedPayload: string | null | undefined): number {
+  if (!encryptedPayload) return 0;
+
+  try {
+    const parts = encryptedPayload.split(':');
+    if (parts.length !== 3) return 0;
+
+    const [ivHex, tagHex, encryptedHex] = parts;
+    const iv = Buffer.from(ivHex, 'hex');
+    const tag = Buffer.from(tagHex, 'hex');
+    const key = getKeyBuffer();
+
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH });
+    decipher.setAuthTag(tag);
+
+    let decrypted = decipher.update(encryptedHex, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+
+    const val = parseFloat(decrypted);
+    return isNaN(val) ? 0 : val;
+  } catch {
+    return 0;
+  }
+}

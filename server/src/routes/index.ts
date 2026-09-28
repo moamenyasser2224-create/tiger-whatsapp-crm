@@ -7,6 +7,7 @@ import attendanceRoutes from './attendance.routes.js';
 import chatRoutes from './chat.routes.js';
 import optionRoutes from './option.routes.js';
 import settingsRoutes from './settings.routes.js';
+import deductionRoutes from './deduction.routes.js';
 
 const router = Router();
 
@@ -18,6 +19,7 @@ router.use('/attendance', attendanceRoutes);
 router.use('/chat', chatRoutes);
 router.use('/options', optionRoutes);
 router.use('/settings', settingsRoutes);
+router.use('/deductions', deductionRoutes);
 
 export default router;
 

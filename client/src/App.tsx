@@ -18,6 +18,7 @@ import { AttendancePage } from './pages/AttendancePage.js';
 import { ChatPage } from './pages/ChatPage.js';
 import { TemplatesPage } from './pages/TemplatesPage.js';
 import { SettingsPage } from './pages/SettingsPage.js';
+import { DeductionsPage } from './pages/DeductionsPage.js';
 
 import { ToastProvider } from './components/motion/Toast.js';
 
@@ -51,6 +52,7 @@ export const App: React.FC = () => {
                       <Route path="/" element={<DashboardPage />} />
                       <Route path="/customers" element={<CustomersPage />} />
                       <Route path="/attendance" element={<AttendancePage />} />
+                      <Route path="/deductions" element={<DeductionsPage />} />
                       <Route path="/chat" element={<ChatPage />} />
                       <Route path="/templates" element={<TemplatesPage />} />
                       <Route path="/settings" element={<SettingsPage />} />
