@@ -6,6 +6,7 @@ export const PromotCompanyPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'all' | 'history' | 'philosophy' | 'portfolio' | 'partners'>('all');
+  const [featuredVideoSource, setFeaturedVideoSource] = useState<'flow' | 'promot'>('flow');
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [activeModalVideo, setActiveModalVideo] = useState<string>('https://www.youtube-nocookie.com/embed/Zjv8MfmMtNw');
   const videoSectionRef = useRef<HTMLDivElement>(null);
@@ -114,7 +115,7 @@ export const PromotCompanyPage: React.FC = () => {
           3. HERO SECTION WITH HIGH-TECH VIDEO BACKGROUND (نفس PROMOT)
           ======================================================== */}
       <section className="relative min-h-[75vh] flex items-center justify-center overflow-hidden">
-        {/* Background Looping Video from Promot / Industrial Robotics */}
+        {/* Background Looping Video from User Flow Video & Promot Robotics */}
         <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
           <video
             autoPlay
@@ -122,14 +123,20 @@ export const PromotCompanyPage: React.FC = () => {
             muted
             playsInline
             preload="auto"
-            className="w-full h-full object-cover opacity-35 scale-105"
+            className="w-full h-full object-cover opacity-45 scale-105"
             poster="https://www.promot-automation.com/wp-content/uploads/2026/02/Promot_Social.jpg"
           >
+            {/* User Flow promotional video as primary source */}
+            <source
+              src="/videos/tiger_promo.mp4"
+              type="video/mp4"
+            />
+            {/* Fallback Promot Machine Automation video */}
             <source
               src="https://www.promot-automation.com/wp-content/uploads/2026/01/header-test-Unternehmen.mp4"
               type="video/mp4"
             />
-            {/* Fallback industrial automation loop */}
+            {/* Fallback robotics loop */}
             <source
               src="https://assets.mixkit.co/videos/preview/mixkit-robotic-arm-working-in-a-factory-42898-large.mp4"
               type="video/mp4"
@@ -228,25 +235,73 @@ export const PromotCompanyPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Embedded HD Video Player (نفس الفيديو الموجود في PROMOT Company) */}
-          <div className="relative max-w-4xl mx-auto rounded-2xl overflow-hidden border-2 border-purple-500/30 shadow-2xl bg-black">
-            <div className="aspect-video w-full">
-              <iframe
-                src="https://www.youtube-nocookie.com/embed/Zjv8MfmMtNw?autoplay=0&rel=0&modestbranding=1"
-                title="PROMOT Automation Company Video"
-                className="w-full h-full border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              />
+          {/* Video Switcher Tabs */}
+          <div className="flex items-center justify-center gap-2 max-w-md mx-auto">
+            <button
+              type="button"
+              onClick={() => setFeaturedVideoSource('flow')}
+              className={`flex-1 py-2 px-4 rounded-full text-xs font-mono font-bold transition-all ${
+                featuredVideoSource === 'flow'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/30 border border-purple-400'
+                  : 'bg-white/10 text-neutral-300 hover:bg-white/20 border border-white/10'
+              }`}
+            >
+              ★ فيديو النمر (إصدار فلو - 1080p)
+            </button>
+            <button
+              type="button"
+              onClick={() => setFeaturedVideoSource('promot')}
+              className={`flex-1 py-2 px-4 rounded-full text-xs font-mono font-bold transition-all ${
+                featuredVideoSource === 'promot'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/30 border border-purple-400'
+                  : 'bg-white/10 text-neutral-300 hover:bg-white/20 border border-white/10'
+              }`}
+            >
+              عرض تقنيات PROMOT (4K)
+            </button>
+          </div>
+
+          {/* Embedded HD Video Player with Flow Video & PROMOT */}
+          <div className="relative max-w-4xl mx-auto rounded-2xl overflow-hidden border-2 border-purple-500/40 shadow-2xl bg-black">
+            <div className="aspect-video w-full bg-black flex items-center justify-center">
+              {featuredVideoSource === 'flow' ? (
+                <video
+                  controls
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-contain"
+                  src="/videos/tiger_promo.mp4"
+                  poster="https://www.promot-automation.com/wp-content/uploads/2026/02/Promot_Social.jpg"
+                >
+                  <source src="/videos/tiger_promo.mp4" type="video/mp4" />
+                </video>
+              ) : (
+                <iframe
+                  src="https://www.youtube-nocookie.com/embed/Zjv8MfmMtNw?autoplay=1&rel=0&modestbranding=1"
+                  title="PROMOT Automation Company Video"
+                  className="w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              )}
             </div>
+
             {/* Video Caption Bar */}
             <div className="p-4 bg-[#070414] border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-mono">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-                <span className="font-bold text-white">الفيلم التعريفي الرسمي:</span>
-                <span className="text-neutral-400">تقنيات الأتمتة المتقدمة ومناولة الأدوات والقطع</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="font-bold text-white">
+                  {featuredVideoSource === 'flow' ? 'فيديو المنظومة الترويجي:' : 'الفيلم التعريفي لـ PROMOT:'}
+                </span>
+                <span className="text-neutral-400">
+                  {featuredVideoSource === 'flow'
+                    ? 'الإنتاج الحصري المعتمد لمنظومة النمر للأتمتة الصناعية (Flow Edition)'
+                    : 'تقنيات الأتمتة المتقدمة ومناولة الأدوات والقطع الهندسية'}
+                </span>
               </div>
-              <span className="text-purple-300 font-bold" dir="ltr">4K ULTRA HD // OFFICIAL RELEASE</span>
+              <span className="text-purple-300 font-bold" dir="ltr">
+                {featuredVideoSource === 'flow' ? 'FLOW // 1080p FULL HD' : '4K ULTRA HD // OFFICIAL'}
+              </span>
             </div>
           </div>
 
@@ -399,34 +454,40 @@ export const PromotCompanyPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Video Card 1 */}
+            {/* Video Card 1: User's Flow Video */}
             <div
-              onClick={() => openVideo('https://www.youtube-nocookie.com/embed/Zjv8MfmMtNw')}
-              className="group cursor-pointer rounded-2xl overflow-hidden bg-white/5 border border-white/10 hover:border-purple-400 transition-all space-y-3"
+              onClick={() => openVideo('/videos/tiger_promo.mp4')}
+              className="group cursor-pointer rounded-2xl overflow-hidden bg-white/5 border-2 border-purple-500/50 hover:border-purple-400 transition-all space-y-3 relative shadow-xl shadow-purple-950/40"
             >
-              <div className="relative aspect-video bg-black/60 overflow-hidden">
-                <img
-                  src="https://www.promot-automation.com/wp-content/uploads/2026/02/Promot_Social.jpg"
-                  alt="Industrial Automation"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+              <div className="relative aspect-video bg-black overflow-hidden">
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform opacity-90"
+                  src="/videos/tiger_promo.mp4"
                 />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/20 transition-colors">
-                  <div className="w-12 h-12 rounded-full bg-purple-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/10 transition-colors">
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform border border-white/30">
+                    <svg className="w-6 h-6 fill-current mr-0.5" viewBox="0 0 24 24">
                       <polygon points="5 3 19 12 5 21 5 3" />
                     </svg>
                   </div>
                 </div>
-                <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/70 text-[10px] font-mono text-white">
-                  03:45 HD
+                <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-purple-600 text-[10px] font-mono font-bold text-white shadow">
+                  ★ إنتاج فلو (FLOW HD)
+                </span>
+                <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/80 text-[10px] font-mono text-emerald-400 font-bold">
+                  فيديو المنظومة الحصري
                 </span>
               </div>
               <div className="p-4 space-y-1">
-                <h4 className="font-bold text-white group-hover:text-purple-300 transition-colors">
-                  مناولة الأدوات والقطع عبر الروبوتات
+                <h4 className="font-bold text-white group-hover:text-purple-300 transition-colors text-sm sm:text-base">
+                  فيديو النمر التعريفي (Flow Edition)
                 </h4>
-                <p className="text-xs text-neutral-400 line-clamp-2">
-                  عرض تقني لمنظومة Palmaster RZ وخلايا الروبوتات المرنة في خطوط المعالجة.
+                <p className="text-xs text-neutral-300 line-clamp-2">
+                  الإنتاج الترويجي المتكامل بدقة 1080p Full HD لاستعراض قدرات المنظومة الصناعية والتشغيل المتكامل.
                 </p>
               </div>
             </div>
@@ -692,14 +753,26 @@ export const PromotCompanyPage: React.FC = () => {
                 ✕
               </button>
             </div>
-            <div className="aspect-video w-full">
-              <iframe
-                src={`${activeModalVideo}?autoplay=1&rel=0`}
-                title="Automation Video"
-                className="w-full h-full border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+            <div className="aspect-video w-full bg-black flex items-center justify-center">
+              {activeModalVideo.endsWith('.mp4') ? (
+                <video
+                  controls
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-contain"
+                  src={activeModalVideo}
+                >
+                  <source src={activeModalVideo} type="video/mp4" />
+                </video>
+              ) : (
+                <iframe
+                  src={`${activeModalVideo}?autoplay=1&rel=0`}
+                  title="Automation Video"
+                  className="w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              )}
             </div>
           </div>
         </div>
