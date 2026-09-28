@@ -125,13 +125,13 @@ export const DeductionsPage: React.FC = () => {
       return res.data;
     },
     onSuccess: () => {
-      addToast('تم رفع الاعتراض بنجاح وجاري مراجعته من الإدارة', 'success');
+      addToast('Dispute lodged successfully and sent for administrative audit', 'success');
       setDisputeDeduction(null);
       setDisputeReason('');
       queryClient.invalidateQueries({ queryKey: ['deductions'] });
     },
     onError: (err: any) => {
-      addToast(err.response?.data?.error || 'فشل رفع الاعتراض', 'error');
+      addToast(err.response?.data?.error || 'Failed to file dispute', 'error');
     },
   });
 
@@ -141,13 +141,13 @@ export const DeductionsPage: React.FC = () => {
       return res.data;
     },
     onSuccess: (data) => {
-      addToast(data.message || 'تمت معالجة الاعتراض', 'success');
+      addToast(data.message || 'Dispute reviewed successfully', 'success');
       setReviewingDispute(null);
       setReviewNotes('');
       queryClient.invalidateQueries({ queryKey: ['deductions'] });
     },
     onError: (err: any) => {
-      addToast(err.response?.data?.error || 'فشلت معالجة الاعتراض', 'error');
+      addToast(err.response?.data?.error || 'Failed to review dispute', 'error');
     },
   });
 
@@ -157,11 +157,11 @@ export const DeductionsPage: React.FC = () => {
       return res.data;
     },
     onSuccess: (data) => {
-      addToast(data.message || 'تم اعتماد كافة الخصومات المقترحة', 'success');
+      addToast(data.message || 'All proposed deductions approved', 'success');
       queryClient.invalidateQueries({ queryKey: ['deductions'] });
     },
     onError: (err: any) => {
-      addToast(err.response?.data?.error || 'فشل الاعتماد الجماعي', 'error');
+      addToast(err.response?.data?.error || 'Batch approval failed', 'error');
     },
   });
 
@@ -177,7 +177,7 @@ export const DeductionsPage: React.FC = () => {
       return res.data;
     },
     onSuccess: () => {
-      addToast('تم تسجيل التسوية بنجاح', 'success');
+      addToast('Adjustment recorded successfully', 'success');
       setIsAdjustmentModalOpen(false);
       setAdjustmentAmount('');
       setAdjustmentReason('');
@@ -185,7 +185,7 @@ export const DeductionsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['deductions'] });
     },
     onError: (err: any) => {
-      addToast(err.response?.data?.error || 'فشل تسجيل التسوية', 'error');
+      addToast(err.response?.data?.error || 'Failed to record adjustment', 'error');
     },
   });
 
@@ -195,22 +195,17 @@ export const DeductionsPage: React.FC = () => {
       return res.data;
     },
     onSuccess: () => {
-      addToast(`تم إغلاق وتجميد الشهر المالي ${selectedMonth} بنجاح`, 'success');
+      addToast(`Billing cycle ${selectedMonth} locked and finalized`, 'success');
       setIsClosePeriodConfirmOpen(false);
       queryClient.invalidateQueries({ queryKey: ['deductions'] });
     },
     onError: (err: any) => {
-      addToast(err.response?.data?.error || 'فشل إغلاق الشهر المالي', 'error');
+      addToast(err.response?.data?.error || 'Failed to close billing cycle', 'error');
     },
   });
 
-  // Calculate Employee Totals
   const totalApprovedDeductions = myDeductions
     .filter((d) => ['approved', 'closed_in_payroll'].includes(d.status))
-    .reduce((sum, d) => sum + Number(d.amount), 0);
-
-  const totalProposedDeductions = myDeductions
-    .filter((d) => d.status === 'proposed')
     .reduce((sum, d) => sum + Number(d.amount), 0);
 
   const totalBonuses = myAdjustments
@@ -229,32 +224,32 @@ export const DeductionsPage: React.FC = () => {
   const getTypeLabel = (type: string) => {
     switch (type) {
       case 'late':
-        return 'تأخير صباحي';
+        return 'Morning Lateness';
       case 'early_leave':
-        return 'انصراف مبكر';
+        return 'Early Departure';
       case 'unexcused_absence':
-        return 'غياب بدون إذن';
+        return 'Unexcused Absence';
       case 'unpaid_leave':
-        return 'إجازة غير مدفوعة';
+        return 'Unpaid Leave';
       default:
-        return 'خصم إداري';
+        return 'Administrative Deduction';
     }
   };
 
   const getStatusStampLabel = (status: string) => {
     switch (status) {
       case 'approved':
-        return 'معتمد';
+        return 'APPROVED';
       case 'proposed':
-        return 'مقترح';
+        return 'PROPOSED';
       case 'disputed':
-        return 'محل نزاع';
+        return 'DISPUTED';
       case 'cancelled':
-        return 'ملغي';
+        return 'CANCELLED';
       case 'closed_in_payroll':
-        return 'مغلق نهائياً';
+        return 'FINAL CLOSED';
       default:
-        return status;
+        return status.toUpperCase();
     }
   };
 
@@ -262,20 +257,20 @@ export const DeductionsPage: React.FC = () => {
 
   return (
     <MotionPage className="space-y-6">
-      {/* 1. Header (ترويسة السجل المالي) */}
+      {/* 1. Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-neutral-900 dark:border-neutral-100 pb-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-neutral-500">
-            <span>النظام المحاسبي والمالي</span>
+            <span>Tiger Finance &amp; Accounting</span>
             <span>/</span>
-            <span>مسير الرواتب والخصومات</span>
+            <span>Payroll &amp; Deductions</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black font-display text-neutral-950 dark:text-white mt-1 flex items-center gap-2.5">
+          <h1 className="text-2xl sm:text-3xl font-black text-neutral-950 dark:text-white mt-1 flex items-center gap-2.5">
             <LedgerIcon name="dollar" size={26} />
-            <span>دفتر الرواتب والخصومات الرسمية</span>
+            <span>Payroll, Deductions &amp; Slips</span>
           </h1>
-          <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5 font-ledger">
-            معادلات حساب دقيقة، إمكانية الاعتراض، التحقق من السقف التأديبي، وقسائم رواتب مثقوبة ومعتمدة.
+          <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5">
+            Transparent wage calculations, dispute workflows, statutory labor cap enforcement, and printable payslip receipts.
           </p>
         </div>
 
@@ -283,7 +278,7 @@ export const DeductionsPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="flex items-center gap-2 border-2 border-neutral-900 dark:border-white bg-white dark:bg-black px-2.5 py-1 text-xs font-mono">
             <LedgerIcon name="calendar" size={14} />
-            <span className="font-bold">الشهر:</span>
+            <span className="font-bold">Period:</span>
             <input
               type="month"
               value={selectedMonth}
@@ -295,9 +290,9 @@ export const DeductionsPage: React.FC = () => {
           {/* Period Status Stamp */}
           <div className="inline-block">
             {isPeriodClosed ? (
-              <RubberStamp label="الشهر مغلق" recordId={`period-${selectedMonth}`} subtext="محمي من التعديل" />
+              <RubberStamp label="PERIOD CLOSED" recordId={`period-${selectedMonth}`} subtext="LOCKED FROM EDITING" />
             ) : (
-              <RubberStamp label="الشهر مفتوح" recordId={`period-${selectedMonth}`} subtext="قيد التسويات" />
+              <RubberStamp label="PERIOD OPEN" recordId={`period-${selectedMonth}`} subtext="ACTIVE CYCLE" />
             )}
           </div>
 
@@ -307,24 +302,24 @@ export const DeductionsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab('my')}
-                className={`px-3 py-1 text-xs font-bold font-ledger transition-colors ${
+                className={`px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
                   activeTab === 'my'
                     ? 'bg-neutral-900 text-white dark:bg-white dark:text-black'
                     : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900'
                 }`}
               >
-                مسير راتبي
+                My Payslip
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('admin')}
-                className={`px-3 py-1 text-xs font-bold font-ledger transition-colors ${
+                className={`px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
                   activeTab === 'admin'
                     ? 'bg-neutral-900 text-white dark:bg-white dark:text-black'
                     : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900'
                 }`}
               >
-                لوحة الرقابة والرواتب
+                Manager Audit
               </button>
             </div>
           )}
@@ -336,33 +331,33 @@ export const DeductionsPage: React.FC = () => {
         <div className="space-y-6">
           {/* Sub-view switcher: Receipt vs Details Table */}
           <div className="flex items-center justify-between border-b border-dashed border-neutral-300 dark:border-neutral-700 pb-2">
-            <div className="inline-flex border border-neutral-900 dark:border-white bg-neutral-100 dark:bg-neutral-900 p-0.5 text-xs font-ledger">
+            <div className="inline-flex border border-neutral-900 dark:border-white bg-neutral-100 dark:bg-neutral-900 p-0.5 text-xs">
               <button
                 type="button"
                 onClick={() => setEmployeeSubView('receipt')}
-                className={`px-3 py-1 font-bold transition-colors ${
+                className={`px-3 py-1 font-bold transition-colors cursor-pointer ${
                   employeeSubView === 'receipt'
                     ? 'bg-white text-neutral-950 dark:bg-neutral-800 dark:text-white shadow-xs'
                     : 'text-neutral-600 dark:text-neutral-400'
                 }`}
               >
-                قسيمة الراتب المثقوبة (إيصال)
+                Official Payslip Voucher
               </button>
               <button
                 type="button"
                 onClick={() => setEmployeeSubView('table')}
-                className={`px-3 py-1 font-bold transition-colors ${
+                className={`px-3 py-1 font-bold transition-colors cursor-pointer ${
                   employeeSubView === 'table'
                     ? 'bg-white text-neutral-950 dark:bg-neutral-800 dark:text-white shadow-xs'
                     : 'text-neutral-600 dark:text-neutral-400'
                 }`}
               >
-                دفتر تفاصيل الخصومات ({myDeductions.length})
+                Deductions Itemized Log ({myDeductions.length})
               </button>
             </div>
 
             <div className="text-xs font-mono text-neutral-500">
-              دورة: <span className="font-bold tabular-nums">{selectedMonth}</span>
+              Period: <span className="font-bold tabular-nums">{selectedMonth}</span>
             </div>
           </div>
 
@@ -371,7 +366,7 @@ export const DeductionsPage: React.FC = () => {
             <div className="py-2">
               <PayslipReceipt
                 serialNumber={serialNumber}
-                employeeName={user?.name || 'الموظف'}
+                employeeName={user?.name || 'Staff'}
                 employeeEmail={user?.email || ''}
                 period={selectedMonth}
                 baseSalary={baseSalary}
@@ -380,7 +375,7 @@ export const DeductionsPage: React.FC = () => {
                 bonuses={totalBonuses}
                 netPay={netEstimatedPay}
                 isClosed={isPeriodClosed}
-                currency={salaryData?.currency || 'ر.س'}
+                currency={salaryData?.currency || 'SAR'}
                 onPrint={() => window.print()}
               />
             </div>
@@ -391,31 +386,31 @@ export const DeductionsPage: React.FC = () => {
             <div className="space-y-6">
               <LedgerTable>
                 <div className="p-3 border-b-2 border-neutral-900 dark:border-neutral-100 bg-neutral-100 dark:bg-neutral-900 flex items-center justify-between">
-                  <div className="font-bold font-display text-sm">
-                    سجل الخصومات لشهر {selectedMonth}
+                  <div className="font-bold text-sm">
+                    Itemized Deductions for {selectedMonth}
                   </div>
                   <span className="font-mono text-xs font-bold border border-neutral-900 dark:border-white px-2 py-0.5 bg-white dark:bg-black">
-                    {myDeductions.length} قيود
+                    {myDeductions.length} entries
                   </span>
                 </div>
 
-                <table className="w-full text-right text-xs">
+                <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="bg-neutral-50 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
-                      <th className="px-4 py-3 font-bold font-mono">تاريخ الخصم</th>
-                      <th className="px-4 py-3 font-bold">النوع</th>
-                      <th className="px-4 py-3 font-bold">البيان والسبب</th>
-                      <th className="px-4 py-3 font-bold font-mono">المعادلة المطبقة</th>
-                      <th className="px-4 py-3 font-bold font-mono">المبلغ</th>
-                      <th className="px-4 py-3 font-bold text-center">الحالة</th>
-                      <th className="px-4 py-3 font-bold text-center">إجراء</th>
+                      <th className="px-4 py-3 font-bold font-mono">Date</th>
+                      <th className="px-4 py-3 font-bold">Category</th>
+                      <th className="px-4 py-3 font-bold">Statement &amp; Reason</th>
+                      <th className="px-4 py-3 font-bold font-mono">Rule Breakdown</th>
+                      <th className="px-4 py-3 font-bold font-mono">Amount</th>
+                      <th className="px-4 py-3 font-bold text-center">Status</th>
+                      <th className="px-4 py-3 font-bold text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
                     {myDeductions.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="px-4 py-12 text-center text-neutral-500 font-mono">
-                          لا توجد خصومات مقيدة بحسابك خلال دورة هذا الشهر. سجل ممتاز!
+                          No deductions recorded against your account during this billing period. Perfect record!
                         </td>
                       </tr>
                     ) : (
@@ -427,10 +422,10 @@ export const DeductionsPage: React.FC = () => {
                             <td className="px-4 py-3 font-mono tabular-nums text-neutral-700 dark:text-neutral-300">
                               {format(new Date(ded.createdAt), 'yyyy-MM-dd')}
                             </td>
-                            <td className="px-4 py-3 font-bold text-neutral-950 dark:text-white font-ledger">
+                            <td className="px-4 py-3 font-bold text-neutral-950 dark:text-white">
                               {getTypeLabel(ded.type)}
                             </td>
-                            <td className="px-4 py-3 text-neutral-700 dark:text-neutral-300 max-w-xs font-ledger">
+                            <td className="px-4 py-3 text-neutral-700 dark:text-neutral-300 max-w-xs">
                               {ded.reason}
                             </td>
                             <td className="px-4 py-3 font-mono text-[11px] text-neutral-600 dark:text-neutral-400">
@@ -443,7 +438,7 @@ export const DeductionsPage: React.FC = () => {
                               )}
                             </td>
                             <td className="px-4 py-3 font-mono font-bold tabular-nums text-neutral-950 dark:text-white">
-                              {Number(ded.amount).toFixed(2)} ر.س
+                              {Number(ded.amount).toFixed(2)} SAR
                             </td>
                             <td className="px-4 py-3 text-center">
                               <RubberStamp
@@ -461,13 +456,13 @@ export const DeductionsPage: React.FC = () => {
                                     setDisputeReason('');
                                   }}
                                 >
-                                  اعتراض
+                                  Dispute
                                 </LedgerButton>
                               ) : ded.dispute ? (
                                 <div className="text-[10px] font-mono font-bold">
-                                  {ded.dispute.status === 'pending' && <span>قيد المراجعة</span>}
-                                  {ded.dispute.status === 'accepted' && <span>تم القبول ✓</span>}
-                                  {ded.dispute.status === 'rejected' && <span className="line-through">مرفوض</span>}
+                                  {ded.dispute.status === 'pending' && <span className="text-amber-500">In Review</span>}
+                                  {ded.dispute.status === 'accepted' && <span className="text-emerald-500">Accepted ✓</span>}
+                                  {ded.dispute.status === 'rejected' && <span className="line-through text-neutral-400">Rejected</span>}
                                 </div>
                               ) : (
                                 <span className="text-neutral-400">—</span>
@@ -484,29 +479,29 @@ export const DeductionsPage: React.FC = () => {
               {/* Adjustments Table */}
               {myAdjustments.length > 0 && (
                 <LedgerTable>
-                  <div className="p-3 border-b-2 border-neutral-900 dark:border-neutral-100 bg-neutral-100 dark:bg-neutral-900 font-bold font-display text-sm">
-                    المكافآت والتسويات الإدارية المباشرة
+                  <div className="p-3 border-b-2 border-neutral-900 dark:border-neutral-100 bg-neutral-100 dark:bg-neutral-900 font-bold text-sm">
+                    Direct Administrative Bonuses &amp; Adjustments
                   </div>
-                  <table className="w-full text-right text-xs">
+                  <table className="w-full text-left text-xs">
                     <thead>
                       <tr className="bg-neutral-50 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
-                        <th className="px-4 py-3 font-bold font-mono">التاريخ</th>
-                        <th className="px-4 py-3 font-bold">النوع</th>
-                        <th className="px-4 py-3 font-bold">البيان</th>
-                        <th className="px-4 py-3 font-bold font-mono">المبلغ</th>
+                        <th className="px-4 py-3 font-bold font-mono">Date</th>
+                        <th className="px-4 py-3 font-bold">Category</th>
+                        <th className="px-4 py-3 font-bold">Statement</th>
+                        <th className="px-4 py-3 font-bold font-mono">Amount</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 font-mono">
                       {myAdjustments.map((adj) => (
                         <tr key={adj.id}>
                           <td className="px-4 py-3 tabular-nums">{format(new Date(adj.createdAt), 'yyyy-MM-dd')}</td>
-                          <td className="px-4 py-3 font-bold font-ledger">
-                            {adj.type === 'bonus' ? 'مكافأة / حافز' : 'تسوية خصم'}
+                          <td className="px-4 py-3 font-bold">
+                            {adj.type === 'bonus' ? 'Bonus / Incentive' : 'Manual Deduction'}
                           </td>
-                          <td className="px-4 py-3 font-ledger text-neutral-700 dark:text-neutral-300">{adj.reason}</td>
+                          <td className="px-4 py-3 text-neutral-700 dark:text-neutral-300">{adj.reason}</td>
                           <td className="px-4 py-3 font-bold tabular-nums">
                             {adj.type === 'bonus' ? '+' : '-'}
-                            {Number(adj.amount).toFixed(2)} ر.س
+                            {Number(adj.amount).toFixed(2)} SAR
                           </td>
                         </tr>
                       ))}
@@ -525,14 +520,14 @@ export const DeductionsPage: React.FC = () => {
           {/* Admin Command Bar */}
           <div className="border-2 border-neutral-900 dark:border-white bg-[#faf9f5] dark:bg-[#141414] p-4 shadow-solid-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h3 className="text-sm font-bold font-display text-neutral-950 dark:text-white flex items-center gap-2">
+              <h3 className="text-sm font-bold text-neutral-950 dark:text-white flex items-center gap-2">
                 <LedgerIcon name="shield" size={16} />
-                <span>إدارة الدورة المالية لشهر {selectedMonth}</span>
+                <span>Financial Cycle Management for {selectedMonth}</span>
               </h3>
-              <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5 font-ledger">
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5">
                 {isPeriodClosed
-                  ? 'الشهر مغلق ومجمد في السجلات المحاسبية الرسمية. لا يمكن قبول تسويات جديدة.'
-                  : 'اعتماد الخصومات المقترحة آلياً، مراجعة النزاعات، وإغلاق المسير المالي نهائياً.'}
+                  ? 'Billing cycle is locked in certified archives. Modifications are disabled.'
+                  : 'Approve proposed deductions, arbitrate employee disputes, and seal monthly ledger.'}
               </p>
             </div>
 
@@ -544,7 +539,7 @@ export const DeductionsPage: React.FC = () => {
                 disabled={isPeriodClosed}
                 onClick={() => setIsAdjustmentModalOpen(true)}
               >
-                إضافة مكافأة / تسوية
+                Add Bonus / Adjustment
               </LedgerButton>
 
               <LedgerButton
@@ -554,7 +549,7 @@ export const DeductionsPage: React.FC = () => {
                 disabled={isPeriodClosed || proposedDeductions.length === 0 || batchApproveMutation.isPending}
                 onClick={() => batchApproveMutation.mutate()}
               >
-                اعتماد الكل ({proposedDeductions.length})
+                Approve All ({proposedDeductions.length})
               </LedgerButton>
 
               {!isPeriodClosed && (
@@ -564,7 +559,7 @@ export const DeductionsPage: React.FC = () => {
                   icon="lock"
                   onClick={() => setIsClosePeriodConfirmOpen(true)}
                 >
-                  إغلاق الشهر نهائياً
+                  Finalize &amp; Close Cycle
                 </LedgerButton>
               )}
             </div>
@@ -573,21 +568,21 @@ export const DeductionsPage: React.FC = () => {
           {/* Pending Disputes Queue */}
           {disputedDeductions.length > 0 && (
             <LedgerTable>
-              <div className="p-3 border-b-2 border-neutral-900 dark:border-neutral-100 bg-neutral-100 dark:bg-neutral-900 font-bold font-display text-sm flex items-center justify-between">
-                <span>طلبات الاعتراض المعلقة من الموظفين ({disputedDeductions.length})</span>
+              <div className="p-3 border-b-2 border-neutral-900 dark:border-neutral-100 bg-neutral-100 dark:bg-neutral-900 font-bold text-sm flex items-center justify-between">
+                <span>Pending Employee Dispute Queue ({disputedDeductions.length})</span>
               </div>
               <div className="divide-y divide-neutral-200 dark:divide-neutral-800 p-3 space-y-3">
                 {disputedDeductions.map((ded) => (
                   <div key={ded.id} className="border border-neutral-900 dark:border-white p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white dark:bg-black">
-                    <div className="space-y-1 font-ledger text-xs">
+                    <div className="space-y-1 text-xs">
                       <div className="flex items-center gap-2 font-mono">
-                        <span className="font-bold text-neutral-950 dark:text-white font-ledger">{ded.user?.name}</span>
+                        <span className="font-bold text-neutral-950 dark:text-white">{ded.user?.name}</span>
                         <span className="text-neutral-500">({ded.user?.email})</span>
                         <span className="border border-neutral-400 px-1">{getTypeLabel(ded.type)}</span>
-                        <span className="font-bold tabular-nums">{Number(ded.amount).toFixed(2)} ر.س</span>
+                        <span className="font-bold tabular-nums">{Number(ded.amount).toFixed(2)} SAR</span>
                       </div>
                       <p className="text-neutral-700 dark:text-neutral-300">
-                        <strong>بيان الاعتراض:</strong> {ded.dispute?.reason || '—'}
+                        <strong>Dispute Statement:</strong> {ded.dispute?.reason || '—'}
                       </p>
                     </div>
 
@@ -605,7 +600,7 @@ export const DeductionsPage: React.FC = () => {
                           setReviewAction('accept');
                         }}
                       >
-                        قبول (إلغاء الخصم)
+                        Accept (Cancel Deduction)
                       </LedgerButton>
 
                       <LedgerButton
@@ -621,7 +616,7 @@ export const DeductionsPage: React.FC = () => {
                           setReviewAction('reject');
                         }}
                       >
-                        رفض وتثبيت
+                        Reject &amp; Enforce
                       </LedgerButton>
                     </div>
                   </div>
@@ -634,11 +629,11 @@ export const DeductionsPage: React.FC = () => {
           <LedgerTable>
             <div className="p-3 border-b-2 border-neutral-900 dark:border-neutral-100 bg-neutral-100 dark:bg-neutral-900 flex items-center justify-between">
               <div>
-                <h3 className="font-bold font-display text-sm text-neutral-950 dark:text-white">
-                  مسير رواتب الموظفين لشهر {selectedMonth}
+                <h3 className="font-bold text-sm text-neutral-950 dark:text-white">
+                  Workforce Payroll Roster for {selectedMonth}
                 </h3>
-                <p className="text-xs text-neutral-500 font-ledger">
-                  كشف رواتب تفصيلي مع التدقيق التلقائي على سقف الخصم التأديبي القانوني.
+                <p className="text-xs text-neutral-500">
+                  Comprehensive wage overview with automatic statutory labor cap audit.
                 </p>
               </div>
 
@@ -648,7 +643,7 @@ export const DeductionsPage: React.FC = () => {
                 icon="download"
                 onClick={() => {
                   const csvRows = [
-                    ['اسم الموظف', 'البريد', 'الراتب الأساسي', 'الخصومات', 'المكافآت', 'صافي الراتب'],
+                    ['Employee Name', 'Email', 'Base Salary', 'Deductions', 'Bonuses', 'Net Pay'],
                     ...payrollSummary.map((p) => [
                       p.user.name,
                       p.user.email,
@@ -668,55 +663,55 @@ export const DeductionsPage: React.FC = () => {
                   document.body.removeChild(link);
                 }}
               >
-                تصدير مسير CSV
+                Export Payroll CSV
               </LedgerButton>
             </div>
 
-            <table className="w-full text-right text-xs">
+            <table className="w-full text-left text-xs">
               <thead>
                 <tr className="bg-neutral-50 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
-                  <th className="px-4 py-3 font-bold">الموظف</th>
-                  <th className="px-4 py-3 font-bold font-mono">الأساسي</th>
-                  <th className="px-4 py-3 font-bold font-mono">أجر اليوم</th>
-                  <th className="px-4 py-3 font-bold font-mono">إجمالي الخصم</th>
-                  <th className="px-4 py-3 font-bold text-center">السقف التأديبي</th>
-                  <th className="px-4 py-3 font-bold font-mono">المكافآت</th>
-                  <th className="px-4 py-3 font-bold font-mono">الصافي المستحق</th>
+                  <th className="px-4 py-3 font-bold">Employee</th>
+                  <th className="px-4 py-3 font-bold font-mono">Gross Base</th>
+                  <th className="px-4 py-3 font-bold font-mono">Daily Wage</th>
+                  <th className="px-4 py-3 font-bold font-mono">Total Deductions</th>
+                  <th className="px-4 py-3 font-bold text-center">Disciplinary Cap</th>
+                  <th className="px-4 py-3 font-bold font-mono">Bonuses</th>
+                  <th className="px-4 py-3 font-bold font-mono">Net Payable</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 font-mono">
                 {payrollSummary.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-4 py-12 text-center text-neutral-500 font-mono">
-                      لا توجد بيانات موظفين مسجلة لهذا الشهر.
+                      No payroll records found for this billing period.
                     </td>
                   </tr>
                 ) : (
                   payrollSummary.map((item) => (
                     <tr key={item.user.id} className="hover:bg-neutral-100/50 dark:hover:bg-neutral-900/50 transition-colors">
-                      <td className="px-4 py-3 font-bold font-ledger text-neutral-950 dark:text-white">
+                      <td className="px-4 py-3 font-bold text-neutral-950 dark:text-white">
                         <div>{item.user.name}</div>
                         <div className="text-[10px] text-neutral-500 font-mono">{item.user.email}</div>
                       </td>
-                      <td className="px-4 py-3 tabular-nums">{Number(item.monthlySalary).toFixed(2)} ر.س</td>
-                      <td className="px-4 py-3 tabular-nums text-neutral-500">{Number(item.dayWage).toFixed(2)} ر.س</td>
+                      <td className="px-4 py-3 tabular-nums">{Number(item.monthlySalary).toFixed(2)} SAR</td>
+                      <td className="px-4 py-3 tabular-nums text-neutral-500">{Number(item.dayWage).toFixed(2)} SAR</td>
                       <td className="px-4 py-3 tabular-nums font-bold text-neutral-900 dark:text-white">
-                        -{Number(item.totalDeductions).toFixed(2)} ر.س
+                        -{Number(item.totalDeductions).toFixed(2)} SAR
                       </td>
                       <td className="px-4 py-3 text-center">
                         {item.capExceeded ? (
                           <span className="border border-neutral-900 dark:border-white px-1 py-0.5 bg-neutral-200 dark:bg-neutral-800 font-bold text-[10px]">
-                            بلغ السقف ({Number(item.disciplinaryCapAmount).toFixed(0)} ر.س)
+                            Cap Reached ({Number(item.disciplinaryCapAmount).toFixed(0)} SAR)
                           </span>
                         ) : (
-                          <span className="text-[10px] text-neutral-400">ضمن الحد النظامي</span>
+                          <span className="text-[10px] text-neutral-400">Within Limit</span>
                         )}
                       </td>
                       <td className="px-4 py-3 tabular-nums text-neutral-800 dark:text-neutral-200">
-                        +{Number(item.bonuses).toFixed(2)} ر.س
+                        +{Number(item.bonuses).toFixed(2)} SAR
                       </td>
                       <td className="px-4 py-3 tabular-nums font-black text-sm text-neutral-950 dark:text-white border-b-2 border-neutral-900 dark:border-white">
-                        {Number(item.netPay).toFixed(2)} ر.س
+                        {Number(item.netPay).toFixed(2)} SAR
                       </td>
                     </tr>
                   ))
@@ -733,36 +728,36 @@ export const DeductionsPage: React.FC = () => {
       <LedgerModal
         isOpen={Boolean(disputeDeduction)}
         onClose={() => setDisputeDeduction(null)}
-        title="تقديم اعتراض رسمي على الخصم"
+        title="Lodge Formal Deduction Dispute"
       >
         {disputeDeduction && (
-          <div className="space-y-4 font-ledger text-xs">
+          <div className="space-y-4 text-xs">
             <div className="border border-neutral-900 dark:border-white p-3 font-mono space-y-1">
               <p>
-                <strong>الخصم:</strong> {getTypeLabel(disputeDeduction.type)}
+                <strong>Deduction:</strong> {getTypeLabel(disputeDeduction.type)}
               </p>
               <p>
-                <strong>المبلغ:</strong> {Number(disputeDeduction.amount).toFixed(2)} ر.س
+                <strong>Amount:</strong> {Number(disputeDeduction.amount).toFixed(2)} SAR
               </p>
               <p>
-                <strong>تاريخ الخصم:</strong> {format(new Date(disputeDeduction.createdAt), 'yyyy-MM-dd')}
+                <strong>Date:</strong> {format(new Date(disputeDeduction.createdAt), 'yyyy-MM-dd')}
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-bold mb-1">سبب وظروف الاعتراض (إلزامي للتوثيق):</label>
+              <label className="block text-xs font-bold mb-1">Dispute Reason &amp; Supporting Circumstances (Required):</label>
               <textarea
                 rows={4}
                 value={disputeReason}
                 onChange={(e) => setDisputeReason(e.target.value)}
-                placeholder="وضح الظرف الطارئ أو العذر المرفق..."
+                placeholder="Explain the emergency or attached excuse..."
                 className="w-full border-1.5 border-neutral-900 dark:border-white p-2.5 bg-white dark:bg-black outline-none"
               />
             </div>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
               <LedgerButton variant="secondary" size="sm" onClick={() => setDisputeDeduction(null)}>
-                إلغاء
+                Cancel
               </LedgerButton>
               <LedgerButton
                 variant="primary"
@@ -770,7 +765,7 @@ export const DeductionsPage: React.FC = () => {
                 disabled={!disputeReason.trim() || disputeMutation.isPending}
                 onClick={() => disputeMutation.mutate({ id: disputeDeduction.id, reason: disputeReason.trim() })}
               >
-                {disputeMutation.isPending ? 'جاري الإرسال...' : 'إرسال الاعتراض'}
+                {disputeMutation.isPending ? 'Submitting...' : 'Send Dispute'}
               </LedgerButton>
             </div>
           </div>
@@ -781,36 +776,36 @@ export const DeductionsPage: React.FC = () => {
       <LedgerModal
         isOpen={Boolean(reviewingDispute)}
         onClose={() => setReviewingDispute(null)}
-        title={reviewAction === 'accept' ? 'قرار قبول الاعتراض (إلغاء الخصم)' : 'قرار رفض الاعتراض (تثبيت الخصم)'}
+        title={reviewAction === 'accept' ? 'Accept Dispute (Cancel Deduction)' : 'Reject Dispute (Enforce Deduction)'}
       >
         {reviewingDispute && (
-          <div className="space-y-4 font-ledger text-xs">
+          <div className="space-y-4 text-xs">
             <div className="border border-neutral-900 dark:border-white p-3 font-mono space-y-1">
               <p>
-                <strong>الموظف:</strong> {reviewingDispute.name}
+                <strong>Employee:</strong> {reviewingDispute.name}
               </p>
               <p>
-                <strong>المبلغ:</strong> {reviewingDispute.amount} ر.س
+                <strong>Amount:</strong> {reviewingDispute.amount} SAR
               </p>
               <p>
-                <strong>بيان الموظف:</strong> {reviewingDispute.reason}
+                <strong>Employee Statement:</strong> {reviewingDispute.reason}
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-bold mb-1">ملاحظات وقرار الإدارة:</label>
+              <label className="block text-xs font-bold mb-1">Official Manager Notes:</label>
               <textarea
                 rows={3}
                 value={reviewNotes}
                 onChange={(e) => setReviewNotes(e.target.value)}
-                placeholder="أدخل ملاحظات القرار الرسمي..."
+                placeholder="Enter formal rationale..."
                 className="w-full border-1.5 border-neutral-900 dark:border-white p-2.5 bg-white dark:bg-black outline-none"
               />
             </div>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
               <LedgerButton variant="secondary" size="sm" onClick={() => setReviewingDispute(null)}>
-                إلغاء
+                Cancel
               </LedgerButton>
               <LedgerButton
                 variant="primary"
@@ -824,7 +819,7 @@ export const DeductionsPage: React.FC = () => {
                   })
                 }
               >
-                {reviewDisputeMutation.isPending ? 'جاري التنفيذ...' : 'تأكيد القرار الدفتري'}
+                {reviewDisputeMutation.isPending ? 'Processing...' : 'Confirm Decision'}
               </LedgerButton>
             </div>
           </div>
@@ -835,17 +830,17 @@ export const DeductionsPage: React.FC = () => {
       <LedgerModal
         isOpen={isAdjustmentModalOpen}
         onClose={() => setIsAdjustmentModalOpen(false)}
-        title={`إضافة تسوية مالية / مكافأة لشهر ${selectedMonth}`}
+        title={`Add Financial Adjustment / Bonus for ${selectedMonth}`}
       >
-        <div className="space-y-4 font-ledger text-xs">
+        <div className="space-y-4 text-xs">
           <div>
-            <label className="block text-xs font-bold mb-1">الموظف المعني:</label>
+            <label className="block text-xs font-bold mb-1">Target Employee:</label>
             <select
               value={adjustmentUserId}
               onChange={(e) => setAdjustmentUserId(e.target.value)}
               className="w-full border-1.5 border-neutral-900 dark:border-white p-2 bg-white dark:bg-black outline-none font-bold"
             >
-              <option value="">اختر موظفاً...</option>
+              <option value="">Select Employee...</option>
               {allUsers.map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.name} ({u.email})
@@ -855,60 +850,60 @@ export const DeductionsPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold mb-1">نوع الحركة:</label>
+            <label className="block text-xs font-bold mb-1">Adjustment Type:</label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setAdjustmentType('bonus')}
-                className={`py-2 px-3 text-xs font-bold border-2 transition-colors ${
+                className={`py-2 px-3 text-xs font-bold border-2 transition-colors cursor-pointer ${
                   adjustmentType === 'bonus'
                     ? 'border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-black'
                     : 'border-neutral-400 text-neutral-600 dark:text-neutral-400'
                 }`}
               >
-                مكافأة / حافز (+)
+                Bonus / Incentive (+)
               </button>
               <button
                 type="button"
                 onClick={() => setAdjustmentType('manual_deduction')}
-                className={`py-2 px-3 text-xs font-bold border-2 transition-colors ${
+                className={`py-2 px-3 text-xs font-bold border-2 transition-colors cursor-pointer ${
                   adjustmentType === 'manual_deduction'
                     ? 'border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-black'
                     : 'border-neutral-400 text-neutral-600 dark:text-neutral-400'
                 }`}
               >
-                خصم يدوي مباشر (-)
+                Manual Deduction (-)
               </button>
             </div>
           </div>
 
           <div>
             <LedgerInput
-              label="المبلغ (ر.س):"
+              label="Amount (SAR):"
               type="number"
               min="0"
               step="0.01"
               value={adjustmentAmount}
               onChange={(e) => setAdjustmentAmount(e.target.value)}
-              placeholder="مثال: 250"
+              placeholder="e.g. 250"
               isMono
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold mb-1">السبب المكتوب (إلزامي للرقابة):</label>
+            <label className="block text-xs font-bold mb-1">Written Justification (Audit Required):</label>
             <textarea
               rows={2}
               value={adjustmentReason}
               onChange={(e) => setAdjustmentReason(e.target.value)}
-              placeholder="مثال: تميز في إنجاز المهام الاستثنائية..."
+              placeholder="e.g. Outstanding performance on priority deliverable..."
               className="w-full border-1.5 border-neutral-900 dark:border-white p-2.5 bg-white dark:bg-black outline-none"
             />
           </div>
 
           <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
             <LedgerButton variant="secondary" size="sm" onClick={() => setIsAdjustmentModalOpen(false)}>
-              إلغاء
+              Cancel
             </LedgerButton>
             <LedgerButton
               variant="primary"
@@ -916,7 +911,7 @@ export const DeductionsPage: React.FC = () => {
               disabled={!adjustmentUserId || !adjustmentAmount || !adjustmentReason.trim() || createAdjustmentMutation.isPending}
               onClick={() => createAdjustmentMutation.mutate()}
             >
-              {createAdjustmentMutation.isPending ? 'جاري القيد...' : 'حفظ الحركة المالية'}
+              {createAdjustmentMutation.isPending ? 'Recording...' : 'Save Financial Adjustment'}
             </LedgerButton>
           </div>
         </div>
@@ -926,16 +921,16 @@ export const DeductionsPage: React.FC = () => {
       <LedgerModal
         isOpen={isClosePeriodConfirmOpen}
         onClose={() => setIsClosePeriodConfirmOpen(false)}
-        title={`إغلاق مسير الرواتب لشهر ${selectedMonth} نهائياً`}
+        title={`Finalize & Lock Payroll for ${selectedMonth}`}
       >
-        <div className="space-y-4 font-ledger text-xs">
+        <div className="space-y-4 text-xs">
           <p className="leading-relaxed border border-neutral-900 dark:border-white p-3 font-mono bg-neutral-100 dark:bg-neutral-900">
-            تحذير مالي: إغلاق الشهر المالي إجراء <strong>دائم وغير قابل للتراجع</strong>. سيتم تحويل كافة الخصومات والتسويات إلى حالة <code className="font-bold">closed_in_payroll</code>، ولن يُسمح بأي تعديل إضافي لهذا الشهر.
+            Financial Audit Notice: Closing the cycle is <strong>permanent and irrevocable</strong>. All deductions will be marked <code className="font-bold">closed_in_payroll</code>, and further modifications will be rejected.
           </p>
 
           <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
             <LedgerButton variant="secondary" size="sm" onClick={() => setIsClosePeriodConfirmOpen(false)}>
-              تراجع
+              Go Back
             </LedgerButton>
             <LedgerButton
               variant="danger"
@@ -943,7 +938,7 @@ export const DeductionsPage: React.FC = () => {
               disabled={closePeriodMutation.isPending}
               onClick={() => closePeriodMutation.mutate()}
             >
-              {closePeriodMutation.isPending ? 'جاري الإغلاق...' : 'نعم، إغلاق الشهر نهائياً'}
+              {closePeriodMutation.isPending ? 'Finalizing...' : 'Yes, Lock & Finalize Cycle'}
             </LedgerButton>
           </div>
         </div>

@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
 import type { Customer, MessageTemplate } from '../types/index.js';
-import { formatDateArabic, isOverdue, generateWhatsAppUrl } from '../lib/utils.js';
+import { formatDate, isOverdue, generateWhatsAppUrl, getStatusLabel } from '../lib/utils.js';
 import { Clock, AlertCircle, MessageCircle, Calendar } from 'lucide-react';
 
 interface DueTodayBannerProps {
@@ -16,7 +16,7 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({ onCustomerClick 
       const { data } = await api.get('/customers/due-today');
       return data.data || [];
     },
-    refetchInterval: 30000, // Refresh every 30s
+    refetchInterval: 30000,
   });
 
   const { data: templates = [] } = useQuery<MessageTemplate[]>({
@@ -38,14 +38,14 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({ onCustomerClick 
 
   if (dueCustomers.length === 0) {
     return (
-      <div className="rounded-2xl border border-neutral-300 bg-neutral-100/70 p-4 dark:border-neutral-800 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 flex items-center justify-between">
+      <div className="rounded-2xl border border-neutral-300 bg-neutral-100/70 p-4 dark:border-neutral-800 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 flex items-center justify-between" dir="ltr">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white">
             <Clock className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold">لا توجد متابعات مستحقة اليوم أو متأخرة</h3>
-            <p className="text-xs opacity-80">جميع العملاء في حالة متابعة منتظمة ومحدثة.</p>
+            <h3 className="text-sm font-bold">No follow-ups due today or overdue</h3>
+            <p className="text-xs opacity-80">All clients are actively updated and on schedule.</p>
           </div>
         </div>
       </div>
@@ -61,7 +61,7 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({ onCustomerClick 
   };
 
   return (
-    <div className="rounded-2xl border-2 border-neutral-900 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900/60 p-5 shadow-sm mb-6">
+    <div className="rounded-2xl border-2 border-neutral-900 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900/60 p-5 shadow-sm mb-6" dir="ltr">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-black text-white dark:bg-white dark:text-black shadow-sm">
@@ -69,15 +69,15 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({ onCustomerClick 
           </div>
           <div>
             <h2 className="text-base font-black text-neutral-900 dark:text-white">
-              متابعات اليوم والمتأخرة ({dueCustomers.length})
+              Today &amp; Overdue Follow-ups ({dueCustomers.length})
             </h2>
             <p className="text-xs text-neutral-600 dark:text-neutral-400">
               {overdueList.length > 0 && (
                 <span className="font-extrabold text-black dark:text-white underline decoration-2">
-                  {overdueList.length} متأخرة •{' '}
+                  {overdueList.length} Overdue •{' '}
                 </span>
               )}
-              {todayList.length} مستحقة اليوم
+              {todayList.length} Due Today
             </p>
           </div>
         </div>
@@ -102,7 +102,7 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({ onCustomerClick 
                 <div className="flex items-start justify-between gap-2 mb-1.5">
                   <button
                     onClick={() => onCustomerClick?.(customer)}
-                    className="font-bold text-sm text-neutral-900 dark:text-white hover:underline text-right transition-colors"
+                    className="font-bold text-sm text-neutral-900 dark:text-white hover:underline text-left transition-colors cursor-pointer"
                   >
                     {customer.name}
                   </button>
@@ -113,13 +113,13 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({ onCustomerClick 
                         : 'border border-neutral-900 text-neutral-900 dark:border-white dark:text-white'
                     }`}
                   >
-                    {overdue ? 'متأخرة' : 'اليوم'}
+                    {overdue ? 'OVERDUE' : 'TODAY'}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400 mb-2">
                   <Calendar className="h-3.5 w-3.5" />
-                  <span>المتابعة: {formatDateArabic(customer.next)}</span>
+                  <span>Next: {formatDate(customer.next)}</span>
                 </div>
 
                 {customer.company && (
@@ -131,7 +131,7 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({ onCustomerClick 
 
               <div className="flex items-center justify-between pt-2 border-t border-neutral-200 dark:border-neutral-800 gap-2">
                 <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                  الحالة: <span className="font-bold text-neutral-900 dark:text-white">{customer.status}</span>
+                  Status: <span className="font-bold text-neutral-900 dark:text-white">{getStatusLabel(customer.status)}</span>
                 </span>
                 <a
                   href={waUrl}
@@ -140,7 +140,7 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({ onCustomerClick 
                   className="flex items-center gap-1.5 rounded-lg border border-neutral-900 dark:border-neutral-300 px-3 py-1.5 text-xs font-bold text-neutral-900 dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
                 >
                   <MessageCircle className="h-3.5 w-3.5" />
-                  <span>مراسلة واتساب</span>
+                  <span>WhatsApp</span>
                 </a>
               </div>
             </div>

@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
-import type { MessageTemplate, CustomerStatus, ListOption } from '../types/index.js';
+import type { MessageTemplate, ListOption } from '../types/index.js';
 import { CUSTOMER_STATUSES } from '../types/index.js';
-import { STATUS_COLORS } from '../lib/utils.js';
+import { getStatusLabel } from '../lib/utils.js';
 import {
   MessageSquareQuote,
   RotateCcw,
   Save,
-  CheckCircle2,
-  Smartphone,
   Eye,
   Info,
 } from 'lucide-react';
@@ -19,7 +17,7 @@ export const TemplatesPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [activeStatus, setActiveStatus] = useState<string>('جديد');
   const [templateBodies, setTemplateBodies] = useState<Record<string, string>>({});
-  const [previewName, setPreviewName] = useState('سعد العتيبي');
+  const [previewName, setPreviewName] = useState('Alex Morgan');
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -36,7 +34,7 @@ export const TemplatesPage: React.FC = () => {
     ? statusOptions.map((o) => o.label)
     : CUSTOMER_STATUSES;
 
-  const { data: templates = [], isLoading } = useQuery<MessageTemplate[]>({
+  const { data: templates = [] } = useQuery<MessageTemplate[]>({
     queryKey: ['templates'],
     queryFn: async () => {
       const { data } = await api.get('/templates');
@@ -55,12 +53,12 @@ export const TemplatesPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['templates'] });
-      setSaveSuccess('تم حفظ القالب بنجاح!');
+      setSaveSuccess('Message template updated successfully!');
       setSaveError(null);
       setTimeout(() => setSaveSuccess(null), 3000);
     },
     onError: (err: any) => {
-      setSaveError(err.response?.data?.error || 'فشل حفظ القالب');
+      setSaveError(err.response?.data?.error || 'Failed to save template');
       setSaveSuccess(null);
     },
   });
@@ -73,7 +71,7 @@ export const TemplatesPage: React.FC = () => {
     onSuccess: (data) => {
       setTemplateBodies((prev) => ({ ...prev, [data.status]: data.body }));
       queryClient.invalidateQueries({ queryKey: ['templates'] });
-      setSaveSuccess('تمت استعادة النص الافتراضي بنجاح');
+      setSaveSuccess('Default template restored successfully');
       setSaveError(null);
       setTimeout(() => setSaveSuccess(null), 3000);
     },
@@ -87,21 +85,21 @@ export const TemplatesPage: React.FC = () => {
 
   const handleSave = () => {
     if (!currentBody.includes('{name}')) {
-      setSaveError('يجب أن يحتوي نص الرسالة على المتغير {name} لاستبداله باسم العميل');
+      setSaveError('Template message must contain the {name} placeholder to interpolate client names');
       return;
     }
     saveMutation.mutate({ status: activeStatus, body: currentBody });
   };
 
-  const formattedPreview = currentBody.replace(/\{name\}/g, previewName || 'العميل');
+  const formattedPreview = currentBody.replace(/\{name\}/g, previewName || 'Valued Client');
 
   return (
     <MotionPage className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-black text-neutral-900 dark:text-white">قوالب رسائل واتساب</h1>
+        <h1 className="text-2xl font-black text-neutral-900 dark:text-white">WhatsApp Message Templates</h1>
         <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-          خصص نصوص الرسائل التلقائية لكل حالة من حالات العملاء، مع إمكانية المعاينة الحية واستبدال المتغيرات
+          Customize automated dispatch scripts per pipeline status, with live rendering and variable interpolation
         </p>
       </div>
 
@@ -109,9 +107,9 @@ export const TemplatesPage: React.FC = () => {
       <div className="flex items-start gap-3 rounded-2xl border border-neutral-300 bg-neutral-100/60 p-4 dark:border-neutral-700 dark:bg-neutral-800/40 text-neutral-800 dark:text-neutral-200">
         <Info className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-300 mt-0.5" />
         <div className="text-xs space-y-1">
-          <p className="font-bold">كيف تعمل قوالب الرسائل؟</p>
+          <p className="font-bold">How do WhatsApp templates function in Tiger?</p>
           <p className="opacity-90">
-            عند الضغط على أيقونة واتساب بجانب أي عميل، يفتح النظام محادثة واتساب فوراً بالرسالة المناسبة لحالته الحالية، ويتم استبدال الرمز <code className="bg-neutral-200 dark:bg-neutral-700 px-1 py-0.5 rounded font-mono font-bold">{'{name}'}</code> باسم العميل الفعلي تلقائياً.
+            Clicking the WhatsApp action trigger beside any customer launches WhatsApp Web pre-loaded with the stage-specific message template. The variable <code className="bg-neutral-200 dark:bg-neutral-700 px-1 py-0.5 rounded font-mono font-bold">{'{name}'}</code> is automatically replaced by the customer's real name.
           </p>
         </div>
       </div>
@@ -134,7 +132,7 @@ export const TemplatesPage: React.FC = () => {
                   : 'bg-white text-neutral-700 hover:bg-neutral-100 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 border border-neutral-300 dark:border-neutral-700'
               }`}
             >
-              <span>قالب حالة: {st}</span>
+              <span>{getStatusLabel(st)}</span>
             </button>
           );
         })}
@@ -147,7 +145,7 @@ export const TemplatesPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
               <MessageSquareQuote className="h-4 w-4 text-neutral-800 dark:text-neutral-200" />
-              <span>تحرير نص الرسالة لحالة ({activeStatus})</span>
+              <span>Editing Template for [{getStatusLabel(activeStatus)}]</span>
             </h3>
 
             <button
@@ -156,7 +154,7 @@ export const TemplatesPage: React.FC = () => {
               className="flex items-center gap-1 text-xs font-semibold text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              <span>استعادة النص الافتراضي</span>
+              <span>Restore Default</span>
             </button>
           </div>
 
@@ -177,12 +175,12 @@ export const TemplatesPage: React.FC = () => {
               rows={6}
               value={currentBody}
               onChange={(e) => handleBodyChange(e.target.value)}
-              placeholder="اكتب نص الرسالة هنا، وتأكد من تضمين {name}..."
+              placeholder="Compose your message script here. Make sure to include {name}..."
               className="w-full rounded-2xl border border-neutral-300 p-4 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
             />
             <div className="flex items-center justify-between mt-1 text-[11px] text-neutral-400">
-              <span>المتغيرات المدعومة: <code className="text-black dark:text-white font-bold font-mono">{'{name}'}</code></span>
-              <span>{currentBody.length} حرف</span>
+              <span>Supported token: <code className="text-black dark:text-white font-bold font-mono">{'{name}'}</code></span>
+              <span>{currentBody.length} characters</span>
             </div>
           </div>
 
@@ -193,7 +191,7 @@ export const TemplatesPage: React.FC = () => {
               className="flex items-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-6 py-2.5 text-xs font-bold disabled:opacity-50 transition-colors"
             >
               <Save className="h-4 w-4" />
-              <span>{saveMutation.isPending ? 'جاري الحفظ...' : 'حفظ التعديلات'}</span>
+              <span>{saveMutation.isPending ? 'Saving...' : 'Save Changes'}</span>
             </button>
           </div>
         </div>
@@ -203,15 +201,15 @@ export const TemplatesPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
               <Eye className="h-4 w-4 text-neutral-700 dark:text-neutral-300" />
-              <span>معاينة حية للرسالة</span>
+              <span>Live Simulation Preview</span>
             </h3>
             <div className="flex items-center gap-1.5 text-xs">
-              <span className="text-neutral-500">اسم تجريبي:</span>
+              <span className="text-neutral-500">Sample Name:</span>
               <input
                 type="text"
                 value={previewName}
                 onChange={(e) => setPreviewName(e.target.value)}
-                className="w-24 rounded-lg border border-neutral-300 px-2 py-0.5 text-xs text-center dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                className="w-28 rounded-lg border border-neutral-300 px-2 py-0.5 text-xs text-center dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
               />
             </div>
           </div>
@@ -221,8 +219,8 @@ export const TemplatesPage: React.FC = () => {
             {/* WhatsApp Chat Bubble */}
             <div className="self-end max-w-[85%] rounded-2xl rounded-tr-none bg-white border border-neutral-300 dark:bg-neutral-800 dark:border-neutral-700 p-3.5 shadow-sm text-neutral-900 dark:text-white">
               <p className="text-xs leading-relaxed whitespace-pre-wrap">{formattedPreview}</p>
-              <div className="text-[10px] text-neutral-400 dark:text-neutral-400 text-left mt-1">
-                12:45 م ✓✓
+              <div className="text-[10px] text-neutral-400 dark:text-neutral-400 text-right mt-1">
+                12:45 PM ✓✓
               </div>
             </div>
           </div>

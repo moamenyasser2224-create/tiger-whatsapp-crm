@@ -48,7 +48,7 @@ export const DashboardPage: React.FC = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `customers_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `tiger_customers_${new Date().toISOString().split('T')[0]}.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -63,10 +63,10 @@ export const DashboardPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white">
-            لوحة التحكم والإحصائيات
+            Performance KPIs &amp; Executive Analytics
           </h1>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            نظرة شاملة ومحدثة على أداء المبيعات والمتابعات اليومية لعملاء واتساب
+            Real-time tracking of sales pipeline conversion, customer accounts, and scheduled follow-ups.
           </p>
         </div>
 
@@ -76,18 +76,18 @@ export const DashboardPage: React.FC = () => {
               setSelectedCustomer(null);
               setIsCustomerModalOpen(true);
             }}
-            className="flex items-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-4 py-2.5 text-xs font-bold transition-colors"
+            className="flex items-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-4 py-2.5 text-xs font-bold transition-colors cursor-pointer"
           >
             <UserPlus className="h-4 w-4" />
-            <span>إضافة عميل جديد</span>
+            <span>Add Customer</span>
           </button>
 
           <button
             onClick={handleExportCsv}
-            className="flex items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-xs font-bold text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+            className="flex items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-xs font-bold text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
           >
             <FileSpreadsheet className="h-4 w-4 text-neutral-700 dark:text-neutral-300" />
-            <span>تصدير CSV</span>
+            <span>Export CSV</span>
           </button>
 
           <Link
@@ -95,7 +95,7 @@ export const DashboardPage: React.FC = () => {
             className="flex items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-xs font-bold text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 transition-colors"
           >
             <MessageSquareQuote className="h-4 w-4 text-neutral-700 dark:text-neutral-300" />
-            <span>قوالب الرسائل</span>
+            <span>WhatsApp Templates</span>
           </Link>
         </div>
       </div>
@@ -114,7 +114,7 @@ export const DashboardPage: React.FC = () => {
         <SpotlightCard className="p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">إجمالي العملاء</p>
+              <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">Total Customers</p>
               <h3 className="text-2xl font-black text-neutral-900 dark:text-white mt-1">
                 {statsLoading ? '...' : <CountUp end={stats?.totalCustomers || 0} />}
               </h3>
@@ -129,7 +129,7 @@ export const DashboardPage: React.FC = () => {
         <SpotlightCard className="p-5 border-2 border-neutral-900 dark:border-neutral-400">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">متابعات اليوم والمتأخرة</p>
+              <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">Due Today &amp; Overdue</p>
               <h3 className="text-2xl font-black text-black dark:text-white mt-1">
                 {statsLoading ? '...' : <CountUp end={stats?.dueTodayCount || 0} />}
               </h3>
@@ -144,7 +144,7 @@ export const DashboardPage: React.FC = () => {
         <SpotlightCard className="p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">معدل التحويل (تم البيع)</p>
+              <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">Conversion Rate</p>
               <h3 className="text-2xl font-black text-neutral-900 dark:text-white mt-1">
                 {statsLoading ? '...' : <><CountUp end={stats?.conversionRate || 0} decimals={1} />%</>}
               </h3>
@@ -159,9 +159,9 @@ export const DashboardPage: React.FC = () => {
         <SpotlightCard className="p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">الطلبات المكتملة</p>
+              <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">Closed Deals</p>
               <h3 className="text-2xl font-black text-neutral-900 dark:text-white mt-1">
-                {statsLoading ? '...' : <CountUp end={stats?.statusDistribution?.['تم البيع'] || 0} />}
+                {statsLoading ? '...' : <CountUp end={stats?.statusDistribution?.['تم البيع'] || (stats?.statusDistribution as any)?.['Closed Won'] || 0} />}
               </h3>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white">

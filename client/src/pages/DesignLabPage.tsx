@@ -10,7 +10,6 @@ export const DesignLabPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [punchState, setPunchState] = useState<'checked-in' | 'checked-out' | 'initial'>('checked-in');
   const [isPunching, setIsPunching] = useState(false);
-  const [paperTextureActive, setPaperTextureActive] = useState(true);
 
   const handlePunchDemo = () => {
     setIsPunching(true);
@@ -21,12 +20,12 @@ export const DesignLabPage: React.FC = () => {
   };
 
   const chartData = [
-    { label: 'السبت', value: 8 },
-    { label: 'الأحد', value: 14, annotation: 'ذروة التفاعل' },
-    { label: 'الاثنين', value: 11 },
-    { label: 'الثلاثاء', value: 9 },
-    { label: 'الأربعاء', value: 16 },
-    { label: 'الخميس', value: 12 },
+    { label: 'Sat', value: 8 },
+    { label: 'Sun', value: 14, annotation: 'Peak Interaction' },
+    { label: 'Mon', value: 11 },
+    { label: 'Tue', value: 9 },
+    { label: 'Wed', value: 16 },
+    { label: 'Thu', value: 12 },
   ];
 
   const sampleIcons: LedgerIconName[] = [
@@ -64,100 +63,100 @@ export const DesignLabPage: React.FC = () => {
       <div className="border-b-2 border-neutral-900 dark:border-white pb-4">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xs font-mono font-bold uppercase tracking-widest px-1.5 py-0.5 border border-neutral-900 dark:border-white">
-            مختبر الهوية البصرية الرسمية
+            Tiger Official Visual System
           </span>
           <span className="text-xs font-mono text-neutral-500">ISO-LEDGER-V2</span>
         </div>
         <h2 className="text-3xl font-display font-bold text-neutral-950 dark:text-white">
-          مختبر مكونات «دفتر الشركة» (Design Lab)
+          Company Ledger Component Lab
         </h2>
         <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 mt-1 max-w-3xl">
-          فحص دقيق لكافة مكونات الهوية البصرية الجديدة في حالاتها المختلفة: زوايا حادة، أختام مطاطية، كروت حضور مثقوبة، إيصالات رواتب، وجداول مسطرة بنظام الدفاتر المحاسبية.
+          Visual test harness for all Tiger Ledger system primitives: crisp borders, rubber stamps, physical punched time cards, payroll slips, and accounting tables.
         </p>
       </div>
 
       {/* 1. Typography & Mega Numerals Section */}
       <section className="space-y-4">
         <div className="flex items-center justify-between border-b border-neutral-300 dark:border-neutral-700 pb-2">
-          <h3 className="font-display font-bold text-lg">1. تباين الطباعة والأرقام الضخمة (Typography)</h3>
-          <span className="text-xs font-mono text-neutral-500">Reem Kufi + IBM Plex Sans Arabic + IBM Plex Mono</span>
+          <h3 className="font-display font-bold text-lg">1. Typography & Mega Numerals</h3>
+          <span className="text-xs font-mono text-neutral-500">Inter + JetBrains Mono + Outfit</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 border-2 border-neutral-900 dark:border-white bg-[#fafafa] dark:bg-[#121212]">
           <div>
-            <span className="text-xs font-mono text-neutral-500 block mb-1">رقم إحصائي رئيسي (Mega Display)</span>
+            <span className="text-xs font-mono text-neutral-500 block mb-1">Mega Display Metric</span>
             <div className="text-7xl sm:text-8xl font-mono font-black tabular-nums text-neutral-950 dark:text-white">
-              98.4
+              98.4%
             </div>
-            <span className="text-xs font-bold font-ledger mt-2 block">نسبة الالتزام بالدوام هذا الشهر</span>
+            <span className="text-xs font-bold font-ledger mt-2 block">Monthly Attendance Compliance Rate</span>
           </div>
 
           <div className="space-y-2">
-            <span className="text-xs font-mono text-neutral-500 block">خط العرض الرسمي (Reem Kufi)</span>
+            <span className="text-xs font-mono text-neutral-500 block">Display Headline</span>
             <div className="text-2xl font-display font-bold text-neutral-900 dark:text-white">
-              سجل الحسابات والمعاملات الإدارية
+              Tiger Workflow Automation
             </div>
             <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed font-ledger">
-              هذا النص مكتوب بخط IBM Plex Sans Arabic المعتمد للقراءة المكتبية الهادئة بدون أي letter-spacing مشوه للنص العربي.
+              Clean, high-density typography optimized for precision operations without artificial decorations or gradients.
             </p>
           </div>
 
           <div className="space-y-3">
-            <span className="text-xs font-mono text-neutral-500 block">ساعة أودوميتر ميكانيكية دوارة</span>
+            <span className="text-xs font-mono text-neutral-500 block">Mechanical Odometer Clock</span>
             <div>
               <OdometerClock className="text-lg" />
             </div>
             <span className="text-[11px] font-mono text-neutral-500 block">
-              أرقام أحادية موحدة العرض (Tabular Numerals)
+              Monospaced Tabular Digits
             </span>
           </div>
         </div>
       </section>
 
-      {/* 2. Rubber Stamps (أختام الحالات) */}
+      {/* 2. Rubber Stamps */}
       <section className="space-y-4">
         <div className="flex items-center justify-between border-b border-neutral-300 dark:border-neutral-700 pb-2">
-          <h3 className="font-display font-bold text-lg">2. الحالات كأختام مطاطية (Rubber Stamps)</h3>
-          <span className="text-xs font-mono text-neutral-500">إطار مزدوج + زاوية ميلان ثابتة مشتقة من المعرف</span>
+          <h3 className="font-display font-bold text-lg">2. Rubber Stamps & Seals</h3>
+          <span className="text-xs font-mono text-neutral-500">Double border + deterministic rotational angle</span>
         </div>
 
         <div className="p-6 border-2 border-neutral-900 dark:border-white bg-white dark:bg-neutral-950 flex flex-wrap items-center gap-6">
-          <RubberStamp label="معتمد" recordId="rec-appr-01" subtext="بقرار الإدارة" />
-          <RubberStamp label="مرفوض" recordId="rec-rej-02" subtext="مخالف للائحة" />
-          <RubberStamp label="غياب غير مبرر" recordId="rec-abs-03" subtext="خصم 1.0 يوم" />
-          <RubberStamp label="متأخر 25 دقيقة" recordId="rec-late-04" subtext="شريحة 2" />
-          <RubberStamp label="محل نزاع" recordId="rec-disp-05" subtext="قيد الدراسة" />
-          <RubberStamp label="مغلق نهائياً" recordId="rec-close-06" subtext="دورة 2026-09" />
+          <RubberStamp label="APPROVED" recordId="rec-appr-01" subtext="BY EXECUTIVE" />
+          <RubberStamp label="REJECTED" recordId="rec-rej-02" subtext="OUT OF POLICY" />
+          <RubberStamp label="ABSENT" recordId="rec-abs-03" subtext="1.0 DAY DEDUCT" />
+          <RubberStamp label="LATE 25M" recordId="rec-late-04" subtext="TIER 2 PENALTY" />
+          <RubberStamp label="DISPUTED" recordId="rec-disp-05" subtext="UNDER AUDIT" />
+          <RubberStamp label="CLOSED" recordId="rec-close-06" subtext="CYCLE 2026-09" />
         </div>
       </section>
 
       {/* 3. Hallmark Components: Punched Attendance Card & Payslip Receipt */}
       <section className="space-y-4">
         <div className="flex items-center justify-between border-b border-neutral-300 dark:border-neutral-700 pb-2">
-          <h3 className="font-display font-bold text-lg">3. الشاشات النموذجية (كارت الحضور وإيصال الراتب)</h3>
+          <h3 className="font-display font-bold text-lg">3. Hallmark Artifacts (Time Card & Payslip)</h3>
           <span className="text-xs font-mono text-neutral-500">Punched Card & Perforated Receipt</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           {/* Punched Card Demo */}
           <div className="space-y-2">
-            <span className="text-xs font-mono text-neutral-500 block">أ. كارت الحضور المثقوب مع تأثير التثقيب الحي:</span>
+            <span className="text-xs font-mono text-neutral-500 block">A. Physical Punched Time Card with punch audio feedback:</span>
             <PunchedCard
-              employeeName="م/ مؤمن ياسر"
+              employeeName="Tiger Operator"
               employeeId="EMP-00918"
               date="2026-09-28"
               punches={[
                 {
-                  type: 'حضور',
+                  type: 'In',
                   time: '08:58:12',
                   isPunched: true,
-                  statusBadge: 'في الموعد',
+                  statusBadge: 'On Time',
                 },
                 {
-                  type: 'انصراف',
+                  type: 'Out',
                   time: punchState === 'checked-out' ? '17:02:45' : '',
                   isPunched: punchState === 'checked-out',
-                  statusBadge: punchState === 'checked-out' ? 'مكتمل' : undefined,
+                  statusBadge: punchState === 'checked-out' ? 'Completed' : undefined,
                 },
               ]}
               onPunchClick={handlePunchDemo}
@@ -167,11 +166,11 @@ export const DesignLabPage: React.FC = () => {
 
           {/* Payslip Receipt Demo */}
           <div className="space-y-2">
-            <span className="text-xs font-mono text-neutral-500 block">ب. إيصال مسير الراتب بحواف مثقبة وخط مزدوج:</span>
+            <span className="text-xs font-mono text-neutral-500 block">B. Cryptographically sealed payslip voucher with QR:</span>
             <PayslipReceipt
               serialNumber="9082-2026-09"
-              employeeName="م/ مؤمن ياسر"
-              employeeEmail="momen@tiger-crm.local"
+              employeeName="Tiger Operator"
+              employeeEmail="operator@tiger.local"
               period="2026-09"
               baseSalary={6000}
               dayWage={200}
@@ -189,52 +188,52 @@ export const DesignLabPage: React.FC = () => {
       {/* 4. Ledger Table & Hatched Chart */}
       <section className="space-y-4">
         <div className="flex items-center justify-between border-b border-neutral-300 dark:border-neutral-700 pb-2">
-          <h3 className="font-display font-bold text-lg">4. جدول الدفتر المسطر والمخطط المهشر (Table & Chart)</h3>
-          <span className="text-xs font-mono text-neutral-500">خطوط رفيعة + خط إجمالي مزدوج + أنماط تهشير</span>
+          <h3 className="font-display font-bold text-lg">4. Ledger Table & Hatched Chart</h3>
+          <span className="text-xs font-mono text-neutral-500">Crisp hairline borders + double accounting underlines</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           {/* Ledger Table */}
           <div className="space-y-2">
-            <span className="text-xs font-mono text-neutral-500 block">أ. جدول دفتر مسطر بخطوط أفقية:</span>
+            <span className="text-xs font-mono text-neutral-500 block">A. Accounting Ledger Table:</span>
             <LedgerTable>
               <thead>
                 <tr className="border-b-2 border-neutral-900 dark:border-white font-bold bg-neutral-100 dark:bg-neutral-900">
-                  <th className="p-3">رقم القيد</th>
-                  <th className="p-3">اسم الموظف / العميل</th>
-                  <th className="p-3">الحالة المحاسبية</th>
-                  <th className="p-3 text-left">المبلغ الصافي</th>
+                  <th className="p-3">Ref ID</th>
+                  <th className="p-3">Client / Organization</th>
+                  <th className="p-3">Ledger Status</th>
+                  <th className="p-3 text-right">Net Value</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 font-mono">
                 <tr>
                   <td className="p-3 font-bold">#TR-01</td>
-                  <td className="p-3 font-ledger font-semibold">شركة النور للتجارة</td>
+                  <td className="p-3 font-ledger font-semibold">Apex Robotics Corp</td>
                   <td className="p-3">
-                    <RubberStamp label="تم البيع" recordId="tr-01" />
+                    <RubberStamp label="CLOSED" recordId="tr-01" />
                   </td>
-                  <td className="p-3 text-left tabular-nums font-bold">25,000.00 ر.س</td>
+                  <td className="p-3 text-right tabular-nums font-bold">25,000.00 SAR</td>
                 </tr>
                 <tr>
                   <td className="p-3 font-bold">#TR-02</td>
-                  <td className="p-3 font-ledger font-semibold">مؤسسة الأفق العقارية</td>
+                  <td className="p-3 font-ledger font-semibold">Horizon Logistics Ltd</td>
                   <td className="p-3">
-                    <RubberStamp label="مهتم" recordId="tr-02" />
+                    <RubberStamp label="INTERESTED" recordId="tr-02" />
                   </td>
-                  <td className="p-3 text-left tabular-nums font-bold">12,500.00 ر.س</td>
+                  <td className="p-3 text-right tabular-nums font-bold">12,500.00 SAR</td>
                 </tr>
                 <tr>
                   <td className="p-3 font-bold">#TR-03</td>
-                  <td className="p-3 font-ledger font-semibold">مكتب الرواد للاستشارات</td>
+                  <td className="p-3 font-ledger font-semibold">Pioneer Consulting Group</td>
                   <td className="p-3">
-                    <RubberStamp label="قيد المتابعة" recordId="tr-03" />
+                    <RubberStamp label="CONTACTED" recordId="tr-03" />
                   </td>
-                  <td className="p-3 text-left tabular-nums font-bold">8,000.00 ر.س</td>
+                  <td className="p-3 text-right tabular-nums font-bold">8,000.00 SAR</td>
                 </tr>
                 {/* Total Row with Double Underline */}
                 <tr className="border-t-2 border-neutral-900 dark:border-white border-double-bottom font-bold text-sm bg-neutral-50 dark:bg-neutral-900/50">
-                  <td colSpan={3} className="p-3 font-display">إجمالي القيود المعتمدة في الدفتر</td>
-                  <td className="p-3 text-left tabular-nums font-black">45,500.00 ر.س</td>
+                  <td colSpan={3} className="p-3 font-display">Total Master Ledger Balance</td>
+                  <td className="p-3 text-right tabular-nums font-black">45,500.00 SAR</td>
                 </tr>
               </tbody>
             </LedgerTable>
@@ -242,11 +241,11 @@ export const DesignLabPage: React.FC = () => {
 
           {/* Hatched Chart */}
           <div className="space-y-2">
-            <span className="text-xs font-mono text-neutral-500 block">ب. رسم بياني بأنماط تهشير ونقاط نصف-تون:</span>
+            <span className="text-xs font-mono text-neutral-500 block">B. Monochrome Hatched Bar Chart:</span>
             <HatchedChart
-              title="معدل المتابعات اليومية المسجلة هذا الأسبوع"
+              title="Daily Follow-Up Interactions Recorded This Week"
               data={chartData}
-              unit=" متابعة"
+              unit=" events"
               height={220}
             />
           </div>
@@ -256,28 +255,28 @@ export const DesignLabPage: React.FC = () => {
       {/* 5. Controls, Buttons & Modals */}
       <section className="space-y-4">
         <div className="flex items-center justify-between border-b border-neutral-300 dark:border-neutral-700 pb-2">
-          <h3 className="font-display font-bold text-lg">5. الأزرار والمداخل والطبقات المنبثقة (Controls & Modals)</h3>
-          <span className="text-xs font-mono text-neutral-500">حواف حادة + انخفاض 1px + خلفية تهشير للنافذة</span>
+          <h3 className="font-display font-bold text-lg">5. Action Buttons & Input Primitives</h3>
+          <span className="text-xs font-mono text-neutral-500">Solid drop-shadows + 1px tactile click down</span>
         </div>
 
         <div className="p-6 border-2 border-neutral-900 dark:border-white bg-white dark:bg-neutral-950 space-y-6">
           <div className="flex flex-wrap items-center gap-3">
-            <LedgerButton variant="primary" icon="plus">زر أساسي بتعبئة كاملة</LedgerButton>
-            <LedgerButton variant="secondary" icon="printer">زر ثانوي بإطار رسمي</LedgerButton>
-            <LedgerButton variant="danger" icon="trash">زر إجراء حرج</LedgerButton>
-            <LedgerButton variant="ghost" icon="search">زر شفاف</LedgerButton>
-            <LedgerButton variant="primary" disabled icon="lock">زر معطل</LedgerButton>
+            <LedgerButton variant="primary" icon="plus">Primary Solid Button</LedgerButton>
+            <LedgerButton variant="secondary" icon="printer">Secondary Outlined</LedgerButton>
+            <LedgerButton variant="danger" icon="trash">Critical Action</LedgerButton>
+            <LedgerButton variant="ghost" icon="search">Ghost Filter</LedgerButton>
+            <LedgerButton variant="primary" disabled icon="lock">Disabled State</LedgerButton>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-            <LedgerInput label="اسم العميل أو جهة القيد" placeholder="أدخل الاسم..." />
-            <LedgerInput label="رقم الجوال (فحص التكرار)" placeholder="05XXXXXXXX" isMono />
-            <LedgerInput label="حقل بقيمة خاطئة (Error State)" defaultValue="قيمة غير صالحة" error="رقم الهاتف مسجل مسبقاً في الدفتر" isMono />
+            <LedgerInput label="Client Name or Ledger Subject" placeholder="Enter name..." />
+            <LedgerInput label="Phone Number (Deduplication Check)" placeholder="+1234567890" isMono />
+            <LedgerInput label="Invalid Field (Error State)" defaultValue="invalid-entry" error="Number is already logged in ledger" isMono />
           </div>
 
           <div className="pt-2">
             <LedgerButton variant="primary" onClick={() => setIsModalOpen(true)}>
-              فتح نافذة منبثقة تجريبية (Hatched Backdrop Modal)
+              Launch Sample Modal (Hatched Backdrop)
             </LedgerButton>
           </div>
         </div>
@@ -286,8 +285,8 @@ export const DesignLabPage: React.FC = () => {
       {/* 6. Hand-drawn 24px SVG Icons Showcase */}
       <section className="space-y-4">
         <div className="flex items-center justify-between border-b border-neutral-300 dark:border-neutral-700 pb-2">
-          <h3 className="font-display font-bold text-lg">6. مصفوفة الأيقونات الرسمية (Hand-crafted 24px Grid)</h3>
-          <span className="text-xs font-mono text-neutral-500">خط 2px + نهايات مربعة + بدون أي مكتبة خارجية</span>
+          <h3 className="font-display font-bold text-lg">6. Hand-Crafted 24px Grid Icons</h3>
+          <span className="text-xs font-mono text-neutral-500">2px stroke + square caps + zero third-party icons</span>
         </div>
 
         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-9 gap-3 p-5 border-2 border-neutral-900 dark:border-white bg-[#fafafa] dark:bg-[#121212]">
@@ -309,18 +308,18 @@ export const DesignLabPage: React.FC = () => {
       <LedgerModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="تأكيد إجراء مكتبي في الدفتر"
+        title="Confirm Administrative Ledger Entry"
       >
         <div className="space-y-4 font-ledger text-xs sm:text-sm">
           <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed">
-            تنبيه: الخلفية خلف هذه النافذة مغطاة بنمط تهشير قطري رفيع (بدون تمويه Glassmorphism)، والنافذة محاطة بإطار سميك مع ظل صلب صريح مزاح بمقدار 4px.
+            Notice: The backdrop behind this modal is hatched with monochrome fine lines (no blurry glassmorphism), while the modal is encased in an ink border with an offset shadow.
           </p>
           <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
             <LedgerButton variant="ghost" size="sm" onClick={() => setIsModalOpen(false)}>
-              إلغاء التراجع
+              Dismiss
             </LedgerButton>
             <LedgerButton variant="primary" size="sm" onClick={() => setIsModalOpen(false)}>
-              تأكيد التوثيق
+              Authorize Entry
             </LedgerButton>
           </div>
         </div>

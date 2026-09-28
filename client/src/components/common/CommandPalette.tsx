@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api.js';
 import { useTheme } from '../../contexts/ThemeContext.js';
 import { LedgerIcon } from '../icons/LedgerIcons.js';
-import { matchesArabicSearch } from '../../lib/utils.js';
+import { matchesArabicSearch, getStatusLabel } from '../../lib/utils.js';
 import type { Customer } from '../../types/index.js';
 
 interface CommandPaletteProps {
@@ -48,9 +48,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const staticActions: PaletteAction[] = [
     {
       id: 'action-attendance',
-      category: 'إجراءات سريعة',
-      title: 'تسجيل بصمة الدوام (حضور / انصراف)',
-      subtitle: 'الانتقال إلى كارت الدوام لإثبات الحضور',
+      category: 'Quick Actions',
+      title: 'Time Clock & Punch Card',
+      subtitle: 'Stamp clock in or clock out for today',
       icon: 'punch-card',
       action: () => {
         navigate('/attendance');
@@ -59,9 +59,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     },
     {
       id: 'action-add-customer',
-      category: 'إجراءات سريعة',
-      title: 'إضافة قيد عميل جديد',
-      subtitle: 'فتح سجل العملاء لإدراج قيد جديد',
+      category: 'Quick Actions',
+      title: 'Create New Customer Record',
+      subtitle: 'Open customers ledger and add entry',
       icon: 'plus',
       action: () => {
         navigate('/customers');
@@ -70,9 +70,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     },
     {
       id: 'action-payroll',
-      category: 'إجراءات سريعة',
-      title: 'استعراض دفتر الرواتب وقسيمة الدفع',
-      subtitle: 'كشف الخصومات ومسير الرواتب الشهري',
+      category: 'Quick Actions',
+      title: 'Payroll, Deductions & Slips',
+      subtitle: 'Review monthly payslips and wage breakdown',
       icon: 'receipt',
       action: () => {
         navigate('/deductions');
@@ -81,9 +81,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     },
     {
       id: 'action-chat',
-      category: 'إجراءات سريعة',
-      title: 'فتح الشات الداخلي للمنظومة',
-      subtitle: 'المراسلات الفورية مع فريق العمل',
+      category: 'Quick Actions',
+      title: 'Open Team Chat',
+      subtitle: 'Instant channels and direct workplace messaging',
       icon: 'chat',
       action: () => {
         navigate('/chat');
@@ -92,20 +92,20 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     },
     {
       id: 'action-company',
-      category: 'إجراءات سريعة',
-      title: 'استعراض ملف المنشأة والهندسة الصناعية',
-      subtitle: 'الرؤية والشركاء ومحفظة الحلول المتكاملة (Company Profile)',
+      category: 'Navigation',
+      title: 'Tiger Company Profile & Videos',
+      subtitle: 'Industrial showcase, Flow video, and partner network',
       icon: 'building',
       action: () => {
-        navigate('/company');
+        navigate('/');
         onClose();
       },
     },
     {
       id: 'action-theme',
-      category: 'إجراءات سريعة',
-      title: 'تبديل وضع الورقة (فاتح / حبر داكن)',
-      subtitle: 'تغيير نمط العرض للواجهة الورقية',
+      category: 'Display',
+      title: 'Toggle Color Theme (Dark / Light)',
+      subtitle: 'Switch interface contrast modes',
       icon: 'eye',
       action: () => {
         toggleTheme();
@@ -114,9 +114,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     },
     {
       id: 'action-shortcuts',
-      category: 'إجراءات سريعة',
-      title: 'دليل اختصارات لوحة المفاتيح',
-      subtitle: 'استعراض كافة أوامر المفاتيح الميكانيكية [?]',
+      category: 'Help',
+      title: 'Keyboard Shortcuts Reference',
+      subtitle: 'Inspect mechanical hotkeys [?]',
       icon: 'help',
       action: () => {
         onClose();
@@ -128,9 +128,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   // Dynamic Customer Search Results
   const customerActions: PaletteAction[] = customers.map((c) => ({
     id: `cust-${c.id}`,
-    category: 'سجل العملاء',
+    category: 'Customers',
     title: c.name,
-    subtitle: `${c.company ? `${c.company} • ` : ''}${c.phone} • [${c.status}]`,
+    subtitle: `${c.company ? `${c.company} • ` : ''}${c.phone} • [${getStatusLabel(c.status)}]`,
     icon: 'users',
     action: () => {
       navigate('/customers');
@@ -140,7 +140,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   const allItems = [...staticActions, ...customerActions];
 
-  // Filter with normalized Arabic search
+  // Filter
   const filteredItems = allItems.filter((item) => {
     if (!query.trim()) return true;
     return (
@@ -184,9 +184,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     <div
       className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 p-4 bg-diagonal-hatch bg-black/60"
       onClick={onClose}
+      dir="ltr"
     >
       <div
-        className="w-full max-w-xl border-2 border-neutral-900 dark:border-white bg-[#ffffff] dark:bg-[#121212] shadow-solid flex flex-col font-ledger overflow-hidden"
+        className="w-full max-w-xl border-2 border-neutral-900 dark:border-white bg-[#ffffff] dark:bg-[#121212] shadow-solid flex flex-col font-sans overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input Bar */}
@@ -201,11 +202,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               setSelectedIndex(0);
             }}
             onKeyDown={handleKeyDown}
-            placeholder="ابحث في الدفتر (عميل، أمر، كارت دوام، أو كيبورد)..."
+            placeholder="Search commands, customer records, time clock, or hotkeys..."
             className="w-full bg-transparent text-sm font-bold text-neutral-950 dark:text-white outline-none placeholder:text-neutral-400 placeholder:font-normal"
           />
           <span className="text-[10px] font-mono border border-neutral-400 dark:border-neutral-600 px-1.5 py-0.5 text-neutral-500">
-            ESC للإلغاء
+            ESC to close
           </span>
         </div>
 
@@ -213,7 +214,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         <div className="max-h-96 overflow-y-auto divide-y divide-neutral-200 dark:divide-neutral-800 p-2">
           {filteredItems.length === 0 ? (
             <div className="p-8 text-center text-xs font-mono text-neutral-500">
-              لا توجد قيود أو أوامر مطابقة لـ "{query}".
+              No matching records or actions found for "{query}".
             </div>
           ) : (
             filteredItems.map((item, index) => {
@@ -263,11 +264,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         {/* Footer info */}
         <div className="border-t-2 border-neutral-900 dark:border-white px-3 py-2 bg-neutral-100 dark:bg-neutral-900 flex items-center justify-between text-[11px] font-mono text-neutral-600 dark:text-neutral-400">
           <div className="flex items-center gap-3">
-            <span>↑↓ للتنقل</span>
-            <span>↵ للتنفيذ</span>
-            <span>ESC للإغلاق</span>
+            <span>↑↓ Navigate</span>
+            <span>↵ Select</span>
+            <span>ESC Close</span>
           </div>
-          <span>المطابقة: بحث عربي ذكي</span>
+          <span>Tiger Quick Command Engine</span>
         </div>
       </div>
     </div>

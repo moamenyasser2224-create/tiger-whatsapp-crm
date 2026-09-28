@@ -8,7 +8,6 @@ import { LedgerIcon } from '../components/icons/LedgerIcons.js';
 import { LedgerButton, LedgerInput, LedgerModal } from '../components/common/LedgerComponents.js';
 import { RubberStamp } from '../components/common/RubberStamp.js';
 import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
 
 export const ChatPage: React.FC = () => {
   const { user } = useAuth();
@@ -77,13 +76,11 @@ export const ChatPage: React.FC = () => {
   useEffect(() => {
     if (!socket) return;
 
-    // Join channel room if selected
     if (selectedChannelId) {
       socket.emit('join_channel', selectedChannelId);
     }
 
     const handleNewMessage = (newMsg: ChatMessage) => {
-      // Check if message belongs to current channel view
       const msgChannel = newMsg.channelId || null;
       const currentChannel = selectedChannelId || null;
 
@@ -153,7 +150,7 @@ export const ChatPage: React.FC = () => {
       setTimeout(() => scrollToBottom(true), 50);
     },
     onError: (err: any) => {
-      setErrorMessage(err.response?.data?.error || 'تعذر إرسال المذكرة. يرجى المحاولة ثانية.');
+      setErrorMessage(err.response?.data?.error || 'Failed to send message. Please try again.');
     },
   });
 
@@ -170,7 +167,7 @@ export const ChatPage: React.FC = () => {
       setSelectedChannelId(newChannel.id);
     },
     onError: (err: any) => {
-      alert(err.response?.data?.error || 'فشل فتح القناة الجديدة');
+      alert(err.response?.data?.error || 'Failed to create channel');
     },
   });
 
@@ -179,7 +176,7 @@ export const ChatPage: React.FC = () => {
     const trimmed = inputText.trim();
     if (!trimmed && !attachmentData) return;
     if (trimmed.length > 2000) {
-      setErrorMessage('لا يمكن أن يتجاوز طول المذكرة 2000 حرف');
+      setErrorMessage('Message length cannot exceed 2000 characters');
       return;
     }
 
@@ -200,13 +197,12 @@ export const ChatPage: React.FC = () => {
     }
   };
 
-  // Handle Attachment Selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
-      setErrorMessage('الحد الأقصى للمرفق هو 10 ميجابايت');
+      setErrorMessage('Attachment size limit is 10MB');
       return;
     }
 
@@ -226,7 +222,7 @@ export const ChatPage: React.FC = () => {
   const formatMessageTime = (isoString: string) => {
     try {
       const d = new Date(isoString);
-      return format(d, 'hh:mm a', { locale: ar });
+      return format(d, 'hh:mm a');
     } catch {
       return '';
     }
@@ -235,24 +231,22 @@ export const ChatPage: React.FC = () => {
   const activeChannel = channels.find((c) => c.id === selectedChannelId);
 
   return (
-    <div className="flex flex-col md:flex-row h-[calc(100vh-10.5rem)] border-2 border-neutral-900 dark:border-neutral-100 bg-[#ffffff] dark:bg-[#141414] shadow-solid select-text">
-      {/* ========================================================
-          1. CHANNELS SIDEBAR (سجل القنوات والمراسلات)
-          ======================================================== */}
-      <aside className="w-full md:w-64 border-b-2 md:border-b-0 md:border-l-2 border-neutral-900 dark:border-neutral-100 bg-[#fafafa] dark:bg-[#111111] flex flex-col shrink-0">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-10.5rem)] border-2 border-neutral-900 dark:border-neutral-100 bg-[#ffffff] dark:bg-[#141414] shadow-solid select-text" dir="ltr">
+      {/* 1. CHANNELS SIDEBAR */}
+      <aside className="w-full md:w-64 border-b-2 md:border-b-0 md:border-r-2 border-neutral-900 dark:border-neutral-100 bg-[#fafafa] dark:bg-[#111111] flex flex-col shrink-0">
         {/* Sidebar Header */}
         <div className="p-3 border-b-2 border-neutral-900 dark:border-neutral-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 bg-neutral-900 dark:bg-white" />
             <h2 className="font-bold text-xs font-mono uppercase tracking-wider text-neutral-900 dark:text-white">
-              قنوات المراسلات
+              CHANNELS
             </h2>
           </div>
           <button
             type="button"
             onClick={() => setIsNewChannelModalOpen(true)}
-            title="فتح قناة جديدة"
-            className="p-1 border border-neutral-900 dark:border-white hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+            title="Create New Channel"
+            className="p-1 border border-neutral-900 dark:border-white hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
           >
             <LedgerIcon name="plus" size={13} />
           </button>
@@ -260,11 +254,11 @@ export const ChatPage: React.FC = () => {
 
         {/* Channels List */}
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {/* General Ledger Channel (All staff) */}
+          {/* General Workspace Channel */}
           <button
             type="button"
             onClick={() => setSelectedChannelId(null)}
-            className={`w-full text-right p-2.5 text-xs font-bold transition-all border flex items-center justify-between ${
+            className={`w-full text-left p-2.5 text-xs font-bold transition-all border flex items-center justify-between cursor-pointer ${
               selectedChannelId === null
                 ? 'bg-neutral-900 text-white dark:bg-white dark:text-black border-neutral-900 dark:border-white shadow-solid-sm'
                 : 'bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 border-neutral-300 dark:border-neutral-700 hover:border-neutral-900'
@@ -272,9 +266,9 @@ export const ChatPage: React.FC = () => {
           >
             <div className="flex items-center gap-2 truncate">
               <span className="font-mono text-sm">#</span>
-              <span className="truncate">الدفتر العام للمنشأة</span>
+              <span className="truncate">General Workspace</span>
             </div>
-            <span className="text-[10px] font-mono px-1 border border-current">عام</span>
+            <span className="text-[10px] font-mono px-1 border border-current">ALL</span>
           </button>
 
           {/* User Channels */}
@@ -285,7 +279,7 @@ export const ChatPage: React.FC = () => {
                 key={chan.id}
                 type="button"
                 onClick={() => setSelectedChannelId(chan.id)}
-                className={`w-full text-right p-2.5 text-xs font-bold transition-all border flex items-center justify-between ${
+                className={`w-full text-left p-2.5 text-xs font-bold transition-all border flex items-center justify-between cursor-pointer ${
                   isSelected
                     ? 'bg-neutral-900 text-white dark:bg-white dark:text-black border-neutral-900 dark:border-white shadow-solid-sm'
                     : 'bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 border-neutral-300 dark:border-neutral-700 hover:border-neutral-900'
@@ -296,7 +290,7 @@ export const ChatPage: React.FC = () => {
                   <span className="truncate">{chan.name}</span>
                 </div>
                 <span className="text-[9px] font-mono px-1 border border-current uppercase">
-                  {chan.type === 'department' ? 'قسم' : chan.type === 'private' ? 'خاص' : 'عام'}
+                  {chan.type}
                 </span>
               </button>
             );
@@ -308,18 +302,16 @@ export const ChatPage: React.FC = () => {
           <div className="flex items-center gap-1.5">
             <span
               className={`w-2 h-2 rounded-full border border-neutral-900 dark:border-white ${
-                isConnected ? 'bg-neutral-900 dark:bg-white animate-pulse' : 'bg-transparent'
+                isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-transparent'
               }`}
             />
-            <span className="font-bold">{isConnected ? 'التيار المباشر متصل' : 'جارِ الربط...'}</span>
+            <span className="font-bold">{isConnected ? 'Live WebSocket Active' : 'Connecting...'}</span>
           </div>
           <span className="text-neutral-500">WS-256</span>
         </div>
       </aside>
 
-      {/* ========================================================
-          2. CHAT FEED & MESSAGES (ورقة المراسلات المسطرة)
-          ======================================================== */}
+      {/* 2. CHAT FEED & MESSAGES */}
       <section className="flex-1 flex flex-col min-w-0 bg-[#ffffff] dark:bg-[#141414]">
         {/* Chat Room Top Bar */}
         <div className="border-b-2 border-neutral-900 dark:border-neutral-100 px-4 py-2.5 flex items-center justify-between bg-[#fbfbfb] dark:bg-[#161616]">
@@ -327,20 +319,20 @@ export const ChatPage: React.FC = () => {
             <span className="font-mono font-bold text-lg">#</span>
             <div>
               <div className="font-bold text-sm text-neutral-950 dark:text-white flex items-center gap-2">
-                <span>{activeChannel ? activeChannel.name : 'الدفتر العام للمنشأة'}</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 border border-neutral-900 dark:border-white">
-                  {activeChannel ? activeChannel.type : 'رسمي لكافة الموظفين'}
+                <span>{activeChannel ? activeChannel.name : 'General Workspace'}</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 border border-neutral-900 dark:border-white uppercase">
+                  {activeChannel ? activeChannel.type : 'All Members'}
                 </span>
               </div>
               <p className="text-[11px] font-mono text-neutral-500 dark:text-neutral-400">
-                سجل مراسلات مشفر وموثّق تحت لائحة العمل الإدارية
+                Tiger authenticated internal workplace stream
               </p>
             </div>
           </div>
 
           <div className="hidden sm:flex items-center gap-2 font-mono text-xs">
             <span className="px-2 py-0.5 border border-neutral-900 dark:border-neutral-100">
-              {messages.length} قيد مسجل
+              {messages.length} messages
             </span>
           </div>
         </div>
@@ -354,18 +346,18 @@ export const ChatPage: React.FC = () => {
             </div>
             <button
               onClick={() => setErrorMessage(null)}
-              className="text-white dark:text-black px-1 font-bold hover:underline"
+              className="text-white dark:text-black px-1 font-bold hover:underline cursor-pointer"
             >
-              [إغلاق]
+              [Dismiss]
             </button>
           </div>
         )}
 
         {/* Messages Feed */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 font-ledger ruled-paper">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 ruled-paper">
           {isLoading ? (
             <div className="flex h-full items-center justify-center text-xs font-mono text-neutral-500">
-              جارِ فك وثائق السجل...
+              Loading chat records...
             </div>
           ) : messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center p-6 space-y-2">
@@ -373,10 +365,10 @@ export const ChatPage: React.FC = () => {
                 <LedgerIcon name="chat" size={24} />
               </div>
               <div className="font-bold text-sm text-neutral-900 dark:text-white">
-                لا توجد مذكرات مقيدة في هذه القناة بعد
+                No messages recorded in this channel yet
               </div>
               <p className="text-xs font-mono text-neutral-500 max-w-sm">
-                قيد أول مراسلة للفريق. جميع السجلات تحفظ وتوثق بشكل دائم.
+                Send the first message to the team. All communications are preserved and encrypted.
               </p>
             </div>
           ) : (
@@ -390,10 +382,10 @@ export const ChatPage: React.FC = () => {
                 >
                   <div
                     className={`max-w-[90%] md:max-w-[75%] border-2 border-neutral-900 dark:border-neutral-100 p-3 bg-white dark:bg-neutral-900 shadow-solid-sm ${
-                      isMe ? 'mr-1' : 'ml-1'
+                      isMe ? 'ml-1' : 'mr-1'
                     }`}
                   >
-                    {/* Message Header: Sender info & Typewriter Timestamp */}
+                    {/* Header */}
                     <div className="flex items-center justify-between gap-3 border-b border-dashed border-neutral-300 dark:border-neutral-700 pb-1.5 mb-2 text-xs">
                       <div className="flex items-center gap-2">
                         {msg.sender?.photoUrl ? (
@@ -404,19 +396,19 @@ export const ChatPage: React.FC = () => {
                           />
                         ) : (
                           <span className="w-5 h-5 border border-neutral-900 dark:border-white flex items-center justify-center font-mono text-[10px] font-bold">
-                            {msg.sender?.name?.[0] || 'م'}
+                            {msg.sender?.name?.[0] || 'U'}
                           </span>
                         )}
                         <span className="font-bold text-neutral-950 dark:text-white">
-                          {isMe ? 'أنت' : msg.sender?.name || 'عضو المنظومة'}
+                          {isMe ? 'You' : msg.sender?.name || 'Member'}
                         </span>
                         {msg.sender?.role === 'admin' ? (
                           <span className="text-[9px] font-mono px-1 border border-neutral-900 dark:border-white bg-neutral-900 text-white dark:bg-white dark:text-black">
-                            إدارة
+                            ADMIN
                           </span>
                         ) : (
                           <span className="text-[9px] font-mono px-1 border border-neutral-400 text-neutral-600 dark:text-neutral-400">
-                            موظف
+                            STAFF
                           </span>
                         )}
                       </div>
@@ -426,32 +418,32 @@ export const ChatPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setReplyingTo(msg)}
-                          title="رد في سلسلة"
-                          className="opacity-0 group-hover:opacity-100 hover:text-neutral-950 dark:hover:text-white font-bold underline transition-opacity"
+                          title="Reply in thread"
+                          className="opacity-0 group-hover:opacity-100 hover:text-neutral-950 dark:hover:text-white font-bold underline transition-opacity cursor-pointer"
                         >
-                          [رد]
+                          [Reply]
                         </button>
                       </div>
                     </div>
 
-                    {/* Quoted Parent Thread Message */}
+                    {/* Quoted Message */}
                     {msg.parent && (
-                      <div className="border-r-2 border-neutral-900 dark:border-white pr-2.5 py-1 mb-2 bg-neutral-100 dark:bg-neutral-800 text-xs font-mono text-neutral-600 dark:text-neutral-300">
+                      <div className="border-l-2 border-neutral-900 dark:border-white pl-2.5 py-1 mb-2 bg-neutral-100 dark:bg-neutral-800 text-xs font-mono text-neutral-600 dark:text-neutral-300">
                         <span className="font-bold block text-[10px] text-neutral-900 dark:text-white">
-                          رداً على {msg.parent.sender?.name || 'عضو'}:
+                          Replying to {msg.parent.sender?.name || 'Member'}:
                         </span>
                         <p className="line-clamp-1 truncate">{msg.parent.text}</p>
                       </div>
                     )}
 
-                    {/* Message Body */}
+                    {/* Text */}
                     {msg.text && (
                       <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed text-neutral-900 dark:text-neutral-100">
                         {msg.text}
                       </p>
                     )}
 
-                    {/* Attachment Render */}
+                    {/* Attachment */}
                     {msg.attachmentUrl && (
                       <div className="mt-2.5 pt-2 border-t border-dashed border-neutral-300 dark:border-neutral-700">
                         {msg.attachmentType?.startsWith('image/') ? (
@@ -463,24 +455,24 @@ export const ChatPage: React.FC = () => {
                           >
                             <img
                               src={msg.attachmentUrl}
-                              alt="مرفق صورة"
+                              alt="Attachment"
                               className="max-h-60 max-w-full object-contain grayscale"
                             />
                           </a>
                         ) : (
                           <a
                             href={msg.attachmentUrl}
-                            download="مرفق-سجل"
+                            download="attachment"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 p-2 border border-neutral-900 dark:border-white hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-mono"
                           >
                             <LedgerIcon name="paperclip" size={16} />
                             <div className="flex-1 truncate">
-                              <span className="font-bold underline block truncate">مستند مرفق</span>
+                              <span className="font-bold underline block truncate">Attached Document</span>
                               {msg.attachmentSize && (
                                 <span className="text-[10px] text-neutral-500">
-                                  {(msg.attachmentSize / 1024).toFixed(1)} كيلوبايت
+                                  {(msg.attachmentSize / 1024).toFixed(1)} KB
                                 </span>
                               )}
                             </div>
@@ -501,7 +493,7 @@ export const ChatPage: React.FC = () => {
         {replyingTo && (
           <div className="border-t-2 border-neutral-900 dark:border-neutral-100 bg-[#f0f0f0] dark:bg-[#1a1a1a] px-4 py-2 flex items-center justify-between text-xs font-mono">
             <div className="flex items-center gap-2 truncate">
-              <span className="font-bold">قيد الرد على:</span>
+              <span className="font-bold">Replying to:</span>
               <span className="font-bold text-neutral-900 dark:text-white">
                 {replyingTo.sender?.name}
               </span>
@@ -512,9 +504,9 @@ export const ChatPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setReplyingTo(null)}
-              className="font-bold hover:underline"
+              className="font-bold hover:underline cursor-pointer"
             >
-              [إلغاء الرد]
+              [Cancel Reply]
             </button>
           </div>
         )}
@@ -532,9 +524,9 @@ export const ChatPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setAttachmentData(null)}
-              className="text-neutral-900 dark:text-white font-bold hover:underline"
+              className="text-neutral-900 dark:text-white font-bold hover:underline cursor-pointer"
             >
-              [حذف المرفق]
+              [Remove Attachment]
             </button>
           </div>
         )}
@@ -557,8 +549,8 @@ export const ChatPage: React.FC = () => {
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            title="إرفاق وثيقة أو صورة (حتى 10MB)"
-            className="p-2 border-2 border-neutral-900 dark:border-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors btn-mechanical"
+            title="Attach file or image (up to 10MB)"
+            className="p-2 border-2 border-neutral-900 dark:border-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors btn-mechanical cursor-pointer"
           >
             <LedgerIcon name="paperclip" size={17} />
           </button>
@@ -569,12 +561,12 @@ export const ChatPage: React.FC = () => {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="اكتب مذكرة المراسلة... (اضغط Enter للإرسال، Shift+Enter لسطر جديد)"
+              placeholder="Write a message... (Press Enter to send, Shift+Enter for new line)"
               rows={2}
               maxLength={2000}
-              className="w-full resize-none border-2 border-neutral-900 dark:border-white bg-[#fafafa] dark:bg-[#111111] p-2 text-xs sm:text-sm text-neutral-950 dark:text-white outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-white rounded-none font-ledger"
+              className="w-full resize-none border-2 border-neutral-900 dark:border-white bg-[#fafafa] dark:bg-[#111111] p-2 text-xs sm:text-sm text-neutral-950 dark:text-white outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-white rounded-none"
             />
-            <div className="absolute left-2 bottom-1.5 text-[9px] font-mono text-neutral-400">
+            <div className="absolute right-2 bottom-1.5 text-[9px] font-mono text-neutral-400">
               {inputText.length}/2000
             </div>
           </div>
@@ -583,21 +575,19 @@ export const ChatPage: React.FC = () => {
           <LedgerButton
             type="submit"
             disabled={(!inputText.trim() && !attachmentData) || sendMutation.isPending}
-            className="h-[46px] px-4"
+            className="h-[46px] px-4 cursor-pointer"
           >
-            <LedgerIcon name="arrow-left" size={15} />
-            <span className="hidden sm:inline">تقييد المذكرة</span>
+            <LedgerIcon name="arrow-right" size={15} />
+            <span className="hidden sm:inline">Send Message</span>
           </LedgerButton>
         </form>
       </section>
 
-      {/* ========================================================
-          3. CREATE CHANNEL MODAL
-          ======================================================== */}
+      {/* 3. CREATE CHANNEL MODAL */}
       <LedgerModal
         isOpen={isNewChannelModalOpen}
         onClose={() => setIsNewChannelModalOpen(false)}
-        title="فتح قناة مراسلات جديدة"
+        title="Create New Team Channel"
       >
         <form
           onSubmit={(e) => {
@@ -611,8 +601,8 @@ export const ChatPage: React.FC = () => {
           className="space-y-4"
         >
           <LedgerInput
-            label="اسم القناة"
-            placeholder="مثال: قسم المبيعات، المشاريع الكبرى"
+            label="Channel Name"
+            placeholder="e.g. Sales Team, Automation Projects"
             value={newChannelName}
             onChange={(e) => setNewChannelName(e.target.value)}
             required
@@ -620,7 +610,7 @@ export const ChatPage: React.FC = () => {
 
           <div className="space-y-1">
             <label className="block text-xs font-bold text-neutral-800 dark:text-neutral-200">
-              نوع وسرية القناة
+              Channel Privacy &amp; Type
             </label>
             <div className="grid grid-cols-3 gap-2">
               {(['public', 'department', 'private'] as const).map((t) => (
@@ -628,13 +618,13 @@ export const ChatPage: React.FC = () => {
                   key={t}
                   type="button"
                   onClick={() => setNewChannelType(t)}
-                  className={`p-2 text-xs font-bold border-2 transition-all ${
+                  className={`p-2 text-xs font-bold border-2 transition-all cursor-pointer ${
                     newChannelType === t
                       ? 'bg-neutral-900 text-white dark:bg-white dark:text-black border-neutral-900 dark:border-white shadow-solid-sm'
                       : 'bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 border-neutral-400 dark:border-neutral-700'
                   }`}
                 >
-                  {t === 'public' ? 'عامة' : t === 'department' ? 'قسم' : 'خاصة'}
+                  {t.toUpperCase()}
                 </button>
               ))}
             </div>
@@ -646,13 +636,13 @@ export const ChatPage: React.FC = () => {
               variant="secondary"
               onClick={() => setIsNewChannelModalOpen(false)}
             >
-              إلغاء
+              Cancel
             </LedgerButton>
             <LedgerButton
               type="submit"
               disabled={createChannelMutation.isPending || !newChannelName.trim()}
             >
-              {createChannelMutation.isPending ? 'جارِ الفتح...' : 'فتح وتوثيق القناة'}
+              {createChannelMutation.isPending ? 'Creating...' : 'Create Channel'}
             </LedgerButton>
           </div>
         </form>

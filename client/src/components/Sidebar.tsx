@@ -17,13 +17,13 @@ import { useAuth } from '../contexts/AuthContext.js';
 import { LazyMotion, domAnimation, m } from 'framer-motion';
 
 export const navItems = [
-  { name: 'العملاء (CRM)', href: '/customers', icon: Users },
-  { name: 'الحضور والانصراف', href: '/attendance', icon: Clock },
-  { name: 'خصوماتي والرواتب', href: '/deductions', icon: ReceiptText },
-  { name: 'الشات الداخلي', href: '/chat', icon: MessageSquare },
-  { name: 'لوحة الإحصائيات', href: '/', icon: LayoutDashboard },
-  { name: 'قوالب الرسائل', href: '/templates', icon: MessageSquareQuote },
-  { name: 'الإعدادات', href: '/settings', icon: SettingsIcon },
+  { name: 'Customers Ledger', href: '/customers', icon: Users },
+  { name: 'Time Clock', href: '/attendance', icon: Clock },
+  { name: 'Payroll & Slips', href: '/deductions', icon: ReceiptText },
+  { name: 'Team Chat', href: '/chat', icon: MessageSquare },
+  { name: 'Metrics & KPIs', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'WhatsApp Templates', href: '/templates', icon: MessageSquareQuote },
+  { name: 'System Settings', href: '/settings', icon: SettingsIcon },
 ];
 
 export const Sidebar: React.FC = () => {
@@ -37,16 +37,16 @@ export const Sidebar: React.FC = () => {
     staleTime: 60000,
   });
 
-  const orgName = settings?.orgName || 'تايجر CRM';
+  const orgName = settings?.orgName || 'Tiger';
 
   return (
     <>
       {/* Desktop Vertical Sidebar */}
-      <aside className="w-64 flex-shrink-0 border-l border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950 min-h-[calc(100vh-4rem)] p-4 hidden md:flex flex-col justify-between transition-colors">
+      <aside className="w-64 flex-shrink-0 border-r border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950 min-h-[calc(100vh-4rem)] p-4 hidden md:flex flex-col justify-between transition-colors">
         <div className="space-y-6">
           <div className="px-3 py-2 border-b border-neutral-100 dark:border-neutral-900">
             <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500 block mb-1">
-              مساحة العمل
+              Workspace
             </span>
             <div className="text-sm font-extrabold text-neutral-900 dark:text-white truncate">
               {orgName}
@@ -109,14 +109,14 @@ export const Sidebar: React.FC = () => {
               )}
               <div className="flex-1 min-w-0">
                 <div className="text-xs font-bold truncate text-neutral-900 dark:text-white">{user.name}</div>
-                <div className="text-[10px] text-neutral-500 font-mono truncate">{user.role === 'admin' ? 'مدير النظام' : 'موظف'}</div>
+                <div className="text-[10px] text-neutral-500 font-mono truncate">{user.role === 'admin' ? 'Administrator' : 'Staff'}</div>
               </div>
             </div>
           )}
 
           <div className="border-t border-neutral-200 dark:border-neutral-800 pt-3 px-3 text-xs text-neutral-400 dark:text-neutral-600 flex items-center justify-between">
-            <span>نظام أحادي اللون</span>
-            <span className="font-mono text-[10px] uppercase font-bold">Monochrome</span>
+            <span>Enterprise Engine</span>
+            <span className="font-mono text-[10px] uppercase font-bold">Tiger</span>
           </div>
         </div>
       </aside>

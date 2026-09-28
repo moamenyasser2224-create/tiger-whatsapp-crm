@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { LedgerIcon } from '../components/icons/LedgerIcons.js';
-import { LedgerButton, LedgerTable } from '../components/common/LedgerComponents.js';
 import { RubberStamp } from '../components/common/RubberStamp.js';
 
 export const CompanyPage: React.FC = () => {
@@ -8,48 +7,46 @@ export const CompanyPage: React.FC = () => {
 
   return (
     <div className="space-y-10 selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black">
-      {/* ========================================================
-          1. INDUSTRIAL HERO HEADER (الترويسة الهندسية الرسمية)
-          ======================================================== */}
+      {/* 1. INDUSTRIAL HERO HEADER */}
       <section className="relative border-2 border-neutral-900 dark:border-white p-6 sm:p-10 bg-white dark:bg-neutral-950 shadow-solid bg-industrial-grid">
         {/* Top Spec Badges */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-neutral-900 dark:border-neutral-100 pb-4 mb-6 text-xs font-mono">
           <div className="flex items-center gap-2">
-            <span className="tech-spec-badge bg-neutral-900 text-white dark:bg-white dark:text-black">
+            <span className="tech-spec-badge bg-neutral-900 text-white dark:bg-white dark:text-black px-2 py-0.5 font-bold">
               SYS-AUT-2026 // INDUSTRIAL SPEC
             </span>
             <span className="text-neutral-500 hidden sm:inline">
-              مؤسسة النمر للأنظمة الهندسية والمقاولات والتشغيل
+              Tiger Machine Automation & Industrial Systems
             </span>
           </div>
           <div className="flex items-center gap-3">
             <span className="border border-neutral-900 dark:border-white px-2 py-0.5 font-bold">
-              معتمد ISO 9001:2015
+              Certified ISO 9001:2015
             </span>
-            <span className="text-neutral-600 dark:text-neutral-400">سجل تجاري #1010-TIGER</span>
+            <span className="text-neutral-600 dark:text-neutral-400">CR #1010-TIGER</span>
           </div>
         </div>
 
         {/* Hero Title & Mission */}
         <div className="max-w-4xl space-y-4">
           <div className="inline-block text-xs font-mono font-bold uppercase tracking-wider px-2 py-0.5 border border-neutral-900 dark:border-white">
-            YOUR EXPERT FOR INDUSTRIAL AUTOMATION & CONTRACTING
+            YOUR EXPERT FOR INDUSTRIAL AUTOMATION & MACHINE SYSTEMS
           </div>
           <h1 className="text-3xl sm:text-5xl font-black font-display text-neutral-950 dark:text-white leading-tight tracking-normal">
-            خبراء أنظمة المقاولات المتكاملة وأتمتة العمليات والتشغيل الذكي
+            Precision Machine Automation & Workflow Orchestration
           </h1>
           <p className="text-sm sm:text-base font-ledger text-neutral-700 dark:text-neutral-300 leading-relaxed max-w-3xl">
-            منذ انطلاقنا، كرّسنا خبراتنا لتقديم حلول هندسية وتشغيلية متقدمة تدمج بين التنفيذ الميداني الصارم، وأحدث برمجيات الأتمتة وإدارة تدفق الأعمال. نضمن لعملائنا إدارة آمنة ودقيقة للمشاريع، الموارد، وسلاسل الإمداد بموثوقية كاملة.
+            We deliver state-of-the-art industrial automation, robotics integration, and deterministic operations software. We empower manufacturers and enterprises to eliminate workflow friction and run continuous, error-free production lines.
           </p>
         </div>
 
         {/* Quick Nav Pills */}
         <div className="flex flex-wrap gap-2 pt-6 mt-6 border-t border-dashed border-neutral-300 dark:border-neutral-700">
           {[
-            { id: 'overview', label: 'من نحن ورؤيتنا' },
-            { id: 'history', label: 'المسار التاريخي' },
-            { id: 'portfolio', label: 'محفظة الحلول' },
-            { id: 'partners', label: 'شبكة الشركاء' },
+            { id: 'overview', label: 'Overview & Philosophy' },
+            { id: 'history', label: 'Evolution Timeline' },
+            { id: 'portfolio', label: 'Solutions Portfolio' },
+            { id: 'partners', label: 'Alliances Network' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -67,15 +64,13 @@ export const CompanyPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ========================================================
-          2. KEY INDUSTRIAL METRICS (أرقام الإنجاز الملموسة)
-          ======================================================== */}
+      {/* 2. KEY INDUSTRIAL METRICS */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { metric: '+4,500', label: 'مشروع وعملية منجزة', sub: 'عقود حكومية وخاصة كبرى' },
-          { metric: '15+', label: 'عاماً من الخبرة الهندسية', sub: 'سجل حافل بالريادة والابتكار' },
-          { metric: '99.8%', label: 'نسبة الدقة التشغيلية', sub: 'معايير جودة صارمة وموثقة' },
-          { metric: '24/7', label: 'دعم وتشغيل ميداني', sub: 'استجابة فورية وفرق متأهبة' },
+          { metric: '+4,500', label: 'Automated Operations Delivered', sub: 'Global enterprise contracts' },
+          { metric: '15+', label: 'Years Engineering Experience', sub: 'Proven industrial leadership' },
+          { metric: '99.8%', label: 'Operational Precision Index', sub: 'Rigorous DIN/ISO standards' },
+          { metric: '24/7', label: 'Continuous Telemetry & Support', sub: 'Immediate response deployment' },
         ].map((stat, idx) => (
           <div
             key={idx}
@@ -94,9 +89,7 @@ export const CompanyPage: React.FC = () => {
         ))}
       </section>
 
-      {/* ========================================================
-          3. WHO WE ARE & PHILOSOPHY (من نحن وفلسفة العمل)
-          ======================================================== */}
+      {/* 3. WHO WE ARE & PHILOSOPHY */}
       {(activeSection === 'overview' || activeSection === 'portfolio') && (
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Who We Are */}
@@ -105,26 +98,26 @@ export const CompanyPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <LedgerIcon name="building" size={20} />
                 <h2 className="font-display font-bold text-xl text-neutral-950 dark:text-white">
-                  من نحن (WHO WE ARE)
+                  WHO WE ARE
                 </h2>
               </div>
-              <RubberStamp label="منشأة معتمدة" recordId="corp-tiger-01" />
+              <RubberStamp label="CERTIFIED CORP" recordId="corp-tiger-01" />
             </div>
 
             <p className="font-ledger text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
-              تأسست <strong>مؤسسة النمر</strong> لتكون شريكاً استراتيجياً موثوقاً في مجالات المقاولات العامة، التجهيزات الهندسية، وحلول الأتمتة المتقدمة. نؤمن بأن النجاح التشغيلي يرتكز على دمج الإشراف البشري الخبير مع الأدوات الرقمية الصارمة.
+              <strong>Tiger</strong> was founded to be the definitive industrial automation and process orchestration partner. We fuse mechanical precision with deterministic cloud infrastructure to ensure that every machine cell, human operator, and business transaction operates at peak performance.
             </p>
 
             <div className="space-y-2 pt-2 font-mono text-xs text-neutral-600 dark:text-neutral-400">
               <div className="flex items-center gap-2 border-b border-dashed border-neutral-300 dark:border-neutral-700 pb-1.5">
                 <span className="w-2 h-2 bg-neutral-900 dark:bg-white" />
-                <span className="font-bold text-neutral-900 dark:text-white">الرؤية:</span>
-                <span>الريادة الإقليمية في الربط بين الأعمال الإنشائية والأتمتة البرمجية.</span>
+                <span className="font-bold text-neutral-900 dark:text-white">Vision:</span>
+                <span>To be the global benchmark for turn-key machine automation and digital operations.</span>
               </div>
               <div className="flex items-center gap-2 border-b border-dashed border-neutral-300 dark:border-neutral-700 pb-1.5">
                 <span className="w-2 h-2 bg-neutral-900 dark:bg-white" />
-                <span className="font-bold text-neutral-900 dark:text-white">المهمة:</span>
-                <span>توفير حلول ذات جدوى اقتصادية مثبتة، خالية من الهدر، وموثقة رقمياً.</span>
+                <span className="font-bold text-neutral-900 dark:text-white">Mission:</span>
+                <span>Deliver zero-downtime, fully audited machine cells and intelligent workflow pipelines.</span>
               </div>
             </div>
           </div>
@@ -135,43 +128,41 @@ export const CompanyPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <LedgerIcon name="target" size={20} />
                 <h2 className="font-display font-bold text-xl text-neutral-950 dark:text-white">
-                  فلسفة العمل (PHILOSOPHY)
+                  OUR PHILOSOPHY
                 </h2>
               </div>
               <span className="text-xs font-mono font-bold px-2 py-0.5 border border-current">
-                قواعد الدقة الميكانيكية
+                Deterministic Precision
               </span>
             </div>
 
             <p className="font-ledger text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
-              فلسفتنا في <strong>النمر</strong> مستلهمة من الهندسة الصناعية الدقيقة: لا مكان للارتجال أو للبيانات غير المؤكدة. كل إجراء، كل حركة تشغيل، وكل قيد مالي يخضع لدورة تحقق صارمة تضمن أعلى كفاءة وأقل تكلفة تشغيلية على المدى الطويل.
+              At <strong>Tiger</strong>, our engineering culture rejects approximations and ambiguity. Every kinematic trajectory, PLC signal, and customer record is backed by an auditable chain of custody that guarantees operational consistency.
             </p>
 
             <div className="grid grid-cols-2 gap-3 pt-2 text-xs font-mono">
               <div className="border border-neutral-900 dark:border-white p-2.5 bg-neutral-50 dark:bg-neutral-900">
-                <div className="font-bold text-neutral-950 dark:text-white">1. دقة التنفيذ (Precision)</div>
-                <div className="text-[11px] text-neutral-500 mt-0.5">مطابقة تامة للمواصفات</div>
+                <div className="font-bold text-neutral-950 dark:text-white">1. Precision</div>
+                <div className="text-[11px] text-neutral-500 mt-0.5">Absolute design compliance</div>
               </div>
               <div className="border border-neutral-900 dark:border-white p-2.5 bg-neutral-50 dark:bg-neutral-900">
-                <div className="font-bold text-neutral-950 dark:text-white">2. الموثوقية (Reliability)</div>
-                <div className="text-[11px] text-neutral-500 mt-0.5">تشغيل متواصل بدون توقف</div>
+                <div className="font-bold text-neutral-950 dark:text-white">2. Reliability</div>
+                <div className="text-[11px] text-neutral-500 mt-0.5">24/7 unhindered runtime</div>
               </div>
               <div className="border border-neutral-900 dark:border-white p-2.5 bg-neutral-50 dark:bg-neutral-900">
-                <div className="font-bold text-neutral-950 dark:text-white">3. الشفافية (Auditability)</div>
-                <div className="text-[11px] text-neutral-500 mt-0.5">سلسلة تدقيق تشفيرية</div>
+                <div className="font-bold text-neutral-950 dark:text-white">3. Auditability</div>
+                <div className="text-[11px] text-neutral-500 mt-0.5">Cryptographic log trail</div>
               </div>
               <div className="border border-neutral-900 dark:border-white p-2.5 bg-neutral-50 dark:bg-neutral-900">
-                <div className="font-bold text-neutral-950 dark:text-white">4. الشراكة (Partnership)</div>
-                <div className="text-[11px] text-neutral-500 mt-0.5">التزام طويل الأمد بالنجاح</div>
+                <div className="font-bold text-neutral-950 dark:text-white">4. Partnership</div>
+                <div className="text-[11px] text-neutral-500 mt-0.5">Decades of client trust</div>
               </div>
             </div>
           </div>
         </section>
       )}
 
-      {/* ========================================================
-          4. SERVICE PORTFOLIO (محفظة الحلول والخدمات المتكاملة)
-          ======================================================== */}
+      {/* 4. SERVICE PORTFOLIO */}
       {(activeSection === 'overview' || activeSection === 'portfolio') && (
         <section className="space-y-4">
           <div className="flex items-center justify-between border-b-2 border-neutral-900 dark:border-white pb-3">
@@ -180,11 +171,11 @@ export const CompanyPage: React.FC = () => {
                 CAPABILITIES & SOLUTIONS
               </span>
               <h2 className="text-2xl font-display font-bold text-neutral-950 dark:text-white">
-                محفظة الخدمات والحلول الهندسية
+                Engineering & Technology Portfolio
               </h2>
             </div>
             <span className="text-xs font-mono border border-neutral-900 dark:border-white px-2 py-1 font-bold">
-              05 ركائز تخصصية
+              05 Core Pillars
             </span>
           </div>
 
@@ -196,13 +187,13 @@ export const CompanyPage: React.FC = () => {
                 <span className="font-mono text-xs font-bold">[01]</span>
               </div>
               <h3 className="font-display font-bold text-base text-neutral-950 dark:text-white">
-                المقاولات العامة والتجهيزات الهندسية
+                Machine Tool Automation & Gantry Systems
               </h3>
               <p className="font-ledger text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                تنفيذ مشاريع المقاولات المتكاملة من التصميم الهيكلي، شبكات التغذية، الأعمال الكهروميكانيكية، وحتى التشطيبات المعتمدة بمعايير الأمان العالمية.
+                Turn-key machine loading, linear portals, robot cells, and raw workpiece buffers engineered for high-throughput CNC machining.
               </p>
               <div className="font-mono text-[10px] text-neutral-500 border-t border-dashed border-neutral-300 dark:border-neutral-700 pt-2">
-                #هندسة_مدنية • #إشراف_ميداني • #معايير_قياسية
+                #Robotics • #GantryPortals • #CNCLoading
               </div>
             </div>
 
@@ -213,13 +204,13 @@ export const CompanyPage: React.FC = () => {
                 <span className="font-mono text-xs font-bold">[02]</span>
               </div>
               <h3 className="font-display font-bold text-base text-neutral-950 dark:text-white">
-                أنظمة الأتمتة وإدارة مسارات العمل (CRM)
+                Tiger CRM & WhatsApp Workflow Automation
               </h3>
               <p className="font-ledger text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                حلول رقمية لأتمتة التواصل عبر واتساب، تصنيف العملاء، تتبع الصفقات، وجدولة المتابعات بدقة متناهية ودون أي تداخل بين الفرق.
+                Direct WhatsApp integration, dynamic sales pipelines, automated scripts, and customer ledger management built directly into your workflow.
               </p>
               <div className="font-mono text-[10px] text-neutral-500 border-t border-dashed border-neutral-300 dark:border-neutral-700 pt-2">
-                #واتساب_CRM • #أتمتة_المبيعات • #سلاسل_المهام
+                #WhatsAppCRM • #SalesPipeline • #Automation
               </div>
             </div>
 
@@ -230,13 +221,13 @@ export const CompanyPage: React.FC = () => {
                 <span className="font-mono text-xs font-bold">[03]</span>
               </div>
               <h3 className="font-display font-bold text-base text-neutral-950 dark:text-white">
-                إدارة القوى العاملة والتحقق البيومتري
+                Biometric Face Authentication & Time Clock
               </h3>
               <p className="font-ledger text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                نظام حضور وانصراف مدعوم ببصمة الوجه المضمنة رياضياً، حساب ساعات العمل الإضافي، وضبط الخصومات الآلية وفق لوائح العمل الصارمة.
+                AES-256-GCM encrypted biometric facial verification with liveness challenges, automated work shifts, and deterministic deductions.
               </p>
               <div className="font-mono text-[10px] text-neutral-500 border-t border-dashed border-neutral-300 dark:border-neutral-700 pt-2">
-                #حضور_بيومتري • #رواتب_مؤتمتة • #إدارة_ورديات
+                #FaceBiometrics • #TimeClock • #Payroll
               </div>
             </div>
 
@@ -247,13 +238,13 @@ export const CompanyPage: React.FC = () => {
                 <span className="font-mono text-xs font-bold">[04]</span>
               </div>
               <h3 className="font-display font-bold text-base text-neutral-950 dark:text-white">
-                التدقيق المشفر وسجلات الإدارة الرقمية
+                Cryptographic Payroll Slips & QR Verification
               </h3>
               <p className="font-ledger text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                إصدار قسائم الرواتب والعقود بتوقيعات تشفيرية (HMAC-SHA256) وأكواد QR عامة للتحقق الفوري ومنع أي تعديل أو تزوير.
+                Every payslip and accounting record is sealed using HMAC-SHA256 signatures, verifiable via public QR codes to ensure audit authenticity.
               </p>
               <div className="font-mono text-[10px] text-neutral-500 border-t border-dashed border-neutral-300 dark:border-neutral-700 pt-2">
-                #تشفير_HMAC • #تحقق_QR • #سجلات_غير_قابلة_للتلاعب
+                #HMACSignatures • #QRVerification • #ImmutableLedger
               </div>
             </div>
 
@@ -264,64 +255,62 @@ export const CompanyPage: React.FC = () => {
                 <span className="font-mono text-xs font-bold">[05]</span>
               </div>
               <h3 className="font-display font-bold text-base text-neutral-950 dark:text-white">
-                التكامل اللوجستي وسلاسل التوريد (Supply Chain Integration)
+                Intralogistics & Supply Chain Orchestration
               </h3>
               <p className="font-ledger text-xs text-neutral-600 dark:text-neutral-400 leading-relaxed">
-                ربط شامل للمستودعات مع خطوط الإنتاج والمواقع الإنشائية، تتبع حركة المواد الخام، وتزويد المشرفين بتقارير تدفق لحظية عبر لوحات تحكم هندسية مخصصة.
+                Seamless material flow connectivity from high-bay warehouses through processing centers with live dashboard telemetry and automated dispatch.
               </p>
               <div className="font-mono text-[10px] text-neutral-500 border-t border-dashed border-neutral-300 dark:border-neutral-700 pt-2">
-                #إدارة_مستودعات • #سلاسل_إمداد • #تقارير_تشغيل
+                #Intralogistics • #MaterialFlow • #RealTimeTelemetry
               </div>
             </div>
           </div>
         </section>
       )}
 
-      {/* ========================================================
-          5. COMPANY HISTORY TIMELINE (المسار التاريخي)
-          ======================================================== */}
+      {/* 5. COMPANY HISTORY TIMELINE */}
       {(activeSection === 'overview' || activeSection === 'history') && (
         <section className="industrial-card p-6 sm:p-8 space-y-6">
           <div className="border-b-2 border-neutral-900 dark:border-white pb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <LedgerIcon name="clock" size={22} />
               <h2 className="font-display font-bold text-xl text-neutral-950 dark:text-white">
-                المسار التاريخي ومحطات التطور (HISTORY)
+                EVOLUTION TIMELINE
               </h2>
             </div>
             <span className="text-xs font-mono text-neutral-500">2011 — 2026</span>
           </div>
 
-          <div className="space-y-6 border-r-2 border-neutral-900 dark:border-white pr-4 mr-2 font-ledger">
+          <div className="space-y-6 border-l-2 border-neutral-900 dark:border-white pl-4 ml-2 font-ledger">
             {[
               {
                 year: '2011',
-                title: 'تأسيس المنشأة والانطلاق الميداني',
-                desc: 'بداية العمل في المقاولات العامة وتجهيز المرافق التجارية والمباني الإدارية بالمملكة.',
+                title: 'Foundation & Industrial Beginnings',
+                desc: 'Inception of Tiger with focus on precision machining and industrial equipment contracting.',
               },
               {
                 year: '2016',
-                title: 'التوسع نحو التجهيزات الكهروميكانيكية المتطورة',
-                desc: 'إنشاء قسم متخصص للأنظمة الكهروميكانيكية وإدارة منشآت الطاقة والمصانع.',
+                title: 'High-Precision Gantry & Robotics Expansion',
+                desc: 'Launched turnkey automation division specializing in linear gantries and CNC load portals.',
               },
               {
                 year: '2020',
-                title: 'أتمتة العمليات وإدارة الحضور البيومتري',
-                desc: 'بناء المنصة الرقمية الداخلية لربط المواقع الإنشائية بنظام بصمة الوجه وسجلات الدوام.',
+                title: 'Biometrics & Real-Time Production Telemetry',
+                desc: 'Pioneered face-biometric verification and digital time clock ledgers across production plants.',
               },
               {
                 year: '2024',
-                title: 'تكامل منظومة CRM والمراسلات الفورية',
-                desc: 'إطلاق نظام إدارة العملاء المعتمد على واتساب وشات الفرق الداخلي المقسم بالقنوات.',
+                title: 'Tiger CRM & Real-Time Communication Hub',
+                desc: 'Architected unified WhatsApp relationship system and encrypted multi-channel team chat.',
               },
               {
                 year: '2026',
-                title: 'منظومة «دفتر الشركة» والتحقق المشفر',
-                desc: 'اكتمال الهوية الهندسية الموحدة مع أمان تشفيري عالي وتوليد سندات الرواتب الرقمية المعتمدة.',
+                title: 'Tiger Company Ledger & Cryptographic Verification',
+                desc: 'Unified industrial aesthetic with HMAC-SHA256 authenticated digital vouchers and public QR verification.',
               },
             ].map((milestone, idx) => (
               <div key={idx} className="relative group">
-                <span className="absolute -right-[23px] top-1.5 w-3 h-3 bg-neutral-900 dark:bg-white border-2 border-white dark:border-black rounded-none" />
+                <span className="absolute -left-[23px] top-1.5 w-3 h-3 bg-neutral-900 dark:bg-white border-2 border-white dark:border-black rounded-none" />
                 <div className="font-mono text-xs font-black text-neutral-950 dark:text-white">
                   [{milestone.year}]
                 </div>
@@ -337,9 +326,7 @@ export const CompanyPage: React.FC = () => {
         </section>
       )}
 
-      {/* ========================================================
-          6. STRATEGIC PARTNERS (شبكة الشركاء المعتمدين)
-          ======================================================== */}
+      {/* 6. STRATEGIC PARTNERS */}
       {(activeSection === 'overview' || activeSection === 'partners') && (
         <section className="space-y-4">
           <div className="border-b-2 border-neutral-900 dark:border-white pb-3 flex items-center justify-between">
@@ -348,11 +335,11 @@ export const CompanyPage: React.FC = () => {
                 ALLIANCES & ECOSYSTEM
               </span>
               <h2 className="text-2xl font-display font-bold text-neutral-950 dark:text-white">
-                شبكة الشركاء الاستراتيجيين (PARTNER COMPANIES)
+                Global Partner Network
               </h2>
             </div>
             <span className="text-xs font-mono border border-neutral-900 dark:border-white px-2 py-0.5 font-bold">
-              تكامل وتوافق شامل
+              Complete Interoperability
             </span>
           </div>
 
@@ -360,27 +347,27 @@ export const CompanyPage: React.FC = () => {
             {[
               {
                 name: 'TECHPLUS AUTOMATION',
-                role: 'شريك تكامل الروبوتات والأنظمة الميكانيكية',
-                desc: 'شراكة فنية لنقل تكنولوجيا الأتمتة الميكانيكية وخطوط النقل الآلي، مع أكثر من 600 تطبيق صناعي ناجح.',
-                region: 'أوروبا / الشرق الأوسط',
+                role: 'Robotics & Mechanical Integration Partner',
+                desc: 'Technical collaboration in standardized automation cells and linear portals, with 600+ deployed systems.',
+                region: 'Europe / Middle East',
               },
               {
                 name: 'WES-TECH SOLUTIONS',
-                role: 'شريك الحلول اللوجستية وتدفق المواد',
-                desc: 'تعاون وثيق في تصميم أنظمة المناولة والتوزيع الآلي لضمان تدفق سلس وسريع للمواد في المشاريع الكبرى.',
-                region: 'الولايات المتحدة / الخليج العربي',
+                role: 'Intralogistics & Material Flow Partner',
+                desc: 'Collaboration on automated palletizing and distribution systems for high-cadence production sites.',
+                region: 'North America / GCC',
               },
               {
                 name: 'HEIDENHAIN COMPLIANCE',
-                role: 'أنظمة التحكم والمطابقة الهندسية الدقيقة',
-                desc: 'تنسيق تقني وتكامل مباشر للواجهات الرقمية للتحكم الآلي وأنظمة القياس فائقة الدقة.',
-                region: 'ألمانيا / السعودية',
+                role: 'High-Precision Measurement Systems',
+                desc: 'Direct digital interface integration for linear encoders, rotary probes, and CNC control systems.',
+                region: 'Germany / Global',
               },
               {
-                name: 'SAUDI INDUSTRIAL HUBS',
-                role: 'شبكة التوريد والإشراف المحلي',
-                desc: 'توفير التواجد الميداني الفوري، الدعم الهندسي على مدار الساعة، وقطع الغيار الأصلية المعتمدة.',
-                region: 'المملكة العربية السعودية',
+                name: 'TIGER INDUSTRIAL SERVICE HUBS',
+                role: 'Field Deployment & Spares Logistics',
+                desc: 'Immediate on-site intervention, 24/7 technical hotline, and genuine certified components depot.',
+                region: 'Regional Network',
               },
             ].map((partner, idx) => (
               <div key={idx} className="industrial-card p-5 space-y-2">
@@ -404,23 +391,20 @@ export const CompanyPage: React.FC = () => {
         </section>
       )}
 
-      {/* ========================================================
-          7. OFFICIAL HEADQUARTERS & HOURS (المقر وساعات العمل)
-          ======================================================== */}
+      {/* 7. OFFICIAL HEADQUARTERS & HOURS */}
       <section className="industrial-card p-6 sm:p-8 bg-[#fafafa] dark:bg-[#111111]">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
           {/* Col 1: Contacts */}
           <div className="space-y-3">
             <div className="font-bold text-sm font-display text-neutral-950 dark:text-white border-b-2 border-neutral-900 dark:border-white pb-2 flex items-center gap-2">
               <LedgerIcon name="building" size={16} />
-              <span>المقر الرئيسي والاتصال</span>
+              <span>Headquarters & Contact</span>
             </div>
             <div className="space-y-1.5 text-neutral-700 dark:text-neutral-300">
-              <div className="font-bold">مؤسسة النمر للمقاولات والتشغيل</div>
-              <div>طريق الملك فهد، المجمع الهندسي الحديث</div>
-              <div>الرياض، المملكة العربية السعودية</div>
-              <div className="pt-2">الهاتف الموحد: <span dir="ltr" className="font-bold">+966 11 400 9200</span></div>
-              <div>البريد الرسمي: <span className="font-bold">contact@tiger-crm.sa</span></div>
+              <div className="font-bold">Tiger Machine Systems</div>
+              <div>Industrial Automation Complex</div>
+              <div className="pt-2">Direct Phone: <span className="font-bold">+1 (800) 555-TIGER</span></div>
+              <div>Official Email: <span className="font-bold">contact@tiger.local</span></div>
             </div>
           </div>
 
@@ -428,19 +412,19 @@ export const CompanyPage: React.FC = () => {
           <div className="space-y-3">
             <div className="font-bold text-sm font-display text-neutral-950 dark:text-white border-b-2 border-neutral-900 dark:border-white pb-2 flex items-center gap-2">
               <LedgerIcon name="clock" size={16} />
-              <span>أوقات العمل الإداري (OFFICE)</span>
+              <span>Executive Office Hours</span>
             </div>
             <div className="space-y-1 text-neutral-700 dark:text-neutral-300">
               <div className="flex justify-between border-b border-dashed border-neutral-300 dark:border-neutral-700 py-1">
-                <span>الأحد – الخميس:</span>
+                <span>Monday – Friday:</span>
                 <span className="font-bold tabular-nums">08:00 – 17:00</span>
               </div>
               <div className="flex justify-between border-b border-dashed border-neutral-300 dark:border-neutral-700 py-1">
-                <span>الجمعة والسبت:</span>
-                <span className="font-bold">عطلة إدارية</span>
+                <span>Saturday – Sunday:</span>
+                <span className="font-bold">Administrative Closure</span>
               </div>
               <div className="text-[11px] text-neutral-500 pt-1">
-                * الاستشارات الهندسية تتطلب موعداً مسبقاً
+                * Consultations require prior booking
               </div>
             </div>
           </div>
@@ -449,19 +433,19 @@ export const CompanyPage: React.FC = () => {
           <div className="space-y-3">
             <div className="font-bold text-sm font-display text-neutral-950 dark:text-white border-b-2 border-neutral-900 dark:border-white pb-2 flex items-center gap-2">
               <LedgerIcon name="shield" size={16} />
-              <span>العمليات الميدانية واللوجستيات</span>
+              <span>Field Ops & Emergency Hotline</span>
             </div>
             <div className="space-y-1 text-neutral-700 dark:text-neutral-300">
               <div className="flex justify-between border-b border-dashed border-neutral-300 dark:border-neutral-700 py-1">
-                <span>السبت – الخميس:</span>
+                <span>Field Dispatch:</span>
                 <span className="font-bold tabular-nums">07:00 – 19:00</span>
               </div>
               <div className="flex justify-between border-b border-dashed border-neutral-300 dark:border-neutral-700 py-1">
-                <span>فرق الطوارئ والصيانة:</span>
-                <span className="font-bold">24 ساعة / 7 أيام</span>
+                <span>Emergency Breakdown Teams:</span>
+                <span className="font-bold">24 Hours / 7 Days</span>
               </div>
               <div className="text-[11px] text-neutral-500 pt-1">
-                * فرق الصيانة الميدانية تغطي جميع مناطق المملكة
+                * Instant response dispatch units
               </div>
             </div>
           </div>
@@ -470,7 +454,7 @@ export const CompanyPage: React.FC = () => {
 
       {/* Footer Legal Stamp */}
       <div className="text-center font-mono text-[11px] text-neutral-500 dark:text-neutral-400 border-t border-neutral-300 dark:border-neutral-800 pt-4">
-        وثيقة تعريفية رسمية صادرة عن منظومة النمر الهندسية — جميع الحقوق محفوظة © 2026
+        Official Specification Document issued by Tiger Machine Systems — All rights reserved © 2026
       </div>
     </div>
   );

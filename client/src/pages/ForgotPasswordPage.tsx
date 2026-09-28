@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api.js';
-import { HelpCircle, Mail, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
+import { HelpCircle, Mail, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
 
 export const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -22,7 +22,7 @@ export const ForgotPasswordPage: React.FC = () => {
         setResetLink(data.resetLink);
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'فشل إرسال الرابط');
+      setError(err.response?.data?.error || 'Failed to dispatch reset link');
     } finally {
       setLoading(false);
     }
@@ -36,10 +36,10 @@ export const ForgotPasswordPage: React.FC = () => {
             <HelpCircle className="h-7 w-7" />
           </div>
           <h1 className="text-2xl font-black text-neutral-900 dark:text-white">
-            استعادة كلمة المرور
+            Recover Password
           </h1>
           <p className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-            أدخل بريدك الإلكتروني لإرسال رابط إعادة تعيين كلمة المرور
+            Enter your corporate email address to receive password reset instructions
           </p>
         </div>
 
@@ -53,15 +53,15 @@ export const ForgotPasswordPage: React.FC = () => {
           <div className="space-y-4 text-center">
             <div className="rounded-2xl border border-neutral-900 bg-neutral-100 p-4 dark:border-white dark:bg-neutral-800 text-neutral-900 dark:text-white font-bold">
               <CheckCircle2 className="mx-auto h-8 w-8 mb-2 text-neutral-900 dark:text-white" />
-              <p className="text-sm font-black">تم إرسال تعليمات الاستعادة بنجاح</p>
+              <p className="text-sm font-black">Reset Instructions Dispatched</p>
               <p className="mt-1 text-xs opacity-80 font-normal">
-                الرابط صالح للاستخدام مرة واحدة ولمدة 15 دقيقة فقط.
+                This one-time security link is valid for 15 minutes only.
               </p>
             </div>
 
             {resetLink && (
-              <div className="rounded-xl border border-neutral-300 bg-neutral-100 p-3 text-right text-xs dark:border-neutral-700 dark:bg-neutral-800">
-                <p className="font-bold mb-1 text-neutral-800 dark:text-neutral-200">رابط الاستعادة التجريبي المباشر:</p>
+              <div className="rounded-xl border border-neutral-300 bg-neutral-100 p-3 text-left text-xs dark:border-neutral-700 dark:bg-neutral-800">
+                <p className="font-bold mb-1 text-neutral-800 dark:text-neutral-200">Direct Test Reset Link:</p>
                 <a
                   href={resetLink}
                   className="font-mono text-[11px] text-neutral-900 dark:text-white underline break-all font-bold"
@@ -75,26 +75,25 @@ export const ForgotPasswordPage: React.FC = () => {
               to="/login"
               className="inline-flex items-center gap-2 text-xs font-bold text-neutral-900 dark:text-white underline hover:opacity-75 mt-4"
             >
-              <ArrowRight className="h-4 w-4 rotate-180" />
-              <span>العودة لصفحة تسجيل الدخول</span>
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Sign In</span>
             </Link>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">
-                البريد الإلكتروني
+                Email Address
               </label>
               <div className="relative">
-                <Mail className="absolute right-3 top-3 h-4 w-4 text-neutral-400" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  dir="ltr"
-                  className="w-full rounded-xl border border-neutral-300 pr-9 pl-3 py-2.5 text-sm text-left focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
+                  className="w-full rounded-xl border border-neutral-300 pl-9 pr-3 py-2.5 text-sm text-left focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
                 />
               </div>
             </div>
@@ -104,16 +103,12 @@ export const ForgotPasswordPage: React.FC = () => {
               disabled={loading}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white py-3 text-sm font-bold disabled:opacity-50 transition-colors mt-2"
             >
-              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <span>إرسال رابط الاستعادة</span>}
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <span>Send Reset Instructions</span>}
             </button>
 
             <div className="mt-4 text-center">
-              <Link
-                to="/login"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:text-black dark:text-neutral-400 dark:hover:text-white"
-              >
-                <ArrowRight className="h-3.5 w-3.5 rotate-180" />
-                <span>العودة لتسجيل الدخول</span>
+              <Link to="/login" className="text-xs font-bold text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white">
+                Back to Sign In
               </Link>
             </div>
           </form>

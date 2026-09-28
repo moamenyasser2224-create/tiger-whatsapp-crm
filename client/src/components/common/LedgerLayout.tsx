@@ -18,14 +18,14 @@ interface NavItem {
 }
 
 export const LEDGER_NAV_ITEMS: NavItem[] = [
-  { id: 'customers', name: 'دفتر العملاء', href: '/customers', icon: 'users' },
-  { id: 'attendance', name: 'كارت الدوام', href: '/attendance', icon: 'punch-card' },
-  { id: 'deductions', name: 'دفتر الرواتب', href: '/deductions', icon: 'receipt' },
-  { id: 'chat', name: 'الشات الداخلي', href: '/chat', icon: 'chat' },
-  { id: 'dashboard', name: 'مؤشرات النشاط', href: '/dashboard', icon: 'dashboard' },
-  { id: 'templates', name: 'قوالب السجلات', href: '/templates', icon: 'template' },
-  { id: 'design-lab', name: 'مختبر التصميم', href: '/design-lab', icon: 'stamp' },
-  { id: 'settings', name: 'إعدادات المنظومة', href: '/settings', icon: 'settings' },
+  { id: 'customers', name: 'Customers Ledger', href: '/customers', icon: 'users' },
+  { id: 'attendance', name: 'Time Clock', href: '/attendance', icon: 'punch-card' },
+  { id: 'deductions', name: 'Payroll & Slips', href: '/deductions', icon: 'receipt' },
+  { id: 'chat', name: 'Team Chat', href: '/chat', icon: 'chat' },
+  { id: 'dashboard', name: 'Metrics & KPIs', href: '/dashboard', icon: 'dashboard' },
+  { id: 'templates', name: 'WhatsApp Templates', href: '/templates', icon: 'template' },
+  { id: 'design-lab', name: 'Design Tokens', href: '/design-lab', icon: 'stamp' },
+  { id: 'settings', name: 'System Settings', href: '/settings', icon: 'settings' },
 ];
 
 export const LedgerLayout: React.FC = () => {
@@ -114,30 +114,24 @@ export const LedgerLayout: React.FC = () => {
     staleTime: 15000,
   });
 
-  // Dual Calendar: Hijri (Umm al-Qura) + Gregorian
   const now = new Date();
-  const hijriDate = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura', {
+  const formattedDate = new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    month: 'short',
     day: 'numeric',
-    month: 'long',
     year: 'numeric',
   }).format(now);
 
-  const gregorianDate = new Intl.DateTimeFormat('ar-EG', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(now);
-
-  const orgName = settings?.orgName || 'دفتر النمر للمقاولات والتجارة';
+  const orgName = settings?.orgName || 'Tiger';
 
   const userShiftText = myStatus?.checkOut
-    ? 'انصرف اليوم'
+    ? 'Clocked Out'
     : myStatus?.checkIn
-    ? 'على رأس العمل'
-    : 'لم يبدأ الدوام';
+    ? 'On Duty'
+    : 'Not Started';
 
   return (
-    <div className="min-h-screen bg-[#fafafa] text-[#111111] dark:bg-[#0d0d0d] dark:text-[#f5f5f5] flex flex-col font-ledger antialiased selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black bg-industrial-grid">
+    <div className="min-h-screen bg-[#fafafa] text-[#111111] dark:bg-[#0d0d0d] dark:text-[#f5f5f5] flex flex-col font-sans antialiased selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black bg-industrial-grid" dir="ltr">
       {/* Hidden SVG Filters for rubber stamp distress edge effect */}
       <svg width="0" height="0" className="hidden absolute pointer-events-none">
         <defs>
@@ -148,37 +142,37 @@ export const LedgerLayout: React.FC = () => {
         </defs>
       </svg>
 
-      {/* TOP MASTHEAD (ترويسة الدفتر الرسمية) */}
+      {/* TOP MASTHEAD */}
       <header className="border-b-2 border-neutral-900 dark:border-neutral-100 bg-[#ffffff] dark:bg-[#141414] px-4 sm:px-8 py-3.5">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Masthead Title & Ledger Subtext */}
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-widest px-1.5 py-0.2 border border-neutral-900 dark:border-white font-bold bg-white dark:bg-black">
-                سجل صناعي موحد // TIGER-SYS
+              <span className="text-[10px] font-mono uppercase tracking-widest px-1.5 py-0.5 border border-neutral-900 dark:border-white font-bold bg-white dark:bg-black">
+                CORE SYSTEM // TIGER-OS
               </span>
               <a
                 href="/"
                 className="text-[11px] font-mono underline font-bold hover:text-purple-600 transition-colors"
-                title="عرض موقع الشركة الخارجي ومعرض الفيديوهات"
+                title="View Public Company Site & Video Showcase"
               >
-                [موقع الشركة والفيديوهات ↗]
+                [Company Site &amp; Videos ↗]
               </a>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-display font-bold text-neutral-950 dark:text-white tracking-normal">
+            <h1 className="text-2xl sm:text-3xl font-black text-neutral-950 dark:text-white tracking-tight">
               {orgName}
             </h1>
           </div>
 
           {/* Dates & Mechanical Live Clock & Shift Badge */}
           <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-xs font-mono">
-            {/* Dual Dates */}
-            <div className="border-r-2 border-neutral-300 dark:border-neutral-700 pr-3 sm:pr-4 space-y-0.5 text-right">
+            {/* System Date */}
+            <div className="border-l-2 border-neutral-300 dark:border-neutral-700 pl-3 sm:pl-4 space-y-0.5 text-left">
               <div className="font-bold text-neutral-900 dark:text-neutral-100">
-                {hijriDate} هـ
+                {formattedDate}
               </div>
               <div className="text-[11px] text-neutral-500 dark:text-neutral-400 tabular-nums">
-                {gregorianDate} م
+                UTC +03:00 / RIYADH
               </div>
             </div>
 
@@ -188,13 +182,13 @@ export const LedgerLayout: React.FC = () => {
             </div>
 
             {/* Shift Status & User Details */}
-            <div className="flex items-center gap-2.5 pl-1">
-              <div className="text-right">
+            <div className="flex items-center gap-2.5 pr-1">
+              <div className="text-left">
                 <div className="font-bold text-neutral-900 dark:text-white text-xs">
                   {user?.name}
                 </div>
-                <div className="text-[10px] text-neutral-500 dark:text-neutral-400 flex items-center gap-1 justify-end">
-                  <span className="h-1.5 w-1.5 bg-current" />
+                <div className="text-[10px] text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
+                  <span className={`h-1.5 w-1.5 rounded-full ${myStatus?.checkIn && !myStatus?.checkOut ? 'bg-emerald-500 animate-pulse' : 'bg-neutral-400'}`} />
                   <span>{userShiftText}</span>
                 </div>
               </div>
@@ -203,11 +197,11 @@ export const LedgerLayout: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsPaletteOpen(true)}
-                title="البحث السريع وأوامر المنظومة (Ctrl+K)"
-                className="flex items-center gap-1.5 border border-neutral-900 dark:border-white px-2 py-1 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors font-mono"
+                title="Quick Search & Commands (Ctrl+K)"
+                className="flex items-center gap-1.5 border border-neutral-900 dark:border-white px-2 py-1 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors font-mono cursor-pointer"
               >
                 <LedgerIcon name="search" size={13} />
-                <span className="hidden sm:inline font-ledger font-bold">بحث</span>
+                <span className="hidden sm:inline font-bold">Search</span>
                 <kbd className="hidden md:inline border border-neutral-400 dark:border-neutral-600 px-1 text-[10px]">⌘K</kbd>
               </button>
 
@@ -215,8 +209,8 @@ export const LedgerLayout: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsNotificationsOpen(true)}
-                title="سجل التنبيهات والإشعارات"
-                className="relative flex items-center justify-center border border-neutral-900 dark:border-white p-1.5 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors font-mono"
+                title="System Notifications"
+                className="relative flex items-center justify-center border border-neutral-900 dark:border-white p-1.5 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors font-mono cursor-pointer"
               >
                 <LedgerIcon name="bell" size={14} />
                 {unreadCount > 0 && (
@@ -231,24 +225,24 @@ export const LedgerLayout: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsShortcutsOpen(true)}
-                  title="دليل الاختصارات الميكانيكية (?)"
-                  className="p-1.5 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+                  title="Keyboard Shortcuts (?)"
+                  className="p-1.5 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                 >
                   <LedgerIcon name="help" size={15} />
                 </button>
                 <button
                   type="button"
                   onClick={toggleTheme}
-                  title="تبديل وضع الورقة (فاتح / حبر أسود)"
-                  className="p-1.5 border-r border-neutral-900 dark:border-white hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+                  title="Toggle Theme (Light / Dark)"
+                  className="p-1.5 border-l border-neutral-900 dark:border-white hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                 >
                   <LedgerIcon name={theme === 'dark' ? 'eye' : 'eye-off'} size={15} />
                 </button>
                 <button
                   type="button"
                   onClick={logout}
-                  title="تسجيل الخروج من الدفتر"
-                  className="p-1.5 border-r border-neutral-900 dark:border-white hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+                  title="Sign Out"
+                  className="p-1.5 border-l border-neutral-900 dark:border-white hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                 >
                   <LedgerIcon name="lock" size={15} />
                 </button>
@@ -258,7 +252,7 @@ export const LedgerLayout: React.FC = () => {
         </div>
       </header>
 
-      {/* DESKTOP HANGING FILE FOLDER TABS NAVIGATION (فواصل ملفات معلقة) */}
+      {/* DESKTOP TAB NAVIGATION */}
       <nav className="hidden md:block bg-[#f0f0f0] dark:bg-[#111111] border-b-2 border-neutral-900 dark:border-neutral-100 px-6 pt-2">
         <div className="max-w-7xl mx-auto flex items-end gap-1.5">
           {LEDGER_NAV_ITEMS.map((item) => {
@@ -273,7 +267,6 @@ export const LedgerLayout: React.FC = () => {
                     : 'bg-[#e5e5e5] text-neutral-600 dark:bg-[#1c1c1c] dark:text-neutral-400 border-neutral-400 dark:border-neutral-700 hover:bg-[#ebebeb] dark:hover:bg-[#262626] hover:text-neutral-900 dark:hover:text-white'
                 }`}
                 style={{
-                  // Sharp folder tab bevel
                   clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
                 }}
               >
@@ -288,12 +281,12 @@ export const LedgerLayout: React.FC = () => {
         </div>
       </nav>
 
-      {/* MAIN CONTENT AREA WITH NOTEBOOK DOUBLE-RULED SPINDLE */}
+      {/* MAIN CONTENT AREA */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-8 bg-[#ffffff] dark:bg-[#141414] ledger-notebook-spine my-4 border-y border-neutral-200 dark:border-neutral-800 shadow-solid-sm sm:shadow-solid">
         <Outlet />
       </main>
 
-      {/* MOBILE BOTTOM NAVIGATION BAR (شريط الدفتر السفلي للموبايل) */}
+      {/* MOBILE BOTTOM NAVIGATION BAR */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#ffffff] dark:bg-[#141414] border-t-2 border-neutral-900 dark:border-neutral-100 py-1 px-2 flex items-center justify-around">
         {LEDGER_NAV_ITEMS.slice(0, 4).map((item) => {
           const isActive = location.pathname === item.href;
@@ -308,7 +301,7 @@ export const LedgerLayout: React.FC = () => {
               }`}
             >
               <LedgerIcon name={item.icon} size={18} />
-              <span className="mt-0.5">{item.name.replace('دفتر ', '').replace('كارت ', '')}</span>
+              <span className="mt-0.5">{item.name.split(' ')[0]}</span>
             </NavLink>
           );
         })}
@@ -317,12 +310,12 @@ export const LedgerLayout: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsMobileMoreOpen(!isMobileMoreOpen)}
-          className={`flex flex-col items-center py-1 px-2 text-[10px] font-bold ${
+          className={`flex flex-col items-center py-1 px-2 text-[10px] font-bold cursor-pointer ${
             isMobileMoreOpen ? 'text-neutral-950 dark:text-white' : 'text-neutral-500 dark:text-neutral-400'
           }`}
         >
           <LedgerIcon name="more-horizontal" size={18} />
-          <span className="mt-0.5">المزيد</span>
+          <span className="mt-0.5">More</span>
         </button>
       </nav>
 
@@ -331,7 +324,7 @@ export const LedgerLayout: React.FC = () => {
         <div className="md:hidden fixed inset-0 z-50 bg-diagonal-hatch flex flex-col justify-end p-4">
           <div className="bg-white dark:bg-neutral-900 border-2 border-neutral-900 dark:border-white p-4 space-y-3">
             <div className="flex items-center justify-between border-b-2 border-neutral-900 pb-2">
-              <span className="font-bold text-sm">أقسام الدفتر الأخرى</span>
+              <span className="font-bold text-sm">System Navigation</span>
               <button
                 type="button"
                 onClick={() => setIsMobileMoreOpen(false)}
@@ -359,7 +352,7 @@ export const LedgerLayout: React.FC = () => {
 
       {/* Bottom Ledger Footer */}
       <footer className="border-t border-neutral-300 dark:border-neutral-800 py-3 px-6 text-center text-[11px] font-mono text-neutral-500 dark:text-neutral-400">
-        نظام إدارة العمل الداخلي «دفتر الشركة» — موثّق بسلسلة تجزئة رقمية غير قابلة للتلاعب
+        Tiger Internal Business OS &bull; Authenticated &amp; Encrypted
       </footer>
 
       {/* Global Command Palette & Mechanical Shortcuts Modals */}

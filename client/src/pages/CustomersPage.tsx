@@ -7,10 +7,12 @@ import { CustomerModal } from '../components/CustomerModal.js';
 import { ConfirmModal } from '../components/ConfirmModal.js';
 import { DueTodayBanner } from '../components/DueTodayBanner.js';
 import {
-  formatDateArabic,
+  formatDate,
   isOverdue,
   generateWhatsAppUrl,
   matchesArabicSearch,
+  getStatusLabel,
+  getSourceLabel,
 } from '../lib/utils.js';
 import { MotionPage } from '../components/motion/MotionPage.js';
 import {
@@ -128,7 +130,7 @@ export const CustomersPage: React.FC = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `ledger_customers_${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `tiger_customers_${new Date().toISOString().split('T')[0]}.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -145,7 +147,7 @@ export const CustomersPage: React.FC = () => {
       setImportResult(data.data);
       queryClient.invalidateQueries({ queryKey: ['customers'] });
     } catch (e: any) {
-      alert(e.response?.data?.error || 'فشل استيراد ملف CSV');
+      alert(e.response?.data?.error || 'Failed to import CSV file');
     } finally {
       setImporting(false);
     }
@@ -161,7 +163,7 @@ export const CustomersPage: React.FC = () => {
     ? statusOptions.map((opt) => opt.label)
     : (CUSTOMER_STATUSES as readonly string[]);
 
-  // Filtered customers locally if normalized search active
+  // Filtered customers locally if search query is active
   const displayedItems = (customerData?.items || []).filter((item) => {
     if (!search) return true;
     return (
@@ -175,20 +177,20 @@ export const CustomersPage: React.FC = () => {
 
   return (
     <MotionPage className="space-y-6">
-      {/* 1. Hallmark Header (ترويسة السجل الدفتري) */}
+      {/* 1. Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-neutral-900 dark:border-neutral-100 pb-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-neutral-500">
-            <span>سجلات الإدارة والعملاء</span>
+            <span>Tiger Operations</span>
             <span>/</span>
-            <span>دفتر قيد الاتصالات</span>
+            <span>Customers Ledger</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black font-display text-neutral-950 dark:text-white mt-1 flex items-center gap-2.5">
+          <h1 className="text-2xl sm:text-3xl font-black text-neutral-950 dark:text-white mt-1 flex items-center gap-2.5">
             <LedgerIcon name="ledger-book" size={26} />
-            <span>سجل العملاء والمتابعات</span>
+            <span>Customers &amp; Pipeline</span>
           </h1>
-          <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5 font-ledger">
-            إدارة قيود العملاء، التحقق من الموافقة الصريحة، وتتبع مراحل البيع عبر النماذج الدفترية المعتمدة.
+          <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5">
+            Manage customer accounts, verify communication consents, and track deal stages across certified ledger entries.
           </p>
         </div>
 
@@ -203,7 +205,7 @@ export const CustomersPage: React.FC = () => {
               setIsCustomerModalOpen(true);
             }}
           >
-            إضافة قيد عميل
+            Add Customer
           </LedgerButton>
 
           <LedgerButton
@@ -216,7 +218,7 @@ export const CustomersPage: React.FC = () => {
               setIsImportModalOpen(true);
             }}
           >
-            استيراد CSV
+            Import CSV
           </LedgerButton>
 
           <LedgerButton
@@ -225,12 +227,12 @@ export const CustomersPage: React.FC = () => {
             icon="download"
             onClick={handleExportCsv}
           >
-            تصدير القيود
+            Export CSV
           </LedgerButton>
         </div>
       </div>
 
-      {/* 2. Due Today Banner with Ledger Styling */}
+      {/* 2. Due Today Banner */}
       <DueTodayBanner
         onCustomerClick={(cust) => {
           setEditingCustomer(cust);
@@ -241,51 +243,51 @@ export const CustomersPage: React.FC = () => {
       {/* 3. Filter Bar & 3-Way View Switcher */}
       <div className="border-2 border-neutral-900 dark:border-white bg-[#faf9f5] dark:bg-[#151515] p-3 shadow-solid-sm space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          {/* 3-Way Mechanical View Switcher */}
+          {/* 3-Way View Switcher */}
           <div className="inline-flex border-2 border-neutral-900 dark:border-white bg-white dark:bg-black p-0.5">
             <button
               type="button"
               onClick={() => setViewMode('ledger')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold font-ledger transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
                 viewMode === 'ledger'
                   ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-950'
                   : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900'
               }`}
             >
               <LedgerIcon name="table" size={14} />
-              <span>دفتر القيود (جدول)</span>
+              <span>Ledger Table</span>
             </button>
 
             <button
               type="button"
               onClick={() => setViewMode('cards')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold font-ledger transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
                 viewMode === 'cards'
                   ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-950'
                   : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900'
               }`}
             >
               <LedgerIcon name="cards" size={14} />
-              <span>بطاقات الفيش (بطاقات)</span>
+              <span>Index Cards</span>
             </button>
 
             <button
               type="button"
               onClick={() => setViewMode('kanban')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold font-ledger transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
                 viewMode === 'kanban'
                   ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-950'
                   : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900'
               }`}
             >
               <LedgerIcon name="kanban" size={14} />
-              <span>لوحة المراحل (كانبان)</span>
+              <span>Stages Board</span>
             </button>
           </div>
 
           {/* Quick Record Counter */}
           <div className="text-xs font-mono text-neutral-600 dark:text-neutral-400 flex items-center gap-2">
-            <span>القيود المعروضة:</span>
+            <span>Records shown:</span>
             <span className="font-bold tabular-nums border border-neutral-400 dark:border-neutral-600 px-1.5 py-0.5 bg-white dark:bg-black">
               {displayedItems.length}
             </span>
@@ -294,10 +296,10 @@ export const CustomersPage: React.FC = () => {
 
         {/* Filter Inputs Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 pt-2 border-t border-dashed border-neutral-300 dark:border-neutral-700">
-          {/* Smart Arabic Search */}
+          {/* Search */}
           <div className="relative">
             <LedgerInput
-              placeholder="بحث ذكي بالاسم أو الشركة..."
+              placeholder="Search by name, company, phone..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -315,12 +317,12 @@ export const CustomersPage: React.FC = () => {
                 setStatus(e.target.value);
                 setPage(1);
               }}
-              className="w-full bg-white dark:bg-black border-1.5 border-neutral-900 dark:border-white px-2.5 py-2 text-xs font-ledger outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-white"
+              className="w-full bg-white dark:bg-black border-1.5 border-neutral-900 dark:border-white px-2.5 py-2 text-xs outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-white"
             >
-              <option value="">جميع الحالات</option>
+              <option value="">All Pipeline Stages</option>
               {availableStatuses.map((st) => (
                 <option key={st} value={st}>
-                  {st}
+                  {getStatusLabel(st)}
                 </option>
               ))}
             </select>
@@ -334,18 +336,18 @@ export const CustomersPage: React.FC = () => {
                 setSource(e.target.value);
                 setPage(1);
               }}
-              className="w-full bg-white dark:bg-black border-1.5 border-neutral-900 dark:border-white px-2.5 py-2 text-xs font-ledger outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-white"
+              className="w-full bg-white dark:bg-black border-1.5 border-neutral-900 dark:border-white px-2.5 py-2 text-xs outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-white"
             >
-              <option value="">جميع المصادر</option>
+              <option value="">All Lead Sources</option>
               {sourceOptions.length > 0
                 ? sourceOptions.map((opt) => (
                     <option key={opt.id} value={opt.label}>
-                      {opt.label}
+                      {getSourceLabel(opt.label)}
                     </option>
                   ))
                 : CUSTOMER_SOURCES.map((src) => (
                     <option key={src} value={src}>
-                      {src}
+                      {getSourceLabel(src)}
                     </option>
                   ))}
             </select>
@@ -361,31 +363,31 @@ export const CustomersPage: React.FC = () => {
                 setSortOrder(so);
                 setPage(1);
               }}
-              className="w-full bg-white dark:bg-black border-1.5 border-neutral-900 dark:border-white px-2.5 py-2 text-xs font-ledger outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-white"
+              className="w-full bg-white dark:bg-black border-1.5 border-neutral-900 dark:border-white px-2.5 py-2 text-xs outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-white"
             >
-              <option value="createdAt-desc">الأحدث إضافة أولاً</option>
-              <option value="createdAt-asc">الأقدم إضافة أولاً</option>
-              <option value="next-asc">المتابعة القادمة الأقرب</option>
-              <option value="name-asc">ترتيب أبجدي (الاسم أ-ي)</option>
-              <option value="status-asc">ترتيب حسب الحالة</option>
+              <option value="createdAt-desc">Newest Added First</option>
+              <option value="createdAt-asc">Oldest Added First</option>
+              <option value="next-asc">Upcoming Follow-up Soonest</option>
+              <option value="name-asc">Alphabetical (A - Z)</option>
+              <option value="status-asc">Group by Stage</option>
             </select>
           </div>
         </div>
       </div>
 
-      {/* 4. VIEW 1: "دفتر القيود" (Ledger Table View) */}
+      {/* 4. VIEW 1: Ledger Table View */}
       {viewMode === 'ledger' && (
         <LedgerTable>
-          <table className="w-full text-right text-xs">
+          <table className="w-full text-left text-xs">
             <thead>
               <tr className="bg-neutral-100 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
-                <th className="px-4 py-3 font-bold">العميل والمؤسسة</th>
-                <th className="px-4 py-3 font-bold font-mono">رقم الجوال</th>
-                <th className="px-4 py-3 font-bold">المصدر</th>
-                <th className="px-4 py-3 font-bold">إقرار التواصل</th>
-                <th className="px-4 py-3 font-bold text-center">حالة القيد</th>
-                <th className="px-4 py-3 font-bold">المتابعة</th>
-                <th className="px-4 py-3 font-bold text-center">إجراءات</th>
+                <th className="px-4 py-3 font-bold">Client &amp; Organization</th>
+                <th className="px-4 py-3 font-bold font-mono">Phone Number</th>
+                <th className="px-4 py-3 font-bold">Source</th>
+                <th className="px-4 py-3 font-bold">Consent Verified</th>
+                <th className="px-4 py-3 font-bold text-center">Stage Stamp</th>
+                <th className="px-4 py-3 font-bold">Next Follow-up</th>
+                <th className="px-4 py-3 font-bold text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
@@ -400,7 +402,7 @@ export const CustomersPage: React.FC = () => {
               ) : displayedItems.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-neutral-500 font-mono">
-                    لا توجد قيود مطابقة لمعايير البحث في دفتر العملاء.
+                    No customer records match your filter criteria in the ledger.
                   </td>
                 </tr>
               ) : (
@@ -416,7 +418,7 @@ export const CustomersPage: React.FC = () => {
                     >
                       {/* Name & Company */}
                       <td className="px-4 py-3">
-                        <div className="font-bold text-neutral-950 dark:text-white font-ledger">
+                        <div className="font-bold text-neutral-950 dark:text-white">
                           {customer.name}
                         </div>
                         {customer.company && (
@@ -439,7 +441,7 @@ export const CustomersPage: React.FC = () => {
                       {/* Source */}
                       <td className="px-4 py-3 font-mono text-[11px]">
                         <span className="border border-neutral-400 dark:border-neutral-600 px-1.5 py-0.5">
-                          {customer.source}
+                          {getSourceLabel(customer.source)}
                         </span>
                       </td>
 
@@ -447,16 +449,16 @@ export const CustomersPage: React.FC = () => {
                       <td className="px-4 py-3">
                         {customer.consent ? (
                           <div className="text-[11px] font-mono text-neutral-700 dark:text-neutral-300">
-                            <span className="inline-block border border-neutral-900 dark:border-white px-1 font-bold">
-                              موثّق ✓
+                            <span className="inline-block border border-neutral-900 dark:border-white px-1 font-bold text-emerald-600 dark:text-emerald-400">
+                              VERIFIED ✓
                             </span>
                             <div className="text-[10px] text-neutral-500 mt-0.5 tabular-nums">
-                              {formatDateArabic(customer.consentDate)}
+                              {formatDate(customer.consentDate)}
                             </div>
                           </div>
                         ) : (
                           <span className="text-[11px] font-mono border border-dashed border-neutral-400 px-1 text-neutral-500">
-                            غير مؤكد
+                            Unconfirmed
                           </span>
                         )}
                       </td>
@@ -464,7 +466,7 @@ export const CustomersPage: React.FC = () => {
                       {/* Status Stamp */}
                       <td className="px-4 py-3 text-center">
                         <RubberStamp
-                          label={customer.status}
+                          label={getStatusLabel(customer.status)}
                           recordId={customer.id}
                         />
                       </td>
@@ -480,11 +482,11 @@ export const CustomersPage: React.FC = () => {
                                   : 'text-neutral-700 dark:text-neutral-300'
                               }`}
                             >
-                              {formatDateArabic(customer.next)}
+                              {formatDate(customer.next)}
                             </span>
                             {overdue && (
                               <span className="block text-[10px] font-bold text-neutral-900 dark:text-white">
-                                [ متأخرة ]
+                                [ OVERDUE ]
                               </span>
                             )}
                           </div>
@@ -500,7 +502,7 @@ export const CustomersPage: React.FC = () => {
                             href={waUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            title="إرسال واتساب بالقالب المعتمد"
+                            title="Direct WhatsApp Messaging"
                             className="p-1.5 border border-neutral-900 dark:border-white hover:bg-neutral-900 hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
                           >
                             <LedgerIcon name="chat" size={14} />
@@ -512,8 +514,8 @@ export const CustomersPage: React.FC = () => {
                               setEditingCustomer(customer);
                               setIsCustomerModalOpen(true);
                             }}
-                            title="تعديل القيد"
-                            className="p-1.5 border border-neutral-400 dark:border-neutral-600 hover:border-neutral-900 dark:hover:border-white transition-colors"
+                            title="Edit Record"
+                            className="p-1.5 border border-neutral-400 dark:border-neutral-600 hover:border-neutral-900 dark:hover:border-white transition-colors cursor-pointer"
                           >
                             <LedgerIcon name="edit" size={14} />
                           </button>
@@ -521,8 +523,8 @@ export const CustomersPage: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => setDeletingCustomer(customer)}
-                            title="حذف القيد"
-                            className="p-1.5 border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+                            title="Delete Record"
+                            className="p-1.5 border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                           >
                             <LedgerIcon name="trash" size={14} />
                           </button>
@@ -539,8 +541,8 @@ export const CustomersPage: React.FC = () => {
           {customerData && customerData.totalPages > 1 && (
             <div className="flex items-center justify-between border-t-2 border-neutral-900 dark:border-neutral-100 p-3 bg-neutral-50 dark:bg-neutral-900 font-mono text-xs">
               <div>
-                إجمالي <span className="font-bold tabular-nums">{customerData.total}</span> قيد • الصفحة{' '}
-                <span className="font-bold tabular-nums">{customerData.page}</span> من{' '}
+                Total <span className="font-bold tabular-nums">{customerData.total}</span> records • Page{' '}
+                <span className="font-bold tabular-nums">{customerData.page}</span> of{' '}
                 <span className="font-bold tabular-nums">{customerData.totalPages}</span>
               </div>
               <div className="flex items-center gap-1">
@@ -550,7 +552,7 @@ export const CustomersPage: React.FC = () => {
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
-                  السابق
+                  Previous
                 </LedgerButton>
                 <span className="px-2 font-bold tabular-nums">{page}</span>
                 <LedgerButton
@@ -559,7 +561,7 @@ export const CustomersPage: React.FC = () => {
                   disabled={page >= customerData.totalPages}
                   onClick={() => setPage((p) => p + 1)}
                 >
-                  التالي
+                  Next
                 </LedgerButton>
               </div>
             </div>
@@ -567,12 +569,12 @@ export const CustomersPage: React.FC = () => {
         </LedgerTable>
       )}
 
-      {/* 5. VIEW 2: "بطاقات الفيش" (Index Cards View) */}
+      {/* 5. VIEW 2: Index Cards View */}
       {viewMode === 'cards' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {displayedItems.length === 0 ? (
             <div className="col-span-full border-2 border-dashed border-neutral-400 p-8 text-center text-neutral-500 font-mono text-xs">
-              لا توجد بطاقات فيش مطابقة للمحددات الحالية.
+              No index cards match current parameters.
             </div>
           ) : (
             displayedItems.map((customer) => {
@@ -587,12 +589,12 @@ export const CustomersPage: React.FC = () => {
                 >
                   {/* Top Index Card Raised Tab */}
                   <div className="flex items-center justify-between border-b-2 border-neutral-900 dark:border-white bg-neutral-100 dark:bg-neutral-900 px-3 py-1.5 text-xs font-mono">
-                    <span className="font-bold">بطاقة قيد #{customer.id.slice(-6).toUpperCase()}</span>
-                    <span className="text-[10px] text-neutral-500">{customer.source}</span>
+                    <span className="font-bold">RECORD #{customer.id.slice(-6).toUpperCase()}</span>
+                    <span className="text-[10px] text-neutral-500">{getSourceLabel(customer.source)}</span>
                   </div>
 
                   {/* Card Content */}
-                  <div className="p-4 space-y-3 font-ledger text-xs">
+                  <div className="p-4 space-y-3 text-xs">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <h3 className="font-bold text-base text-neutral-950 dark:text-white">
@@ -610,32 +612,32 @@ export const CustomersPage: React.FC = () => {
 
                       {/* Stamp on Card */}
                       <RubberStamp
-                        label={customer.status}
+                        label={getStatusLabel(customer.status)}
                         recordId={customer.id}
                       />
                     </div>
 
                     <div className="border-t border-dashed border-neutral-300 dark:border-neutral-700 pt-2 space-y-1 font-mono text-xs">
                       <div className="flex justify-between">
-                        <span className="text-neutral-500">الجوال:</span>
+                        <span className="text-neutral-500">Phone:</span>
                         <span dir="ltr" className="tabular-nums font-bold">
                           {customer.phone}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-neutral-500">الموافقة:</span>
+                        <span className="text-neutral-500">Consent:</span>
                         <span className="font-bold">
-                          {customer.consent ? `موثّقة (${formatDateArabic(customer.consentDate)})` : 'غير موثقة'}
+                          {customer.consent ? `Verified (${formatDate(customer.consentDate)})` : 'Unconfirmed'}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-neutral-500">المتابعة:</span>
+                        <span className="text-neutral-500">Next Action:</span>
                         <span
                           className={`tabular-nums ${
                             overdue ? 'font-bold underline decoration-2' : ''
                           }`}
                         >
-                          {formatDateArabic(customer.next)} {overdue ? '[متأخرة]' : ''}
+                          {formatDate(customer.next)} {overdue ? '[OVERDUE]' : ''}
                         </span>
                       </div>
                     </div>
@@ -647,7 +649,7 @@ export const CustomersPage: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Mechanical Actions Footer */}
+                  {/* Actions Footer */}
                   <div className="border-t-2 border-neutral-900 dark:border-white p-2.5 bg-neutral-50 dark:bg-neutral-900 flex items-center justify-between gap-2">
                     <a
                       href={waUrl}
@@ -656,7 +658,7 @@ export const CustomersPage: React.FC = () => {
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-neutral-900 dark:border-white font-bold text-xs hover:bg-neutral-900 hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
                     >
                       <LedgerIcon name="chat" size={14} />
-                      <span>واتساب</span>
+                      <span>WhatsApp</span>
                     </a>
 
                     <div className="flex items-center gap-1">
@@ -666,16 +668,16 @@ export const CustomersPage: React.FC = () => {
                           setEditingCustomer(customer);
                           setIsCustomerModalOpen(true);
                         }}
-                        className="p-1.5 border border-neutral-400 dark:border-neutral-600 hover:border-neutral-900"
-                        title="تعديل"
+                        className="p-1.5 border border-neutral-400 dark:border-neutral-600 hover:border-neutral-900 cursor-pointer"
+                        title="Edit"
                       >
                         <LedgerIcon name="edit" size={14} />
                       </button>
                       <button
                         type="button"
                         onClick={() => setDeletingCustomer(customer)}
-                        className="p-1.5 border border-neutral-400 dark:border-neutral-600 hover:bg-neutral-200 dark:hover:bg-neutral-800"
-                        title="حذف"
+                        className="p-1.5 border border-neutral-400 dark:border-neutral-600 hover:bg-neutral-200 dark:hover:bg-neutral-800 cursor-pointer"
+                        title="Delete"
                       >
                         <LedgerIcon name="trash" size={14} />
                       </button>
@@ -688,7 +690,7 @@ export const CustomersPage: React.FC = () => {
         </div>
       )}
 
-      {/* 6. VIEW 3: "لوحة المراحل" (Kanban Board View) */}
+      {/* 6. VIEW 3: Stages Board View (Kanban) */}
       {viewMode === 'kanban' && (
         <div className="flex gap-4 overflow-x-auto pb-6">
           {availableStatuses.map((st) => {
@@ -702,10 +704,10 @@ export const CustomersPage: React.FC = () => {
                 {/* Stage Header */}
                 <div className="border-b-2 border-neutral-900 dark:border-white p-3 bg-neutral-100 dark:bg-neutral-900 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold font-display text-sm text-neutral-950 dark:text-white">
-                      {st}
+                    <span className="font-bold text-sm text-neutral-950 dark:text-white">
+                      {getStatusLabel(st)}
                     </span>
-                    <span className="font-mono text-xs border border-neutral-900 dark:border-white px-1.5 py-0.2 bg-white dark:bg-black font-bold tabular-nums">
+                    <span className="font-mono text-xs border border-neutral-900 dark:border-white px-1.5 py-0.5 bg-white dark:bg-black font-bold tabular-nums">
                       {stageCustomers.length}
                     </span>
                   </div>
@@ -715,7 +717,7 @@ export const CustomersPage: React.FC = () => {
                 <div className="p-3 space-y-3 overflow-y-auto flex-1">
                   {stageCustomers.length === 0 ? (
                     <div className="border border-dashed border-neutral-300 dark:border-neutral-700 p-6 text-center text-neutral-400 font-mono text-[11px]">
-                      لا توجد قيود في هذه المرحلة.
+                      No records in this stage.
                     </div>
                   ) : (
                     stageCustomers.map((customer) => {
@@ -730,7 +732,7 @@ export const CustomersPage: React.FC = () => {
                         >
                           <div className="flex items-start justify-between gap-1">
                             <div>
-                              <h4 className="font-bold text-xs text-neutral-950 dark:text-white font-ledger">
+                              <h4 className="font-bold text-xs text-neutral-950 dark:text-white">
                                 {customer.name}
                               </h4>
                               {customer.company && (
@@ -740,7 +742,7 @@ export const CustomersPage: React.FC = () => {
                               )}
                             </div>
                             <span className="text-[10px] font-mono text-neutral-400 border border-neutral-300 dark:border-neutral-700 px-1">
-                              {customer.source}
+                              {getSourceLabel(customer.source)}
                             </span>
                           </div>
 
@@ -748,7 +750,7 @@ export const CustomersPage: React.FC = () => {
                             <span dir="ltr">{customer.phone}</span>
                             {customer.next && (
                               <span className={overdue ? 'font-bold underline decoration-2' : ''}>
-                                {formatDateArabic(customer.next)}
+                                {formatDate(customer.next)}
                               </span>
                             )}
                           </div>
@@ -763,12 +765,12 @@ export const CustomersPage: React.FC = () => {
                                   newStatus: e.target.value,
                                 })
                               }
-                              className="text-[10px] font-mono border border-neutral-400 dark:border-neutral-600 bg-neutral-50 dark:bg-neutral-900 px-1 py-0.5 outline-none"
-                              title="نقل القيد إلى مرحلة أخرى"
+                              className="text-[10px] font-mono border border-neutral-400 dark:border-neutral-600 bg-neutral-50 dark:bg-neutral-900 px-1 py-0.5 outline-none cursor-pointer"
+                              title="Transition customer to another stage"
                             >
                               {availableStatuses.map((opt) => (
                                 <option key={opt} value={opt}>
-                                  ← {opt}
+                                  → {getStatusLabel(opt)}
                                 </option>
                               ))}
                             </select>
@@ -778,8 +780,8 @@ export const CustomersPage: React.FC = () => {
                                 href={waUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="p-1 border border-neutral-900 dark:border-white hover:bg-neutral-900 hover:text-white dark:hover:bg-white dark:hover:text-black"
-                                title="واتساب"
+                                className="p-1 border border-neutral-900 dark:border-white hover:bg-neutral-900 hover:text-white dark:hover:bg-white dark:hover:text-black cursor-pointer"
+                                title="WhatsApp"
                               >
                                 <LedgerIcon name="chat" size={12} />
                               </a>
@@ -789,8 +791,8 @@ export const CustomersPage: React.FC = () => {
                                   setEditingCustomer(customer);
                                   setIsCustomerModalOpen(true);
                                 }}
-                                className="p-1 border border-neutral-400 hover:border-neutral-900"
-                                title="تعديل"
+                                className="p-1 border border-neutral-400 hover:border-neutral-900 cursor-pointer"
+                                title="Edit"
                               >
                                 <LedgerIcon name="edit" size={12} />
                               </button>
@@ -827,37 +829,37 @@ export const CustomersPage: React.FC = () => {
             deleteMutation.mutate(deletingCustomer.id);
           }
         }}
-        title="تأكيد شطب القيد الدفتري"
-        message={`هل أنت متأكد من رغبتك في شطب قيد العميل "${deletingCustomer?.name}" من السجل؟`}
-        confirmText="نعم، اشطب القيد"
+        title="Confirm Record Deletion"
+        message={`Are you sure you want to permanently delete "${deletingCustomer?.name}" from the customers ledger?`}
+        confirmText="Yes, Delete Record"
         danger={true}
       />
 
-      {/* 9. Import CSV Modal with LedgerModal */}
+      {/* 9. Import CSV Modal */}
       <LedgerModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
-        title="استيراد قيود عملاء من ملف CSV"
+        title="Import Customer Records from CSV"
       >
-        <div className="space-y-4 font-ledger">
+        <div className="space-y-4">
           {importResult ? (
             <div className="border-2 border-neutral-900 dark:border-white p-4 text-center font-mono space-y-1">
-              <p className="font-bold text-sm">اكتمل قيد الملف بنجاح</p>
+              <p className="font-bold text-sm">Batch import completed</p>
               <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                تم استيراد: <span className="font-bold tabular-nums">{importResult.importedCount}</span> قيد •
-                تم تخطي: <span className="font-bold tabular-nums">{importResult.skippedCount}</span> قيد
+                Imported: <span className="font-bold tabular-nums">{importResult.importedCount}</span> records •
+                Skipped: <span className="font-bold tabular-nums">{importResult.skippedCount}</span> duplicates
               </p>
             </div>
           ) : (
             <>
               <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                الصق محتوى ملف CSV هنا مباشرة (تأكد من وجود عمود الاسم ورقم الجوال بالصيغة الدولية):
+                Paste CSV content directly here (ensure columns for name and phone in international format):
               </p>
               <textarea
                 rows={6}
                 value={importCsvText}
                 onChange={(e) => setImportCsvText(e.target.value)}
-                placeholder="name,phone,company,source,status&#10;محمد أحمد,966501234567,مؤسسة النور,واتساب,جديد"
+                placeholder="name,phone,company,source,status&#10;Alexander Vance,966501234567,Tiger Tech,WhatsApp,New"
                 dir="ltr"
                 className="w-full border-1.5 border-neutral-900 dark:border-white p-3 font-mono text-xs bg-white dark:bg-black text-neutral-950 dark:text-white outline-none"
               />
@@ -870,7 +872,7 @@ export const CustomersPage: React.FC = () => {
               size="sm"
               onClick={() => setIsImportModalOpen(false)}
             >
-              إغلاق
+              Close
             </LedgerButton>
             {!importResult && (
               <LedgerButton
@@ -879,7 +881,7 @@ export const CustomersPage: React.FC = () => {
                 disabled={importing || !importCsvText.trim()}
                 onClick={handleImportCsv}
               >
-                {importing ? 'جاري الاستيراد...' : 'بدء إدراج القيود'}
+                {importing ? 'Importing...' : 'Begin Batch Import'}
               </LedgerButton>
             )}
           </div>

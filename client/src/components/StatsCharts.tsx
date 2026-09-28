@@ -11,8 +11,8 @@ import {
   Pie,
   Legend,
 } from 'recharts';
-import type { DashboardStats, CustomerStatus } from '../types/index.js';
-import { STATUS_COLORS, SOURCE_COLORS } from '../lib/utils.js';
+import type { DashboardStats } from '../types/index.js';
+import { getStatusLabel, getSourceLabel, SOURCE_COLORS } from '../lib/utils.js';
 
 interface StatsChartsProps {
   stats: DashboardStats;
@@ -21,6 +21,11 @@ interface StatsChartsProps {
 const MONOCHROME_GRAYS = ['#171717', '#404040', '#737373', '#a3a3a3', '#d4d4d4', '#525252'];
 
 const statusHexColors: Record<string, string> = {
+  'New': '#737373',
+  'Contacted': '#525252',
+  'Interested': '#404040',
+  'Closed Won': '#171717',
+  'Lost': '#a3a3a3',
   'جديد': '#737373',
   'تم التواصل': '#525252',
   'مهتم': '#404040',
@@ -28,24 +33,27 @@ const statusHexColors: Record<string, string> = {
   'غير مهتم': '#a3a3a3',
 };
 
-
 export const StatsCharts: React.FC<StatsChartsProps> = ({ stats }) => {
   const statusData = Object.entries(stats.statusDistribution || {}).map(([name, count]) => ({
-    name,
+    name: getStatusLabel(name),
+    rawName: name,
     count,
   }));
 
-  const sourceData = Object.entries(stats.sourceDistribution || {}).map(([name, count]) => ({
-    name,
-    count,
-  })).filter((item) => item.count > 0);
+  const sourceData = Object.entries(stats.sourceDistribution || {})
+    .map(([name, count]) => ({
+      name: getSourceLabel(name),
+      rawName: name,
+      count,
+    }))
+    .filter((item) => item.count > 0);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Customer Status Distribution Bar Chart */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 transition-colors">
-        <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4">
-          توزيع العملاء حسب الحالة
+      <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 transition-colors">
+        <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-4">
+          Customer Pipeline Distribution
         </h3>
         <div className="h-64 w-full" dir="ltr">
           <ResponsiveContainer width="100%" height="100%">
@@ -58,19 +66,19 @@ export const StatsCharts: React.FC<StatsChartsProps> = ({ stats }) => {
               <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#888888' }} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#1f2937',
+                  backgroundColor: '#171717',
                   borderRadius: '12px',
-                  border: 'none',
+                  border: '1px solid #404040',
                   color: '#fff',
-                  direction: 'rtl',
+                  direction: 'ltr',
                 }}
-                formatter={(value: any) => [`${value} عميل`, 'العدد']}
+                formatter={(value: any) => [`${value} leads`, 'Count']}
               />
               <Bar dataKey="count" radius={[6, 6, 0, 0]}>
                 {statusData.map((entry, idx) => (
                   <Cell
                     key={`cell-${entry.name}`}
-                    fill={statusHexColors[entry.name] || MONOCHROME_GRAYS[idx % MONOCHROME_GRAYS.length]}
+                    fill={statusHexColors[entry.rawName] || statusHexColors[entry.name] || MONOCHROME_GRAYS[idx % MONOCHROME_GRAYS.length]}
                   />
                 ))}
               </Bar>
@@ -80,14 +88,14 @@ export const StatsCharts: React.FC<StatsChartsProps> = ({ stats }) => {
       </div>
 
       {/* Customer Source Distribution Donut Chart */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 transition-colors">
-        <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4">
-          توزيع العملاء حسب المصدر
+      <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 transition-colors">
+        <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-4">
+          Lead Acquisition Sources
         </h3>
         <div className="h-64 w-full" dir="ltr">
           {sourceData.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-sm text-gray-400">
-              لا توجد بيانات مسجلة لمصادر العملاء حتى الآن
+            <div className="flex h-full items-center justify-center text-sm text-neutral-400">
+              No lead source records captured yet
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -105,24 +113,24 @@ export const StatsCharts: React.FC<StatsChartsProps> = ({ stats }) => {
                   {sourceData.map((entry, idx) => (
                     <Cell
                       key={`source-${entry.name}`}
-                      fill={(SOURCE_COLORS as any)[entry.name] || MONOCHROME_GRAYS[idx % MONOCHROME_GRAYS.length]}
+                      fill={(SOURCE_COLORS as any)[entry.rawName] || MONOCHROME_GRAYS[idx % MONOCHROME_GRAYS.length]}
                     />
                   ))}
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#1f2937',
+                    backgroundColor: '#171717',
                     borderRadius: '12px',
-                    border: 'none',
+                    border: '1px solid #404040',
                     color: '#fff',
-                    direction: 'rtl',
+                    direction: 'ltr',
                   }}
-                  formatter={(value: any) => [`${value} عميل`, 'العدد']}
+                  formatter={(value: any) => [`${value} leads`, 'Count']}
                 />
                 <Legend
                   verticalAlign="bottom"
                   height={36}
-                  formatter={(value) => <span className="text-xs text-gray-700 dark:text-gray-300 mr-2">{value}</span>}
+                  formatter={(value) => <span className="text-xs text-neutral-700 dark:text-neutral-300 ml-2">{value}</span>}
                 />
               </PieChart>
             </ResponsiveContainer>

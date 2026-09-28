@@ -20,9 +20,9 @@ export const RegisterPage: React.FC = () => {
 
     try {
       await registerUser({ name, email, password });
-      navigate('/');
+      navigate('/customers');
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || 'فشل إنشاء الحساب');
+      setError(err.response?.data?.error || err.message || 'Account registration failed');
     } finally {
       setLoading(false);
     }
@@ -36,14 +36,14 @@ export const RegisterPage: React.FC = () => {
             <UserPlus className="h-7 w-7" />
           </div>
           <div className="flex items-center justify-center gap-1.5 mb-2">
-            <span className="text-2xl font-black text-neutral-900 dark:text-white">تايجر</span>
-            <span className="text-xl font-extrabold text-neutral-500 dark:text-neutral-400">CRM</span>
+            <span className="text-2xl font-black text-neutral-900 dark:text-white">Tiger</span>
+            <span className="text-xs uppercase px-2 py-0.5 font-black border border-neutral-900 dark:border-white rounded-md text-neutral-900 dark:text-white">CRM</span>
           </div>
           <h1 className="text-2xl font-black text-neutral-900 dark:text-white">
-            إنشاء حساب جديد
+            Create an Account
           </h1>
           <p className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-            انضم لنظام تايجر لإدارة العملاء والمحادثات بأعلى درجات الأمان والسرعة
+            Join Tiger for enterprise machine workflow & customer ledger management
           </p>
         </div>
 
@@ -56,53 +56,51 @@ export const RegisterPage: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">
-              الاسم الكامل
+              Full Name
             </label>
             <div className="relative">
-              <User className="absolute right-3 top-3 h-4 w-4 text-neutral-400" />
+              <User className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="أحمد المحمد"
-                className="w-full rounded-xl border border-neutral-300 pr-9 pl-3 py-2.5 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
+                placeholder="John Doe"
+                className="w-full rounded-xl border border-neutral-300 pl-9 pr-3 py-2.5 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
               />
             </div>
           </div>
 
           <div>
             <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">
-              البريد الإلكتروني
+              Email Address
             </label>
             <div className="relative">
-              <Mail className="absolute right-3 top-3 h-4 w-4 text-neutral-400" />
+              <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
-                dir="ltr"
-                className="w-full rounded-xl border border-neutral-300 pr-9 pl-3 py-2.5 text-sm text-left focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
+                className="w-full rounded-xl border border-neutral-300 pl-9 pr-3 py-2.5 text-sm text-left focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
               />
             </div>
           </div>
 
           <div>
             <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">
-              كلمة المرور (8 أحرف، أرقام وحروف كبيرة وصغيرة)
+              Password (min 8 chars, uppercase, lowercase & digits)
             </label>
             <div className="relative">
-              <Lock className="absolute right-3 top-3 h-4 w-4 text-neutral-400" />
+              <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                dir="ltr"
-                className="w-full rounded-xl border border-neutral-300 pr-9 pl-3 py-2.5 text-sm text-left focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
+                className="w-full rounded-xl border border-neutral-300 pl-9 pr-3 py-2.5 text-sm text-left focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
               />
             </div>
           </div>
@@ -112,14 +110,14 @@ export const RegisterPage: React.FC = () => {
             disabled={loading}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white py-3 text-sm font-bold disabled:opacity-50 transition-colors mt-2"
           >
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <span>إنشاء الحساب</span>}
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <span>Create Account</span>}
           </button>
         </form>
 
         <div className="mt-8 text-center text-xs text-neutral-600 dark:text-neutral-400">
-          لديك حساب بالفعل؟{' '}
+          Already have an account?{' '}
           <Link to="/login" className="font-bold text-neutral-900 dark:text-white underline hover:opacity-75">
-            تسجيل الدخول
+            Sign In
           </Link>
         </div>
       </div>

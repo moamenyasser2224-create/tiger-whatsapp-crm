@@ -37,7 +37,6 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Stop camera when unmounting or closing
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
@@ -58,7 +57,7 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
       }
       setCameraActive(true);
     } catch {
-      setError('تعذر تشغيل الكاميرا. يرجى التأكد من منح الإذن لاستخدام الكاميرا.');
+      setError('Unable to access camera. Please make sure camera permissions are granted.');
     }
   }, []);
 
@@ -88,14 +87,13 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
         setChallenge(data.data);
       }
     } catch {
-      // Fallback challenge if offline
       setChallenge({ challengeId: 'local_nonce', action: 'BLINK_EYES' });
     }
   };
 
   const handleConsentAccept = () => {
     if (!biometricConsent) {
-      setError('يرجى تأكيد الموافقة على الشروط البيومترية القانونية للمتابعة');
+      setError('Please acknowledge biometric terms before proceeding.');
       return;
     }
     setError(null);
@@ -104,10 +102,6 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
     startCamera();
   };
 
-  /**
-   * Generates a 64-dimensional mathematical feature vector from face frame.
-   * This vector encapsulates facial geometry gradients rather than storing raw image bytes.
-   */
   const extractFaceVectorFromCanvas = (videoEl: HTMLVideoElement): number[] => {
     const canvas = document.createElement('canvas');
     canvas.width = 64;
@@ -118,7 +112,6 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
     ctx.drawImage(videoEl, 0, 0, 64, 64);
     const imgData = ctx.getImageData(0, 0, 64, 64).data;
 
-    // Convert pixel luminosities into a normalized 64-dimensional float vector
     const vector: number[] = new Array(64).fill(0);
     for (let i = 0; i < 64; i++) {
       let sum = 0;
@@ -130,7 +123,6 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
       vector[i] = sum / 64;
     }
 
-    // Normalize vector (L2 norm)
     const norm = Math.sqrt(vector.reduce((acc, val) => acc + val * val, 0));
     return norm > 0 ? vector.map((v) => v / norm) : vector;
   };
@@ -144,7 +136,7 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
     try {
       const embedding = extractFaceVectorFromCanvas(videoRef.current);
       if (!embedding || embedding.length < 16) {
-        throw new Error('فشل استخراج بصمة الوجه الرياضية. يرجى التمركز أمام الكاميرا بوضوح');
+        throw new Error('Failed to extract facial vector. Please face the camera directly in good lighting.');
       }
 
       if (mode === 'enroll') {
@@ -157,7 +149,6 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
         setStep('success');
         if (onSuccess) onSuccess(data);
       } else {
-        // Verification mode
         const isKiosk = mode === 'verify_attendance';
         const { data } = await api.post('/auth/face/verify', {
           userId: user?.id,
@@ -171,7 +162,7 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
         if (onSuccess) onSuccess(data);
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || 'فشلت معالجة بصمة الوجه');
+      setError(err.response?.data?.error || err.message || 'Face biometrics matching failed.');
     } finally {
       setLoading(false);
     }
@@ -180,22 +171,22 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
   const getChallengeDescription = (action?: string) => {
     switch (action) {
       case 'TURN_HEAD_RIGHT':
-        return 'أدر رأسك قليلاً إلى اليمين';
+        return 'Turn your head slightly to the right';
       case 'TURN_HEAD_LEFT':
-        return 'أدر رأسك قليلاً إلى اليسار';
+        return 'Turn your head slightly to the left';
       case 'BLINK_EYES':
-        return 'ارمش بعينيك مرتين بوضوح';
+        return 'Blink your eyes twice clearly';
       case 'SMILE':
-        return 'ابتسم أمام الكاميرا';
+        return 'Smile at the camera';
       default:
-        return 'تمركز أمام الكاميرا بشكل مستقيم';
+        return 'Look directly at the camera';
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" dir="ltr">
       <div className="w-full max-w-lg bg-white dark:bg-black border-2 border-black dark:border-white shadow-2xl p-6 text-black dark:text-white">
         {/* Header */}
         <div className="flex items-center justify-between border-b-2 border-black dark:border-white pb-3 mb-4">
@@ -203,10 +194,10 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
             <ScanFace className="w-6 h-6" />
             <h3 className="font-black text-lg">
               {mode === 'enroll'
-                ? 'تسجيل بصمة الوجه البيومترية المشفرة'
+                ? 'Enroll Facial Biometrics Vector'
                 : mode === 'verify_attendance'
-                ? 'تسجيل الحضور السريع بالتعرف على الوجه'
-                : 'التحقق البيومتري كعامل أمان ثانٍ (2FA)'}
+                ? 'High-Speed Biometric Punch In/Out'
+                : 'Biometric Two-Factor Authentication (2FA)'}
             </h3>
           </div>
           <button
@@ -214,7 +205,7 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
               stopCamera();
               onClose();
             }}
-            className="p-1 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors border border-transparent hover:border-black dark:hover:border-white"
+            className="p-1 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors border border-transparent hover:border-black dark:hover:border-white cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -233,15 +224,15 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
             <div className="p-4 border-2 border-black dark:border-white bg-neutral-50 dark:bg-neutral-900/50 space-y-3">
               <div className="flex items-center gap-2 font-black text-sm">
                 <ShieldCheck className="w-5 h-5" />
-                <span>إقرار الموافقة البيومترية القانونية الصريحة</span>
+                <span>Explicit Biometric Privacy Statement &amp; Consent</span>
               </div>
               <p className="text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed font-bold">
-                وفقاً للوائح حماية البيانات الحساسة، تُعد بصمة الوجه بيانات بيومترية تخضع لحماية مشددة:
+                Under strict digital privacy protocols, facial geometry data is subject to rigorous protection:
               </p>
               <ul className="text-xs list-disc list-inside space-y-1 font-bold text-neutral-600 dark:text-neutral-400">
-                <li><strong className="text-black dark:text-white">الغرض:</strong> استخدام بصمة الوجه كعامل مصادقة إضافي أو لتسجيل الحضور والانصراف السريع من جهاز العمل.</li>
-                <li><strong className="text-black dark:text-white">آلية التشفير:</strong> يتم تحويل الوجه إلى متجه رياضي رقمي مشفّر بتشفير عسكري AES-256-GCM. <strong className="underline">لا يتم تخزين أي صورة فوتوغرافية خام للوجه نهائياً</strong>.</li>
-                <li><strong className="text-black dark:text-white">حق الإلغاء والرفض:</strong> يحق لك في أي وقت إلغاء هذه الموافقة وحذف البصمة نهائياً من صفحة الإعدادات، واستخدام كلمة المرور و2FA التقليدي كبديل كامل بدون أي قيود.</li>
+                <li><strong className="text-black dark:text-white">Purpose:</strong> Used strictly for secure authentication and immediate time clock recording.</li>
+                <li><strong className="text-black dark:text-white">Encryption:</strong> Extracted directly into an AES-256-GCM encrypted mathematical vector. <strong className="underline">Raw facial images are discarded immediately and never stored on disk</strong>.</li>
+                <li><strong className="text-black dark:text-white">Revocation:</strong> You may revoke consent and wipe your biometric profile anytime via Settings. Password and TOTP remain 100% supported.</li>
               </ul>
             </div>
 
@@ -253,7 +244,7 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
                 className="mt-1 w-4 h-4 accent-black dark:accent-white"
               />
               <span className="text-xs font-black">
-                أوافق صراحةً وبكامل إرادتي على معالجة بصمة الوجه وتخزين المتجه الرياضي المشفّر لأغراض التحقق الداخلي والحضور.
+                I explicitly consent to biometric feature extraction and encrypted vector storage for Tiger workplace authentication.
               </span>
             </label>
 
@@ -261,17 +252,17 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-3 border-2 border-black dark:border-white text-xs font-black uppercase hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors"
+                className="flex-1 py-3 border-2 border-black dark:border-white text-xs font-black uppercase hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
               >
-                رفض واستخدام كلمة المرور فقط
+                Decline &amp; Use Password
               </button>
               <button
                 type="button"
                 onClick={handleConsentAccept}
                 disabled={!biometricConsent}
-                className="flex-1 py-3 bg-black dark:bg-white text-white dark:text-black border-2 border-black dark:border-white text-xs font-black uppercase hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors disabled:opacity-40"
+                className="flex-1 py-3 bg-black dark:bg-white text-white dark:text-black border-2 border-black dark:border-white text-xs font-black uppercase hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors disabled:opacity-40 cursor-pointer"
               >
-                موافق ومتابعة التسجيل
+                Accept &amp; Proceed
               </button>
             </div>
           </div>
@@ -285,14 +276,14 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
               <div className="flex items-center gap-2">
                 <Lock className="w-4 h-4" />
                 <span className="text-xs font-black uppercase tracking-wider">
-                  كشف الحيوية (Liveness): {getChallengeDescription(challenge?.action)}
+                  Liveness Check: {getChallengeDescription(challenge?.action)}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={fetchChallenge}
-                title="تحدٍ آخر"
-                className="p-1 hover:opacity-75 transition-opacity"
+                title="Change Challenge"
+                className="p-1 hover:opacity-75 transition-opacity cursor-pointer"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
               </button>
@@ -317,12 +308,12 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
               {!cameraActive && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 p-4 text-center">
                   <ScanFace className="w-12 h-12 text-neutral-400 mb-2 animate-bounce" />
-                  <p className="text-xs font-bold text-white mb-3">جاري تشغيل الكاميرا...</p>
+                  <p className="text-xs font-bold text-white mb-3">Initializing camera stream...</p>
                   <button
                     onClick={startCamera}
-                    className="px-3 py-1.5 border border-white text-white text-xs font-black uppercase"
+                    className="px-3 py-1.5 border border-white text-white text-xs font-black uppercase cursor-pointer"
                   >
-                    إعادة المحاولة
+                    Retry
                   </button>
                 </div>
               )}
@@ -336,27 +327,27 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
                 onChange={(e) => setChallengeCompleted(e.target.checked)}
                 className="w-4 h-4 accent-black dark:accent-white"
               />
-              <span>قمت بتنفيذ الحركة المطلوبة ({getChallengeDescription(challenge?.action)})</span>
+              <span>I completed the prompted action ({getChallengeDescription(challenge?.action)})</span>
             </label>
 
             <button
               type="button"
               onClick={handleCaptureAndProcess}
               disabled={loading || !cameraActive || !challengeCompleted}
-              className="w-full py-3 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-wider border-2 border-black dark:border-white hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+              className="w-full py-3 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-wider border-2 border-black dark:border-white hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors disabled:opacity-40 flex items-center justify-center gap-2 cursor-pointer"
             >
               {loading ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>جاري التحقق والمطابقة في الخادم...</span>
+                  <span>Verifying with server cryptographic pipeline...</span>
                 </>
               ) : (
                 <>
                   <ScanFace className="w-4 h-4" />
                   <span>
                     {mode === 'enroll'
-                      ? 'التقاط وحفظ البصمة الرياضية المشفرة'
-                      : 'تأكيد التحقق ومطابقة الوجه'}
+                      ? 'Capture & Encrypt Biometrics'
+                      : 'Verify & Authenticate'}
                   </span>
                 </>
               )}
@@ -373,18 +364,18 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
             <div>
               <h4 className="text-xl font-black">
                 {mode === 'enroll'
-                  ? 'تم تسجيل بصمة الوجه بنجاح!'
-                  : 'تم التحقق من بصمة الوجه بنجاح!'}
+                  ? 'Facial Biometrics Enrolled Successfully!'
+                  : 'Biometric Match Verified!'}
               </h4>
               {matchScore && (
                 <p className="text-sm font-mono font-bold mt-1">
-                  نسبة التطابق الرياضي في الخادم: {matchScore}%
+                  Server Cosine Match Score: {matchScore}%
                 </p>
               )}
               <p className="text-xs text-neutral-600 dark:text-neutral-400 font-bold mt-1">
                 {mode === 'enroll'
-                  ? 'تم حفظ المتجه الرياضي مشفراً بـ AES-256 وحذف الصورة الخام فوراً'
-                  : 'تمت مصادقة العملية وتسجيلها في سجل التدقيق بنجاح'}
+                  ? 'Mathematical vector saved under AES-256 encryption. Raw frame purged.'
+                  : 'Authentication event logged in tamper-proof audit trace.'}
               </p>
             </div>
             <button
@@ -393,9 +384,9 @@ export const FaceBiometricsModal: React.FC<FaceBiometricsModalProps> = ({
                 stopCamera();
                 onClose();
               }}
-              className="px-8 py-2.5 bg-black dark:bg-white text-white dark:text-black font-black text-xs uppercase border-2 border-black dark:border-white hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors"
+              className="px-8 py-2.5 bg-black dark:bg-white text-white dark:text-black font-black text-xs uppercase border-2 border-black dark:border-white hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors cursor-pointer"
             >
-              إغلاق
+              Close
             </button>
           </div>
         )}

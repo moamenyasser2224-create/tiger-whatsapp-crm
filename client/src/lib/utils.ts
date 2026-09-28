@@ -6,11 +6,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDateArabic(dateStr: string | null | undefined): string {
+export function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '—';
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('ar-EG', {
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -19,6 +19,8 @@ export function formatDateArabic(dateStr: string | null | undefined): string {
     return dateStr;
   }
 }
+
+export const formatDateArabic = formatDate;
 
 export function isOverdue(dateStr: string | null | undefined): boolean {
   if (!dateStr) return false;
@@ -47,13 +49,56 @@ export function generateWhatsAppUrl(
   customerName?: string
 ): string {
   const cleanPhone = rawPhone.replace(/\D/g, '');
-  const rawMsg = templateBody || 'مرحباً {name}!';
-  const message = rawMsg.replace(/\{name\}/g, customerName || 'عزيزي العميل');
+  const rawMsg = templateBody || 'Hello {name}!';
+  const message = rawMsg.replace(/\{name\}/g, customerName || 'Valued Customer');
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+}
+
+export const STATUS_TRANSLATIONS: Record<string, string> = {
+  'جديد': 'New',
+  'تم التواصل': 'Contacted',
+  'مهتم': 'Interested',
+  'تم البيع': 'Closed Won',
+  'غير مهتم': 'Not Interested',
+  'New': 'New',
+  'Contacted': 'Contacted',
+  'Interested': 'Interested',
+  'Closed Won': 'Closed Won',
+  'Not Interested': 'Not Interested',
+};
+
+export const SOURCE_TRANSLATIONS: Record<string, string> = {
+  'إعلان': 'Ad Campaign',
+  'واتساب': 'WhatsApp',
+  'انستغرام': 'Instagram',
+  'فيسبوك': 'Facebook',
+  'توصية': 'Referral',
+  'معرض': 'Exhibition',
+  'أخرى': 'Other',
+  'Ad Campaign': 'Ad Campaign',
+  'WhatsApp': 'WhatsApp',
+  'Instagram': 'Instagram',
+  'Facebook': 'Facebook',
+  'Referral': 'Referral',
+  'Exhibition': 'Exhibition',
+  'Other': 'Other',
+};
+
+export function getStatusLabel(status: string): string {
+  return STATUS_TRANSLATIONS[status] || status;
+}
+
+export function getSourceLabel(source: string): string {
+  return SOURCE_TRANSLATIONS[source] || source;
 }
 
 export const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   'جديد': {
+    bg: 'bg-neutral-100 dark:bg-neutral-900',
+    text: 'text-neutral-900 dark:text-neutral-100 font-bold',
+    border: 'border-neutral-900 dark:border-neutral-300',
+  },
+  'New': {
     bg: 'bg-neutral-100 dark:bg-neutral-900',
     text: 'text-neutral-900 dark:text-neutral-100 font-bold',
     border: 'border-neutral-900 dark:border-neutral-300',
@@ -63,7 +108,17 @@ export const STATUS_COLORS: Record<string, { bg: string; text: string; border: s
     text: 'text-neutral-800 dark:text-neutral-200 font-medium',
     border: 'border-neutral-400 dark:border-neutral-600',
   },
+  'Contacted': {
+    bg: 'bg-neutral-200 dark:bg-neutral-800',
+    text: 'text-neutral-800 dark:text-neutral-200 font-medium',
+    border: 'border-neutral-400 dark:border-neutral-600',
+  },
   'مهتم': {
+    bg: 'bg-neutral-800 dark:bg-neutral-200',
+    text: 'text-white dark:text-neutral-900 font-bold',
+    border: 'border-neutral-800 dark:border-neutral-200',
+  },
+  'Interested': {
     bg: 'bg-neutral-800 dark:bg-neutral-200',
     text: 'text-white dark:text-neutral-900 font-bold',
     border: 'border-neutral-800 dark:border-neutral-200',
@@ -73,7 +128,17 @@ export const STATUS_COLORS: Record<string, { bg: string; text: string; border: s
     text: 'text-white dark:text-black font-black',
     border: 'border-black dark:border-white shadow-sm',
   },
+  'Closed Won': {
+    bg: 'bg-black dark:bg-white',
+    text: 'text-white dark:text-black font-black',
+    border: 'border-black dark:border-white shadow-sm',
+  },
   'غير مهتم': {
+    bg: 'bg-neutral-100 dark:bg-neutral-950',
+    text: 'text-neutral-500 dark:text-neutral-500 line-through',
+    border: 'border-neutral-300 dark:border-neutral-800',
+  },
+  'Not Interested': {
     bg: 'bg-neutral-100 dark:bg-neutral-950',
     text: 'text-neutral-500 dark:text-neutral-500 line-through',
     border: 'border-neutral-300 dark:border-neutral-800',
@@ -88,39 +153,35 @@ export const SOURCE_COLORS: Record<string, string> = {
   'توصية': '#525252',
   'معرض': '#262626',
   'أخرى': '#d4d4d4',
+  'Ad Campaign': '#171717',
+  'WhatsApp': '#404040',
+  'Instagram': '#737373',
+  'Facebook': '#a3a3a3',
+  'Referral': '#525252',
+  'Exhibition': '#262626',
+  'Other': '#d4d4d4',
 };
 
 /**
- * Normalizes Arabic text for smart invariant search:
- * - Strips tashkeel (diacritics)
- * - Strips tatweel (kashida)
- * - Normalizes alifs (أ إ آ ٱ -> ا)
- * - Normalizes taa marbuta (ة -> ه)
- * - Normalizes yaa and alif maqsura (ى -> ي)
+ * Normalizes text for smart invariant search
  */
 export function normalizeArabic(text: string): string {
   if (!text) return '';
   return text
     .trim()
     .toLowerCase()
-    // Strip diacritics
     .replace(/[\u064B-\u0652\u0656-\u065F\u0670]/g, '')
-    // Strip tatweel
     .replace(/\u0640/g, '')
-    // Unify alifs
     .replace(/[أإآٱ]/g, 'ا')
-    // Unify taa marbuta
     .replace(/ة/g, 'ه')
-    // Unify yaa / alif maqsura
     .replace(/ى/g, 'ي');
 }
 
-/**
- * Checks if search query matches target text using normalized Arabic
- */
 export function matchesArabicSearch(target: string, query: string): boolean {
   if (!query) return true;
   if (!target) return false;
-  return normalizeArabic(target).includes(normalizeArabic(query));
+  return (
+    target.toLowerCase().includes(query.toLowerCase()) ||
+    normalizeArabic(target).includes(normalizeArabic(query))
+  );
 }
-

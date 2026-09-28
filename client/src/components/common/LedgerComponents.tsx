@@ -2,7 +2,7 @@ import React from 'react';
 import { LedgerIcon, LedgerIconName } from '../icons/LedgerIcons.js';
 
 /* --------------------------------------------------------------------------
-   1. Ledger Button (زر الدفتر الميكانيكي)
+   1. Ledger Button
    Sharp edges, 2px border, 1px depression on active
    -------------------------------------------------------------------------- */
 interface LedgerButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -21,7 +21,7 @@ export const LedgerButton: React.FC<LedgerButtonProps> = ({
   ...props
 }) => {
   const baseStyles =
-    'inline-flex items-center justify-center gap-2 font-bold font-ledger rounded-none select-none border-2 transition-all btn-mechanical cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none';
+    'inline-flex items-center justify-center gap-2 font-bold font-sans rounded-none select-none border-2 transition-all btn-mechanical cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none';
 
   const sizeStyles = {
     sm: 'px-2.5 py-1 text-xs',
@@ -53,7 +53,7 @@ export const LedgerButton: React.FC<LedgerButtonProps> = ({
 };
 
 /* --------------------------------------------------------------------------
-   2. Ledger Input & Select (حقول الإدخال الدفترية)
+   2. Ledger Input & Select
    -------------------------------------------------------------------------- */
 interface LedgerInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -72,7 +72,7 @@ export const LedgerInput: React.FC<LedgerInputProps> = ({
   const inputId = id || (label ? label.replace(/\s+/g, '-').toLowerCase() : undefined);
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1 text-left">
       {label && (
         <label htmlFor={inputId} className="block text-xs font-bold text-neutral-800 dark:text-neutral-200">
           {label}
@@ -81,7 +81,7 @@ export const LedgerInput: React.FC<LedgerInputProps> = ({
       <input
         id={inputId}
         className={`w-full bg-white dark:bg-neutral-900 border-1.5 border-neutral-900 dark:border-neutral-100 rounded-[2px] px-3 py-2 text-xs sm:text-sm text-neutral-950 dark:text-white outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-white transition-shadow ${
-          isMono ? 'font-mono tabular-nums' : 'font-ledger'
+          isMono ? 'font-mono tabular-nums' : 'font-sans'
         } ${error ? 'border-2 border-dashed' : ''} ${className}`}
         {...props}
       />
@@ -91,7 +91,7 @@ export const LedgerInput: React.FC<LedgerInputProps> = ({
 };
 
 /* --------------------------------------------------------------------------
-   3. Ledger Table Wrapper (ورقة الدفتر المسطرة)
+   3. Ledger Table Wrapper
    -------------------------------------------------------------------------- */
 interface LedgerTableProps {
   children: React.ReactNode;
@@ -101,7 +101,7 @@ interface LedgerTableProps {
 export const LedgerTable: React.FC<LedgerTableProps> = ({ children, className = '' }) => {
   return (
     <div className={`w-full overflow-x-auto border-2 border-neutral-900 dark:border-neutral-100 bg-white dark:bg-neutral-950 ${className}`}>
-      <table className="w-full text-right text-xs sm:text-sm border-collapse">
+      <table className="w-full text-left text-xs sm:text-sm border-collapse">
         {children}
       </table>
     </div>
@@ -109,8 +109,7 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({ children, className = 
 };
 
 /* --------------------------------------------------------------------------
-   4. Ledger Modal (النافذة المنبثقة بخلفية تهشير وظل صلب)
-   No blur! Diagonal hatch pattern overlay. Solid 4px offset shadow.
+   4. Ledger Modal
    -------------------------------------------------------------------------- */
 interface LedgerModalProps {
   isOpen: boolean;
@@ -130,7 +129,7 @@ export const LedgerModal: React.FC<LedgerModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-diagonal-hatch">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-diagonal-hatch" dir="ltr">
       <div
         className={`w-full max-w-lg bg-white dark:bg-neutral-950 border-2 border-neutral-900 dark:border-white shadow-solid sm:shadow-solid-lg rounded-none p-5 animate-in fade-in zoom-in-95 duration-100 ${className}`}
       >
@@ -138,14 +137,14 @@ export const LedgerModal: React.FC<LedgerModalProps> = ({
         <div className="flex items-center justify-between border-b-2 border-neutral-900 dark:border-neutral-100 pb-3 mb-4">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 bg-neutral-900 dark:bg-white" />
-            <h3 className="font-display font-bold text-base sm:text-lg text-neutral-950 dark:text-white">
+            <h3 className="font-bold text-base sm:text-lg text-neutral-950 dark:text-white">
               {title}
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 border border-neutral-900 dark:border-white hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+            className="p-1 border border-neutral-900 dark:border-white hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
           >
             <LedgerIcon name="x" size={16} />
           </button>
@@ -159,7 +158,7 @@ export const LedgerModal: React.FC<LedgerModalProps> = ({
 };
 
 /* --------------------------------------------------------------------------
-   5. Punched Attendance Card (كارت الحضور المثقوب)
+   5. Punched Attendance Card
    -------------------------------------------------------------------------- */
 interface PunchedCardProps {
   employeeName: string;
@@ -167,7 +166,7 @@ interface PunchedCardProps {
   date: string;
   shiftHours?: string;
   punches: Array<{
-    type: 'حضور' | 'انصراف';
+    type: 'Clock In' | 'Clock Out' | 'حضور' | 'انصراف' | string;
     time: string;
     isPunched: boolean;
     statusBadge?: string;
@@ -185,34 +184,40 @@ export const PunchedCard: React.FC<PunchedCardProps> = ({
   onPunchClick,
   isPunching = false,
 }) => {
+  const formatPunchType = (t: string) => {
+    if (t === 'حضور' || t === 'Clock In') return 'Clock In';
+    if (t === 'انصراف' || t === 'Clock Out') return 'Clock Out';
+    return t;
+  };
+
   return (
-    <div className="w-full max-w-sm border-2 border-neutral-900 dark:border-white bg-[#fffef9] dark:bg-[#151515] p-5 shadow-solid relative select-none">
+    <div className="w-full max-w-sm border-2 border-neutral-900 dark:border-white bg-[#fffef9] dark:bg-[#151515] p-5 shadow-solid relative select-none" dir="ltr">
       {/* Hole punch strip on side */}
-      <div className="absolute top-0 bottom-0 right-2 w-4 flex flex-col justify-around items-center pointer-events-none">
+      <div className="absolute top-0 bottom-0 left-2 w-4 flex flex-col justify-around items-center pointer-events-none">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <span key={i} className="punch-hole" />
         ))}
       </div>
 
-      <div className="mr-6 space-y-4">
+      <div className="ml-6 space-y-4">
         {/* Card Header */}
         <div className="border-b-2 border-neutral-900 dark:border-white pb-3 space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono font-bold uppercase tracking-widest border border-current px-1.5 py-0.5">
-              بطاقة دوام رسمية
+              OFFICIAL TIME CARD
             </span>
             <span className="text-xs font-mono text-neutral-500">#{employeeId.slice(0, 8)}</span>
           </div>
-          <div className="font-display font-bold text-lg text-neutral-950 dark:text-white">
+          <div className="font-bold text-lg text-neutral-950 dark:text-white">
             {employeeName}
           </div>
           <div className="flex items-center justify-between text-xs font-mono text-neutral-600 dark:text-neutral-400">
-            <span>التاريخ: {date}</span>
-            <span>الوردية: {shiftHours}</span>
+            <span>Date: {date}</span>
+            <span>Shift: {shiftHours}</span>
           </div>
         </div>
 
-        {/* Recorded Punches (مطبوعة كآلة كاتبة) */}
+        {/* Recorded Punches */}
         <div className="space-y-3 font-mono">
           {punches.map((p, idx) => (
             <div
@@ -225,7 +230,7 @@ export const PunchedCard: React.FC<PunchedCardProps> = ({
                     p.isPunched ? 'bg-neutral-900 dark:bg-white' : 'bg-transparent'
                   }`}
                 />
-                <span className="text-xs font-bold">{p.type}:</span>
+                <span className="text-xs font-bold">{formatPunchType(p.type)}:</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-sm tabular-nums">
@@ -251,14 +256,14 @@ export const PunchedCard: React.FC<PunchedCardProps> = ({
               size="md"
             >
               <LedgerIcon name="stamp" size={16} />
-              <span>{isPunching ? 'جاري تثقيب البطاقة...' : 'تثقيب وبصمة الحركة الآن'}</span>
+              <span>{isPunching ? 'Stamping Time Card...' : 'Punch & Record Now'}</span>
             </LedgerButton>
           </div>
         )}
 
         {/* Footer Card Notes */}
         <div className="text-[10px] font-mono text-neutral-400 dark:text-neutral-500 border-t border-neutral-200 dark:border-neutral-800 pt-2 text-center">
-          كارت رسمي موثق — ممنوع تداول البطاقة خارج المنشأة
+          Tiger Official Time Record &bull; Tamper-Proof Electronic Seal
         </div>
       </div>
     </div>

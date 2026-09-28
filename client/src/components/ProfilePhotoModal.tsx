@@ -23,12 +23,12 @@ export const ProfilePhotoModal: React.FC<ProfilePhotoModalProps> = ({ isOpen, on
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      setError('يرجى اختيار ملف صورة صالح (JPEG, PNG, WEBP)');
+      setError('Please select a valid image file (JPEG, PNG, WEBP)');
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      setError('حجم الصورة كبير جداً (الحد الأقصى 5 ميجابايت)');
+      setError('Image file is too large (Maximum 5MB)');
       return;
     }
 
@@ -37,7 +37,6 @@ export const ProfilePhotoModal: React.FC<ProfilePhotoModalProps> = ({ isOpen, on
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
-        // Compress and scale down to 256x256
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         const size = Math.min(img.width, img.height);
@@ -60,7 +59,7 @@ export const ProfilePhotoModal: React.FC<ProfilePhotoModalProps> = ({ isOpen, on
 
   const handleSave = async () => {
     if (!photoPreview) {
-      setError('يرجى اختيار صورة أولاً');
+      setError('Please choose a photo first');
       return;
     }
 
@@ -78,23 +77,23 @@ export const ProfilePhotoModal: React.FC<ProfilePhotoModalProps> = ({ isOpen, on
         onClose();
       }, 1000);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'فشل حفظ الصورة الشخصية');
+      setError(err.response?.data?.error || 'Failed to update profile photo');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" dir="ltr">
       <div className="w-full max-w-sm bg-white dark:bg-black border-2 border-black dark:border-white shadow-2xl p-6 text-black dark:text-white">
         <div className="flex items-center justify-between border-b-2 border-black dark:border-white pb-3 mb-4">
           <div className="flex items-center gap-2">
             <Camera className="w-5 h-5" />
-            <h3 className="font-black text-lg">تحديث الصورة الشخصية</h3>
+            <h3 className="font-black text-lg">Update Profile Photo</h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors border border-transparent hover:border-black dark:hover:border-white"
+            className="p-1 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors border border-transparent hover:border-black dark:hover:border-white cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -117,7 +116,7 @@ export const ProfilePhotoModal: React.FC<ProfilePhotoModalProps> = ({ isOpen, on
               />
             ) : (
               <span className="text-3xl font-black text-neutral-400">
-                {user?.name?.[0]?.toUpperCase() || '؟'}
+                {user?.name?.[0]?.toUpperCase() || '?'}
               </span>
             )}
           </div>
@@ -133,37 +132,36 @@ export const ProfilePhotoModal: React.FC<ProfilePhotoModalProps> = ({ isOpen, on
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-4 py-2 border-2 border-black dark:border-white bg-white dark:bg-black text-xs font-black uppercase hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 border-2 border-black dark:border-white bg-white dark:bg-black text-xs font-black uppercase hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
           >
             <Upload className="w-4 h-4" />
-            <span>اختيار صورة من الجهاز</span>
+            <span>Choose Image</span>
           </button>
         </div>
 
-        <div className="flex gap-2 pt-2 border-t-2 border-black dark:border-white">
+        <div className="flex gap-2 border-t-2 border-black dark:border-white pt-4">
           <button
             type="button"
             onClick={onClose}
-            disabled={loading}
-            className="flex-1 py-2 border-2 border-black dark:border-white bg-transparent text-xs font-black uppercase hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+            className="flex-1 py-2 border-2 border-black dark:border-white text-xs font-black uppercase hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
           >
-            إلغاء
+            Cancel
           </button>
           <button
             type="button"
             onClick={handleSave}
             disabled={loading || !photoPreview}
-            className="flex-1 py-2 border-2 border-black dark:border-white bg-black dark:bg-white text-white dark:text-black text-xs font-black uppercase hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+            className="flex-1 py-2 bg-black dark:bg-white text-white dark:text-black border-2 border-black dark:border-white text-xs font-black uppercase hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer"
           >
             {success ? (
               <>
                 <Check className="w-4 h-4" />
-                <span>تم الحفظ!</span>
+                <span>Saved</span>
               </>
             ) : loading ? (
-              'جاري الحفظ...'
+              <span>Saving...</span>
             ) : (
-              'حفظ الصورة'
+              <span>Save Photo</span>
             )}
           </button>
         </div>
