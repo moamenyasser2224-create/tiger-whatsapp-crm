@@ -22,8 +22,7 @@ export const LEDGER_NAV_ITEMS: NavItem[] = [
   { id: 'attendance', name: 'كارت الدوام', href: '/attendance', icon: 'punch-card' },
   { id: 'deductions', name: 'دفتر الرواتب', href: '/deductions', icon: 'receipt' },
   { id: 'chat', name: 'الشات الداخلي', href: '/chat', icon: 'chat' },
-  { id: 'company', name: 'ملف المنشأة', href: '/company', icon: 'building' },
-  { id: 'dashboard', name: 'مؤشرات النشاط', href: '/', icon: 'dashboard' },
+  { id: 'dashboard', name: 'مؤشرات النشاط', href: '/dashboard', icon: 'dashboard' },
   { id: 'templates', name: 'قوالب السجلات', href: '/templates', icon: 'template' },
   { id: 'design-lab', name: 'مختبر التصميم', href: '/design-lab', icon: 'stamp' },
   { id: 'settings', name: 'إعدادات المنظومة', href: '/settings', icon: 'settings' },
@@ -158,9 +157,13 @@ export const LedgerLayout: React.FC = () => {
               <span className="text-[10px] font-mono uppercase tracking-widest px-1.5 py-0.2 border border-neutral-900 dark:border-white font-bold bg-white dark:bg-black">
                 سجل صناعي موحد // TIGER-SYS
               </span>
-              <span className="text-[11px] font-mono text-neutral-500 dark:text-neutral-400">
-                رقم الاعتماد #0492-ISO
-              </span>
+              <a
+                href="/"
+                className="text-[11px] font-mono underline font-bold hover:text-purple-600 transition-colors"
+                title="عرض موقع الشركة الخارجي ومعرض الفيديوهات"
+              >
+                [موقع الشركة والفيديوهات ↗]
+              </a>
             </div>
             <h1 className="text-2xl sm:text-3xl font-display font-bold text-neutral-950 dark:text-white tracking-normal">
               {orgName}
