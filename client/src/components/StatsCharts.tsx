@@ -12,26 +12,21 @@ import {
   Legend,
 } from 'recharts';
 import type { DashboardStats } from '../types/index.js';
-import { getStatusLabel, getSourceLabel, SOURCE_COLORS } from '../lib/utils.js';
+import { getStatusLabel, getSourceLabel } from '../lib/utils.js';
 
 interface StatsChartsProps {
   stats: DashboardStats;
 }
 
-const MONOCHROME_GRAYS = ['#171717', '#404040', '#737373', '#a3a3a3', '#d4d4d4', '#525252'];
-
-const statusHexColors: Record<string, string> = {
-  'New': '#737373',
-  'Contacted': '#525252',
-  'Interested': '#404040',
-  'Closed Won': '#171717',
-  'Lost': '#a3a3a3',
-  '\u062C\u062F\u064A\u062F': '#737373',
-  '\u062A\u0645 \u0627\u0644\u062A\u0648\u0627\u0635\u0644': '#525252',
-  '\u0645\u0647\u062A\u0645': '#404040',
-  '\u062A\u0645 \u0627\u0644\u0628\u064A\u0639': '#171717',
-  '\u063A\u064A\u0631 \u0645\u0647\u062A\u0645': '#a3a3a3',
-};
+// Quiet Professionalism palette: Accent, Muted, Danger, and Subtle Tones
+const FINANCIAL_CHART_TONES = [
+  '#15503f', // accent
+  '#6b6b6f', // muted
+  '#0f3d30', // accent-hover
+  '#8a3b32', // danger
+  '#9d9d9d', // dark muted
+  '#4fae8e', // dark accent
+];
 
 export const StatsCharts: React.FC<StatsChartsProps> = ({ stats }) => {
   const statusData = Object.entries(stats.statusDistribution || {}).map(([name, count]) => ({
@@ -51,8 +46,8 @@ export const StatsCharts: React.FC<StatsChartsProps> = ({ stats }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Customer Status Distribution Bar Chart */}
-      <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 transition-colors">
-        <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-4">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-subtle transition-colors">
+        <h3 className="text-sm font-semibold text-text mb-4">
           Customer Pipeline Distribution
         </h3>
         <div className="h-64 w-full" dir="ltr">
@@ -60,25 +55,26 @@ export const StatsCharts: React.FC<StatsChartsProps> = ({ stats }) => {
             <BarChart data={statusData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
               <XAxis
                 dataKey="name"
-                tick={{ fontSize: 12, fill: '#888888' }}
+                tick={{ fontSize: 11, fill: '#6b6b6f' }}
                 interval={0}
               />
-              <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#888888' }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#6b6b6f' }} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: '#171717',
-                  borderRadius: '12px',
-                  border: '1px solid #404040',
-                  color: '#fff',
-                  direction: 'ltr',
+                  backgroundColor: 'var(--color-card)',
+                  borderRadius: '8px',
+                  border: '1px solid var(--color-border)',
+                  color: 'var(--color-text)',
+                  fontSize: '12px',
+                  boxShadow: 'var(--shadow-subtle)',
                 }}
-                formatter={(value: any) => [`${value} leads`, 'Count']}
+                formatter={(value: any) => [`${value} accounts`, 'Count']}
               />
-              <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+              <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                 {statusData.map((entry, idx) => (
                   <Cell
                     key={`cell-${entry.name}`}
-                    fill={statusHexColors[entry.rawName] || statusHexColors[entry.name] || MONOCHROME_GRAYS[idx % MONOCHROME_GRAYS.length]}
+                    fill={idx === 0 ? '#15503f' : idx % 2 === 0 ? '#6b6b6f' : '#0f3d30'}
                   />
                 ))}
               </Bar>
@@ -88,13 +84,13 @@ export const StatsCharts: React.FC<StatsChartsProps> = ({ stats }) => {
       </div>
 
       {/* Customer Source Distribution Donut Chart */}
-      <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 transition-colors">
-        <h3 className="text-base font-bold text-neutral-900 dark:text-white mb-4">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-subtle transition-colors">
+        <h3 className="text-sm font-semibold text-text mb-4">
           Lead Acquisition Sources
         </h3>
         <div className="h-64 w-full" dir="ltr">
           {sourceData.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-sm text-neutral-400">
+            <div className="flex h-full items-center justify-center text-xs text-muted">
               No lead source records captured yet
             </div>
           ) : (
@@ -102,35 +98,35 @@ export const StatsCharts: React.FC<StatsChartsProps> = ({ stats }) => {
               <PieChart>
                 <Pie
                   data={sourceData}
-                  dataKey="count"
-                  nameKey="name"
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
                   outerRadius={85}
-                  paddingAngle={4}
+                  paddingAngle={3}
+                  dataKey="count"
                 >
-                  {sourceData.map((entry, idx) => (
+                  {sourceData.map((entry, index) => (
                     <Cell
-                      key={`source-${entry.name}`}
-                      fill={(SOURCE_COLORS as any)[entry.rawName] || MONOCHROME_GRAYS[idx % MONOCHROME_GRAYS.length]}
+                      key={`source-cell-${entry.name}`}
+                      fill={FINANCIAL_CHART_TONES[index % FINANCIAL_CHART_TONES.length]}
                     />
                   ))}
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#171717',
-                    borderRadius: '12px',
-                    border: '1px solid #404040',
-                    color: '#fff',
-                    direction: 'ltr',
+                    backgroundColor: 'var(--color-card)',
+                    borderRadius: '8px',
+                    border: '1px solid var(--color-border)',
+                    color: 'var(--color-text)',
+                    fontSize: '12px',
+                    boxShadow: 'var(--shadow-subtle)',
                   }}
                   formatter={(value: any) => [`${value} leads`, 'Count']}
                 />
                 <Legend
+                  wrapperStyle={{ fontSize: '11px', color: '#6b6b6f' }}
+                  layout="horizontal"
                   verticalAlign="bottom"
-                  height={36}
-                  formatter={(value) => <span className="text-xs text-neutral-700 dark:text-neutral-300 ml-2">{value}</span>}
                 />
               </PieChart>
             </ResponsiveContainer>

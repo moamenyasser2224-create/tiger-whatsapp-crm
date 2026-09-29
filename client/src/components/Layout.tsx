@@ -9,7 +9,7 @@ export const Layout: React.FC = () => {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col">
+    <div className="min-h-screen bg-bg text-text flex flex-col font-sans antialiased">
       <ForceChangePasswordModal />
       <Navbar />
       <div className="flex flex-1 w-full">

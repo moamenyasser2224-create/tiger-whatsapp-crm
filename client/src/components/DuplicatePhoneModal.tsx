@@ -22,63 +22,63 @@ export const DuplicatePhoneModal: React.FC<DuplicatePhoneModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-diagonal-hatch" dir="ltr">
-      <div className="w-full max-w-lg bg-white dark:bg-neutral-950 border-2 border-neutral-900 dark:border-white shadow-solid p-5 select-none">
-        <div className="flex items-start justify-between border-b-2 border-neutral-900 dark:border-white pb-3 mb-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" dir="ltr">
+      <div className="w-full max-w-lg bg-card border border-border rounded-xl shadow-lg p-6 select-none text-text">
+        <div className="flex items-start justify-between border-b border-border pb-3 mb-4">
           <div className="flex items-center gap-2">
-            <span className="p-1 border border-neutral-900 dark:border-white">
+            <span className="p-1.5 rounded-lg border border-border bg-bg text-muted">
               <LedgerIcon name="alert-triangle" size={18} />
             </span>
             <div>
-              <h3 className="text-base font-bold text-neutral-900 dark:text-white">
-                Warning: Duplicate Phone Number Detected
+              <h3 className="text-base font-semibold text-text">
+                Duplicate Phone Number Detected
               </h3>
-              <p className="text-xs font-mono text-neutral-600 dark:text-neutral-400">
-                Number: <span className="font-bold underline">{attemptedPhone}</span>
+              <p className="text-xs font-mono text-muted tabular-nums">
+                Number: <span className="font-semibold text-text">{attemptedPhone}</span>
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 border border-neutral-900 dark:border-white hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
+            className="p-1 rounded-lg border border-border hover:bg-bg text-muted hover:text-text cursor-pointer transition-colors"
           >
             <LedgerIcon name="x" size={16} />
           </button>
         </div>
 
-        <div className="border border-neutral-900 dark:border-neutral-100 p-3 mb-4 bg-[#fafafa] dark:bg-[#111111] font-mono text-xs space-y-2">
-          <p className="font-bold text-neutral-900 dark:text-white">
+        <div className="border border-border rounded-lg p-3.5 mb-4 bg-bg text-xs space-y-2">
+          <p className="font-medium text-text">
             An existing record with this number already exists:
           </p>
           {existingCustomer && (
-            <div className="space-y-1.5 divide-y divide-dashed divide-neutral-300 dark:divide-neutral-700">
+            <div className="space-y-1.5 divide-y divide-border/60">
               <div className="flex justify-between py-1">
-                <span className="text-neutral-500">Existing Customer:</span>
-                <span className="font-bold">{existingCustomer.name}</span>
+                <span className="text-muted">Existing Customer:</span>
+                <span className="font-semibold text-text">{existingCustomer.name}</span>
               </div>
               <div className="flex justify-between py-1">
-                <span className="text-neutral-500">Pipeline Status:</span>
-                <span className="font-bold">{getStatusLabel(existingCustomer.status)}</span>
+                <span className="text-muted">Pipeline Status:</span>
+                <span className="font-semibold text-text">{getStatusLabel(existingCustomer.status)}</span>
               </div>
               {existingCustomer.company && (
                 <div className="flex justify-between py-1">
-                  <span className="text-neutral-500">Company:</span>
-                  <span>{existingCustomer.company}</span>
+                  <span className="text-muted">Company:</span>
+                  <span className="text-text">{existingCustomer.company}</span>
                 </div>
               )}
               <div className="flex justify-between py-1">
-                <span className="text-neutral-500">Registered Date:</span>
-                <span>{formatDate(existingCustomer.createdAt)}</span>
+                <span className="text-muted">Registered Date:</span>
+                <span className="text-text tabular-nums">{formatDate(existingCustomer.createdAt)}</span>
               </div>
             </div>
           )}
         </div>
 
-        <p className="text-xs text-neutral-500 font-mono mb-4 leading-relaxed">
+        <p className="text-xs text-muted mb-4 leading-relaxed">
           Tiger system rules allow bypassing duplicate protection if needed, which will be logged to audit history.
         </p>
 
-        <div className="flex items-center justify-end gap-2 pt-3 border-t-2 border-neutral-900 dark:border-white">
+        <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
           <LedgerButton type="button" variant="secondary" onClick={onClose} size="sm">
             Cancel
           </LedgerButton>

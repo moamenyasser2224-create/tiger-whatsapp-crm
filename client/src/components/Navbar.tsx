@@ -11,42 +11,42 @@ export const Navbar: React.FC = () => {
   const { isConnected } = useSocket();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-neutral-200 bg-white/95 px-4 md:px-6 backdrop-blur-md dark:border-neutral-800 dark:bg-neutral-950/95 transition-colors">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-card/95 px-4 md:px-6 backdrop-blur-md transition-colors text-text">
       <div className="flex items-center gap-4">
-        <Link to="/" className="flex items-center gap-2.5 font-bold text-xl hover:opacity-80 transition-opacity">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-neutral-900 bg-white text-neutral-900 dark:border-white dark:bg-neutral-900 dark:text-white shadow-xs">
+        <Link to="/" className="flex items-center gap-2.5 font-semibold text-lg hover:opacity-85 transition-opacity">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-accent/20 bg-accent-soft text-accent">
             <svg className="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
           </div>
-          <span className="text-neutral-900 dark:text-white flex items-center gap-1.5 tracking-tight font-black">
+          <span className="text-text flex items-center gap-1.5 tracking-tight font-bold">
             <span>Tiger</span>
-            <span className="border border-neutral-900 dark:border-white px-1.5 py-0.5 text-xs rounded-md">CRM</span>
+            <span className="border border-border px-1.5 py-0.5 text-[10px] rounded text-muted font-normal">CRM</span>
           </span>
         </Link>
 
-        {/* Live WebSocket Indicator - Strict Monochrome */}
+        {/* Live WebSocket Indicator - Quiet Pill */}
         <div
           title={isConnected ? 'Connected in real-time' : 'Attempting to reconnect...'}
-          className="hidden sm:flex items-center gap-2 rounded-full border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-900 px-3 py-1 text-[11px] font-bold text-neutral-800 dark:text-neutral-200"
+          className="hidden sm:flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-0.5 text-xs text-muted"
         >
           <span
-            className={`h-2 w-2 rounded-full ${
+            className={`h-1.5 w-1.5 rounded-full ${
               isConnected
-                ? 'bg-neutral-900 dark:bg-white animate-pulse'
-                : 'border border-neutral-500 bg-transparent'
+                ? 'bg-accent'
+                : 'bg-muted'
             }`}
           />
           <span>{isConnected ? 'Real-Time Sync' : 'Reconnecting...'}</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         {/* Dark Mode Toggle */}
         <button
           onClick={toggleTheme}
           aria-label="Toggle visual theme"
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-300 text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900 transition-colors"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted hover:text-text hover:bg-bg transition-colors"
         >
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </button>
@@ -56,21 +56,21 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center gap-2">
             <Link
               to="/settings"
-              className="flex items-center gap-2 rounded-xl border border-neutral-300 px-3 py-2 text-sm font-bold text-neutral-900 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-900 transition-colors"
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-text hover:bg-bg transition-colors"
             >
               {user.photoUrl ? (
                 <img
                   src={user.photoUrl}
                   alt={user.name}
-                  className="h-6 w-6 rounded-md object-cover border border-neutral-400 dark:border-neutral-600 grayscale"
+                  className="h-5 w-5 rounded object-cover border border-border"
                 />
               ) : (
-                <div className="flex h-6 w-6 items-center justify-center rounded-md border border-neutral-400 text-neutral-800 dark:border-neutral-600 dark:text-neutral-200">
-                  <UserIcon className="h-3.5 w-3.5" />
+                <div className="flex h-5 w-5 items-center justify-center rounded border border-border text-muted bg-bg">
+                  <UserIcon className="h-3 w-3" />
                 </div>
               )}
               <span className="max-w-[120px] truncate">{user.name}</span>
-              <span className="rounded border border-neutral-400 dark:border-neutral-600 bg-neutral-100 dark:bg-neutral-900 px-1.5 py-0.5 text-[10px] font-black uppercase">
+              <span className="rounded border border-border bg-bg px-1.5 py-0.2 text-[10px] text-muted uppercase">
                 {user.role === 'admin' ? 'Admin' : 'Staff'}
               </span>
             </Link>
@@ -78,7 +78,7 @@ export const Navbar: React.FC = () => {
             <button
               onClick={() => logout()}
               title="Sign Out"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-300 text-neutral-800 hover:bg-neutral-900 hover:text-white dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-white dark:hover:text-neutral-900 transition-all"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted hover:text-danger hover:border-danger/30 hover:bg-danger-soft transition-all"
             >
               <LogOut className="h-4 w-4" />
             </button>

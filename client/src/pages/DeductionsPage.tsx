@@ -12,9 +12,18 @@ import {
   LedgerTable,
   LedgerModal,
 } from '../components/common/LedgerComponents.js';
-import { RubberStamp } from '../components/common/RubberStamp.js';
+import { StatusBadge } from '../components/common/StatusBadge.js';
 import { PayslipReceipt } from '../components/common/PayslipReceipt.js';
-import { LedgerIcon } from '../components/icons/LedgerIcons.js';
+import {
+  DollarSign,
+  Calendar,
+  Download,
+  AlertTriangle,
+  Lock,
+  Plus,
+  FileText,
+  ShieldCheck,
+} from 'lucide-react';
 
 export const DeductionsPage: React.FC = () => {
   const { user } = useAuth();
@@ -100,7 +109,7 @@ export const DeductionsPage: React.FC = () => {
   });
 
   // 7. Fetch Period Status
-  const { data: periodStatus } = useQuery<PayrollPeriod | null>({
+  const { data: periodStatus } = useQuery<PayrollPeriod>({
     queryKey: ['deductions', 'period-status', selectedMonth],
     queryFn: async () => {
       const res = await api.get(`/deductions/period-status?period=${selectedMonth}`);
@@ -108,15 +117,17 @@ export const DeductionsPage: React.FC = () => {
     },
   });
 
-  // 8. Fetch Users for Adjustment Modal
+  // 8. Admin: Fetch Users list for manual adjustments
   const { data: allUsers = [] } = useQuery<{ id: string; name: string; email: string }[]>({
-    queryKey: ['attendance', 'users'],
+    queryKey: ['users', 'all'],
     queryFn: async () => {
-      const res = await api.get('/attendance/users');
+      const res = await api.get('/users');
       return res.data.data;
     },
-    enabled: user?.role === 'admin',
+    enabled: user?.role === 'admin' && isAdjustmentModalOpen,
   });
+
+  const isPeriodClosed = periodStatus?.status === 'closed';
 
   // Mutations
   const disputeMutation = useMutation({
@@ -124,19 +135,33 @@ export const DeductionsPage: React.FC = () => {
       const res = await api.post(`/deductions/${id}/dispute`, { reason });
       return res.data;
     },
-    onSuccess: () => {
-      addToast('Dispute lodged successfully and sent for administrative audit', 'success');
+    onSuccess: (data) => {
+      addToast(data.message || 'Dispute lodged successfully', 'success');
       setDisputeDeduction(null);
       setDisputeReason('');
       queryClient.invalidateQueries({ queryKey: ['deductions'] });
     },
     onError: (err: any) => {
-      addToast(err.response?.data?.error || 'Failed to file dispute', 'error');
+      addToast(err.response?.data?.error || 'Failed to lodge dispute', 'error');
+    },
+  });
+
+  const approveDeductionMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.post(`/deductions/${id}/approve`, {});
+      return res.data;
+    },
+    onSuccess: () => {
+      addToast('Deduction confirmed and committed to payroll ledger', 'success');
+      queryClient.invalidateQueries({ queryKey: ['deductions'] });
+    },
+    onError: (err: any) => {
+      addToast(err.response?.data?.error || 'Failed to approve deduction', 'error');
     },
   });
 
   const reviewDisputeMutation = useMutation({
-    mutationFn: async ({ id, action, reviewNotes }: { id: string; action: 'accept' | 'reject'; reviewNotes?: string }) => {
+    mutationFn: async ({ id, action, reviewNotes }: { id: string; action: 'accept' | 'reject'; reviewNotes: string }) => {
       const res = await api.post(`/deductions/${id}/review-dispute`, { action, reviewNotes });
       return res.data;
     },
@@ -151,59 +176,40 @@ export const DeductionsPage: React.FC = () => {
     },
   });
 
-  const batchApproveMutation = useMutation({
-    mutationFn: async () => {
-      const res = await api.post('/deductions/admin/batch-approve', { period: selectedMonth });
-      return res.data;
-    },
-    onSuccess: (data) => {
-      addToast(data.message || 'All proposed deductions approved', 'success');
-      queryClient.invalidateQueries({ queryKey: ['deductions'] });
-    },
-    onError: (err: any) => {
-      addToast(err.response?.data?.error || 'Batch approval failed', 'error');
-    },
-  });
-
-  const createAdjustmentMutation = useMutation({
-    mutationFn: async () => {
-      const res = await api.post('/deductions/admin/adjustment', {
-        userId: adjustmentUserId,
-        period: selectedMonth,
-        type: adjustmentType,
-        amount: parseFloat(adjustmentAmount),
-        reason: adjustmentReason,
-      });
+  const addAdjustmentMutation = useMutation({
+    mutationFn: async (payload: { userId: string; period: string; type: string; amount: number; reason: string }) => {
+      const res = await api.post('/deductions/admin/adjustments', payload);
       return res.data;
     },
     onSuccess: () => {
-      addToast('Adjustment recorded successfully', 'success');
+      addToast('Financial adjustment added to ledger', 'success');
       setIsAdjustmentModalOpen(false);
       setAdjustmentAmount('');
       setAdjustmentReason('');
-      setAdjustmentUserId('');
       queryClient.invalidateQueries({ queryKey: ['deductions'] });
     },
     onError: (err: any) => {
-      addToast(err.response?.data?.error || 'Failed to record adjustment', 'error');
+      addToast(err.response?.data?.error || 'Failed to add adjustment', 'error');
     },
   });
 
   const closePeriodMutation = useMutation({
-    mutationFn: async () => {
-      const res = await api.post('/deductions/admin/close-period', { period: selectedMonth });
+    mutationFn: async (period: string) => {
+      const res = await api.post('/deductions/admin/close-period', { period });
       return res.data;
     },
-    onSuccess: () => {
-      addToast(`Billing cycle ${selectedMonth} locked and finalized`, 'success');
+    onSuccess: (data) => {
+      addToast(data.message || 'Billing cycle officially closed', 'success');
       setIsClosePeriodConfirmOpen(false);
       queryClient.invalidateQueries({ queryKey: ['deductions'] });
     },
     onError: (err: any) => {
-      addToast(err.response?.data?.error || 'Failed to close billing cycle', 'error');
+      addToast(err.response?.data?.error || 'Failed to close period', 'error');
     },
   });
 
+  // Wage math
+  const baseSalary = Number(salaryData?.monthlySalary || 0);
   const totalApprovedDeductions = myDeductions
     .filter((d) => ['approved', 'closed_in_payroll'].includes(d.status))
     .reduce((sum, d) => sum + Number(d.amount), 0);
@@ -216,23 +222,18 @@ export const DeductionsPage: React.FC = () => {
     .filter((a) => a.type === 'manual_deduction')
     .reduce((sum, a) => sum + Number(a.amount), 0);
 
-  const baseSalary = salaryData?.monthlySalary || 0;
   const netEstimatedPay = Math.max(0, baseSalary - totalApprovedDeductions - totalManualDeductions + totalBonuses);
-
-  const isPeriodClosed = periodStatus?.status === 'closed';
 
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case 'late':
-        return 'Morning Lateness';
-      case 'early_leave':
-        return 'Early Departure';
-      case 'unexcused_absence':
+      case 'absence':
         return 'Unexcused Absence';
-      case 'unpaid_leave':
-        return 'Unpaid Leave';
+      case 'lateness':
+        return 'Cumulative Lateness';
+      case 'disciplinary':
+        return 'Disciplinary Rule';
       default:
-        return 'Administrative Deduction';
+        return type.toUpperCase();
     }
   };
 
@@ -258,54 +259,51 @@ export const DeductionsPage: React.FC = () => {
   return (
     <MotionPage className="space-y-6">
       {/* 1. Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-neutral-900 dark:border-neutral-100 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-neutral-500">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted font-medium">
             <span>Tiger Finance &amp; Accounting</span>
             <span>/</span>
             <span>Payroll &amp; Deductions</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-neutral-950 dark:text-white mt-1 flex items-center gap-2.5">
-            <LedgerIcon name="dollar" size={26} />
-            <span>Payroll, Deductions &amp; Slips</span>
+          <h1 className="text-xl sm:text-2xl font-semibold text-text mt-1">
+            Payroll, Deductions &amp; Slips
           </h1>
-          <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             Transparent wage calculations, dispute workflows, statutory labor cap enforcement, and printable payslip receipts.
           </p>
         </div>
 
         {/* Month Selector & Controls */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-2 border-2 border-neutral-900 dark:border-white bg-white dark:bg-black px-2.5 py-1 text-xs font-mono">
-            <LedgerIcon name="calendar" size={14} />
-            <span className="font-bold">Period:</span>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 bg-card border border-border rounded-lg px-3 py-1.5 text-xs">
+            <Calendar className="w-3.5 h-3.5 text-muted" />
+            <span className="font-medium text-text">Period:</span>
             <input
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="bg-transparent font-bold tabular-nums outline-none text-neutral-950 dark:text-white"
+              className="bg-transparent font-medium tabular-nums outline-none text-text"
             />
           </div>
 
           {/* Period Status Stamp */}
-          <div className="inline-block">
-            {isPeriodClosed ? (
-              <RubberStamp label="PERIOD CLOSED" recordId={`period-${selectedMonth}`} subtext="LOCKED FROM EDITING" />
-            ) : (
-              <RubberStamp label="PERIOD OPEN" recordId={`period-${selectedMonth}`} subtext="ACTIVE CYCLE" />
-            )}
-          </div>
+          <StatusBadge
+            label={isPeriodClosed ? 'PERIOD CLOSED' : 'PERIOD OPEN'}
+            statusKey={isPeriodClosed ? 'closed' : 'open'}
+            tone={isPeriodClosed ? 'muted' : 'accent'}
+          />
 
           {/* Tab Switcher if Admin */}
           {user?.role === 'admin' && (
-            <div className="inline-flex border-2 border-neutral-900 dark:border-white bg-white dark:bg-black p-0.5">
+            <div className="inline-flex rounded-lg border border-border bg-bg p-0.5">
               <button
                 type="button"
                 onClick={() => setActiveTab('my')}
-                className={`px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
+                className={`px-3 py-1.5 text-xs rounded-md transition-colors cursor-pointer ${
                   activeTab === 'my'
-                    ? 'bg-neutral-900 text-white dark:bg-white dark:text-black'
-                    : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900'
+                    ? 'bg-card text-text font-semibold shadow-subtle'
+                    : 'text-muted hover:text-text font-normal'
                 }`}
               >
                 My Payslip
@@ -313,10 +311,10 @@ export const DeductionsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab('admin')}
-                className={`px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
+                className={`px-3 py-1.5 text-xs rounded-md transition-colors cursor-pointer ${
                   activeTab === 'admin'
-                    ? 'bg-neutral-900 text-white dark:bg-white dark:text-black'
-                    : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900'
+                    ? 'bg-card text-text font-semibold shadow-subtle'
+                    : 'text-muted hover:text-text font-normal'
                 }`}
               >
                 Manager Audit
@@ -330,15 +328,15 @@ export const DeductionsPage: React.FC = () => {
       {activeTab === 'my' && (
         <div className="space-y-6">
           {/* Sub-view switcher: Receipt vs Details Table */}
-          <div className="flex items-center justify-between border-b border-dashed border-neutral-300 dark:border-neutral-700 pb-2">
-            <div className="inline-flex border border-neutral-900 dark:border-white bg-neutral-100 dark:bg-neutral-900 p-0.5 text-xs">
+          <div className="flex items-center justify-between border-b border-border pb-3">
+            <div className="inline-flex rounded-lg border border-border bg-bg p-0.5 text-xs">
               <button
                 type="button"
                 onClick={() => setEmployeeSubView('receipt')}
-                className={`px-3 py-1 font-bold transition-colors cursor-pointer ${
+                className={`px-3 py-1.5 rounded-md font-semibold transition-colors cursor-pointer ${
                   employeeSubView === 'receipt'
-                    ? 'bg-white text-neutral-950 dark:bg-neutral-800 dark:text-white shadow-xs'
-                    : 'text-neutral-600 dark:text-neutral-400'
+                    ? 'bg-card text-text shadow-subtle'
+                    : 'text-muted hover:text-text font-normal'
                 }`}
               >
                 Official Payslip Voucher
@@ -346,22 +344,22 @@ export const DeductionsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setEmployeeSubView('table')}
-                className={`px-3 py-1 font-bold transition-colors cursor-pointer ${
+                className={`px-3 py-1.5 rounded-md font-semibold transition-colors cursor-pointer ${
                   employeeSubView === 'table'
-                    ? 'bg-white text-neutral-950 dark:bg-neutral-800 dark:text-white shadow-xs'
-                    : 'text-neutral-600 dark:text-neutral-400'
+                    ? 'bg-card text-text shadow-subtle'
+                    : 'text-muted hover:text-text font-normal'
                 }`}
               >
                 Deductions Itemized Log ({myDeductions.length})
               </button>
             </div>
 
-            <div className="text-xs font-mono text-neutral-500">
-              Period: <span className="font-bold tabular-nums">{selectedMonth}</span>
+            <div className="text-xs text-muted">
+              Period: <span className="font-semibold text-text tabular-nums">{selectedMonth}</span>
             </div>
           </div>
 
-          {/* VIEW A: Perforated Payslip Receipt */}
+          {/* VIEW A: Payslip Receipt */}
           {employeeSubView === 'receipt' && (
             <div className="py-2">
               <PayslipReceipt
@@ -381,35 +379,35 @@ export const DeductionsPage: React.FC = () => {
             </div>
           )}
 
-          {/* VIEW B: Ruled Ledger Table for Deductions */}
+          {/* VIEW B: Table for Deductions */}
           {employeeSubView === 'table' && (
             <div className="space-y-6">
               <LedgerTable>
-                <div className="p-3 border-b-2 border-neutral-900 dark:border-neutral-100 bg-neutral-100 dark:bg-neutral-900 flex items-center justify-between">
-                  <div className="font-bold text-sm">
+                <div className="p-3.5 border-b border-border bg-bg flex items-center justify-between">
+                  <div className="font-semibold text-xs text-text">
                     Itemized Deductions for {selectedMonth}
                   </div>
-                  <span className="font-mono text-xs font-bold border border-neutral-900 dark:border-white px-2 py-0.5 bg-white dark:bg-black">
+                  <span className="text-xs text-muted font-medium px-2 py-0.5 rounded bg-card border border-border">
                     {myDeductions.length} entries
                   </span>
                 </div>
 
                 <table className="w-full text-left text-xs">
                   <thead>
-                    <tr className="bg-neutral-50 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
-                      <th className="px-4 py-3 font-bold font-mono">Date</th>
-                      <th className="px-4 py-3 font-bold">Category</th>
-                      <th className="px-4 py-3 font-bold">Statement &amp; Reason</th>
-                      <th className="px-4 py-3 font-bold font-mono">Rule Breakdown</th>
-                      <th className="px-4 py-3 font-bold font-mono">Amount</th>
-                      <th className="px-4 py-3 font-bold text-center">Status</th>
-                      <th className="px-4 py-3 font-bold text-center">Action</th>
+                    <tr className="bg-bg text-muted font-medium text-xs border-b border-border">
+                      <th className="px-4 py-3 font-semibold font-mono">Date</th>
+                      <th className="px-4 py-3 font-semibold">Category</th>
+                      <th className="px-4 py-3 font-semibold">Statement &amp; Reason</th>
+                      <th className="px-4 py-3 font-semibold font-mono">Rule Breakdown</th>
+                      <th className="px-4 py-3 font-semibold font-mono">Amount</th>
+                      <th className="px-4 py-3 font-semibold text-center">Status</th>
+                      <th className="px-4 py-3 font-semibold text-center">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+                  <tbody className="divide-y divide-border">
                     {myDeductions.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-4 py-12 text-center text-neutral-500 font-mono">
+                        <td colSpan={7} className="px-4 py-12 text-center text-muted">
                           No deductions recorded against your account during this billing period. Perfect record!
                         </td>
                       </tr>
@@ -418,32 +416,32 @@ export const DeductionsPage: React.FC = () => {
                         const canDispute = !isPeriodClosed && ['proposed', 'approved'].includes(ded.status) && !ded.dispute;
 
                         return (
-                          <tr key={ded.id} className="hover:bg-neutral-100/50 dark:hover:bg-neutral-900/50 transition-colors">
-                            <td className="px-4 py-3 font-mono tabular-nums text-neutral-700 dark:text-neutral-300">
+                          <tr key={ded.id} className="hover:bg-bg/40 transition-colors">
+                            <td className="px-4 py-3 font-mono tabular-nums text-muted">
                               {format(new Date(ded.createdAt), 'yyyy-MM-dd')}
                             </td>
-                            <td className="px-4 py-3 font-bold text-neutral-950 dark:text-white">
+                            <td className="px-4 py-3 font-semibold text-text">
                               {getTypeLabel(ded.type)}
                             </td>
-                            <td className="px-4 py-3 text-neutral-700 dark:text-neutral-300 max-w-xs">
+                            <td className="px-4 py-3 text-text max-w-xs">
                               {ded.reason}
                             </td>
-                            <td className="px-4 py-3 font-mono text-[11px] text-neutral-600 dark:text-neutral-400">
+                            <td className="px-4 py-3 font-mono text-[11px] text-muted">
                               {ded.calculationDetails?.explanation ? (
-                                <span className="border border-neutral-300 dark:border-neutral-700 px-1 py-0.5 bg-neutral-50 dark:bg-neutral-900">
+                                <span className="border border-border px-1.5 py-0.5 rounded bg-bg">
                                   {ded.calculationDetails.explanation}
                                 </span>
                               ) : (
                                 '—'
                               )}
                             </td>
-                            <td className="px-4 py-3 font-mono font-bold tabular-nums text-neutral-950 dark:text-white">
+                            <td className="px-4 py-3 font-mono font-semibold tabular-nums text-text">
                               {Number(ded.amount).toFixed(2)} SAR
                             </td>
                             <td className="px-4 py-3 text-center">
-                              <RubberStamp
+                              <StatusBadge
                                 label={getStatusStampLabel(ded.status)}
-                                recordId={ded.id}
+                                statusKey={ded.status}
                               />
                             </td>
                             <td className="px-4 py-3 text-center">
@@ -451,21 +449,16 @@ export const DeductionsPage: React.FC = () => {
                                 <LedgerButton
                                   variant="secondary"
                                   size="sm"
-                                  onClick={() => {
-                                    setDisputeDeduction(ded);
-                                    setDisputeReason('');
-                                  }}
+                                  onClick={() => setDisputeDeduction(ded)}
                                 >
                                   Dispute
                                 </LedgerButton>
                               ) : ded.dispute ? (
-                                <div className="text-[10px] font-mono font-bold">
-                                  {ded.dispute.status === 'pending' && <span className="text-amber-500">In Review</span>}
-                                  {ded.dispute.status === 'accepted' && <span className="text-emerald-500">Accepted ✓</span>}
-                                  {ded.dispute.status === 'rejected' && <span className="line-through text-neutral-400">Rejected</span>}
-                                </div>
+                                <span className="text-[11px] text-muted">
+                                  Disputed ({ded.dispute.status})
+                                </span>
                               ) : (
-                                <span className="text-neutral-400">—</span>
+                                <span className="text-muted">—</span>
                               )}
                             </td>
                           </tr>
@@ -475,59 +468,22 @@ export const DeductionsPage: React.FC = () => {
                   </tbody>
                 </table>
               </LedgerTable>
-
-              {/* Adjustments Table */}
-              {myAdjustments.length > 0 && (
-                <LedgerTable>
-                  <div className="p-3 border-b-2 border-neutral-900 dark:border-neutral-100 bg-neutral-100 dark:bg-neutral-900 font-bold text-sm">
-                    Direct Administrative Bonuses &amp; Adjustments
-                  </div>
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="bg-neutral-50 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
-                        <th className="px-4 py-3 font-bold font-mono">Date</th>
-                        <th className="px-4 py-3 font-bold">Category</th>
-                        <th className="px-4 py-3 font-bold">Statement</th>
-                        <th className="px-4 py-3 font-bold font-mono">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 font-mono">
-                      {myAdjustments.map((adj) => (
-                        <tr key={adj.id}>
-                          <td className="px-4 py-3 tabular-nums">{format(new Date(adj.createdAt), 'yyyy-MM-dd')}</td>
-                          <td className="px-4 py-3 font-bold">
-                            {adj.type === 'bonus' ? 'Bonus / Incentive' : 'Manual Deduction'}
-                          </td>
-                          <td className="px-4 py-3 text-neutral-700 dark:text-neutral-300">{adj.reason}</td>
-                          <td className="px-4 py-3 font-bold tabular-nums">
-                            {adj.type === 'bonus' ? '+' : '-'}
-                            {Number(adj.amount).toFixed(2)} SAR
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </LedgerTable>
-              )}
             </div>
           )}
         </div>
       )}
 
-      {/* 3. ADMIN VIEW */}
+      {/* 3. MANAGER AUDIT (Admin only) */}
       {activeTab === 'admin' && user?.role === 'admin' && (
-        <div className="space-y-6">
-          {/* Admin Command Bar */}
-          <div className="border-2 border-neutral-900 dark:border-white bg-[#faf9f5] dark:bg-[#141414] p-4 shadow-solid-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-8">
+          {/* Admin Controls Toolbar */}
+          <div className="border border-border bg-card rounded-xl p-4 shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-sm font-bold text-neutral-950 dark:text-white flex items-center gap-2">
-                <LedgerIcon name="shield" size={16} />
-                <span>Financial Cycle Management for {selectedMonth}</span>
+              <h3 className="font-semibold text-sm text-text">
+                Billing Cycle Governance ({selectedMonth})
               </h3>
-              <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5">
-                {isPeriodClosed
-                  ? 'Billing cycle is locked in certified archives. Modifications are disabled.'
-                  : 'Approve proposed deductions, arbitrate employee disputes, and seal monthly ledger.'}
+              <p className="text-xs text-muted">
+                Audit pending deductions, resolve disputes, record bonuses, and close financial ledger.
               </p>
             </div>
 
@@ -535,104 +491,33 @@ export const DeductionsPage: React.FC = () => {
               <LedgerButton
                 variant="secondary"
                 size="sm"
-                icon="plus"
-                disabled={isPeriodClosed}
                 onClick={() => setIsAdjustmentModalOpen(true)}
               >
-                Add Bonus / Adjustment
-              </LedgerButton>
-
-              <LedgerButton
-                variant="primary"
-                size="sm"
-                icon="check"
-                disabled={isPeriodClosed || proposedDeductions.length === 0 || batchApproveMutation.isPending}
-                onClick={() => batchApproveMutation.mutate()}
-              >
-                Approve All ({proposedDeductions.length})
+                <Plus className="w-3.5 h-3.5 text-muted" />
+                <span>Add Adjustment / Bonus</span>
               </LedgerButton>
 
               {!isPeriodClosed && (
                 <LedgerButton
-                  variant="danger"
+                  variant="primary"
                   size="sm"
-                  icon="lock"
                   onClick={() => setIsClosePeriodConfirmOpen(true)}
                 >
-                  Finalize &amp; Close Cycle
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Close Period Ledger</span>
                 </LedgerButton>
               )}
             </div>
           </div>
 
-          {/* Pending Disputes Queue */}
-          {disputedDeductions.length > 0 && (
-            <LedgerTable>
-              <div className="p-3 border-b-2 border-neutral-900 dark:border-neutral-100 bg-neutral-100 dark:bg-neutral-900 font-bold text-sm flex items-center justify-between">
-                <span>Pending Employee Dispute Queue ({disputedDeductions.length})</span>
-              </div>
-              <div className="divide-y divide-neutral-200 dark:divide-neutral-800 p-3 space-y-3">
-                {disputedDeductions.map((ded) => (
-                  <div key={ded.id} className="border border-neutral-900 dark:border-white p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white dark:bg-black">
-                    <div className="space-y-1 text-xs">
-                      <div className="flex items-center gap-2 font-mono">
-                        <span className="font-bold text-neutral-950 dark:text-white">{ded.user?.name}</span>
-                        <span className="text-neutral-500">({ded.user?.email})</span>
-                        <span className="border border-neutral-400 px-1">{getTypeLabel(ded.type)}</span>
-                        <span className="font-bold tabular-nums">{Number(ded.amount).toFixed(2)} SAR</span>
-                      </div>
-                      <p className="text-neutral-700 dark:text-neutral-300">
-                        <strong>Dispute Statement:</strong> {ded.dispute?.reason || '—'}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <LedgerButton
-                        variant="primary"
-                        size="sm"
-                        onClick={() => {
-                          setReviewingDispute({
-                            id: ded.id,
-                            name: ded.user?.name || '',
-                            amount: Number(ded.amount),
-                            reason: ded.dispute?.reason || '',
-                          });
-                          setReviewAction('accept');
-                        }}
-                      >
-                        Accept (Cancel Deduction)
-                      </LedgerButton>
-
-                      <LedgerButton
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                          setReviewingDispute({
-                            id: ded.id,
-                            name: ded.user?.name || '',
-                            amount: Number(ded.amount),
-                            reason: ded.dispute?.reason || '',
-                          });
-                          setReviewAction('reject');
-                        }}
-                      >
-                        Reject &amp; Enforce
-                      </LedgerButton>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </LedgerTable>
-          )}
-
           {/* All Employees Payroll Summary Table */}
           <LedgerTable>
-            <div className="p-3 border-b-2 border-neutral-900 dark:border-neutral-100 bg-neutral-100 dark:bg-neutral-900 flex items-center justify-between">
+            <div className="p-3.5 border-b border-border bg-bg flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-sm text-neutral-950 dark:text-white">
+                <h3 className="font-semibold text-xs text-text">
                   Workforce Payroll Roster for {selectedMonth}
                 </h3>
-                <p className="text-xs text-neutral-500">
+                <p className="text-[11px] text-muted">
                   Comprehensive wage overview with automatic statutory labor cap audit.
                 </p>
               </div>
@@ -640,7 +525,6 @@ export const DeductionsPage: React.FC = () => {
               <LedgerButton
                 variant="secondary"
                 size="sm"
-                icon="download"
                 onClick={() => {
                   const csvRows = [
                     ['Employee Name', 'Email', 'Base Salary', 'Deductions', 'Bonuses', 'Net Pay'],
@@ -663,54 +547,55 @@ export const DeductionsPage: React.FC = () => {
                   document.body.removeChild(link);
                 }}
               >
-                Export Payroll CSV
+                <Download className="w-3.5 h-3.5 text-muted" />
+                <span>Export Payroll CSV</span>
               </LedgerButton>
             </div>
 
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="bg-neutral-50 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
-                  <th className="px-4 py-3 font-bold">Employee</th>
-                  <th className="px-4 py-3 font-bold font-mono">Gross Base</th>
-                  <th className="px-4 py-3 font-bold font-mono">Daily Wage</th>
-                  <th className="px-4 py-3 font-bold font-mono">Total Deductions</th>
-                  <th className="px-4 py-3 font-bold text-center">Disciplinary Cap</th>
-                  <th className="px-4 py-3 font-bold font-mono">Bonuses</th>
-                  <th className="px-4 py-3 font-bold font-mono">Net Payable</th>
+                <tr className="bg-bg text-muted font-medium text-xs border-b border-border">
+                  <th className="px-4 py-3 font-semibold">Employee</th>
+                  <th className="px-4 py-3 font-semibold font-mono">Gross Base</th>
+                  <th className="px-4 py-3 font-semibold font-mono">Daily Wage</th>
+                  <th className="px-4 py-3 font-semibold font-mono">Total Deductions</th>
+                  <th className="px-4 py-3 font-semibold text-center">Disciplinary Cap</th>
+                  <th className="px-4 py-3 font-semibold font-mono">Bonuses</th>
+                  <th className="px-4 py-3 font-semibold font-mono">Net Payable</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 font-mono">
+              <tbody className="divide-y divide-border font-mono">
                 {payrollSummary.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-12 text-center text-neutral-500 font-mono">
+                    <td colSpan={7} className="px-4 py-12 text-center text-muted font-sans">
                       No payroll records found for this billing period.
                     </td>
                   </tr>
                 ) : (
                   payrollSummary.map((item) => (
-                    <tr key={item.user.id} className="hover:bg-neutral-100/50 dark:hover:bg-neutral-900/50 transition-colors">
-                      <td className="px-4 py-3 font-bold text-neutral-950 dark:text-white">
+                    <tr key={item.user.id} className="hover:bg-bg/40 transition-colors">
+                      <td className="px-4 py-3 font-semibold text-text font-sans">
                         <div>{item.user.name}</div>
-                        <div className="text-[10px] text-neutral-500 font-mono">{item.user.email}</div>
+                        <div className="text-[10px] text-muted font-mono">{item.user.email}</div>
                       </td>
                       <td className="px-4 py-3 tabular-nums">{Number(item.monthlySalary).toFixed(2)} SAR</td>
-                      <td className="px-4 py-3 tabular-nums text-neutral-500">{Number(item.dayWage).toFixed(2)} SAR</td>
-                      <td className="px-4 py-3 tabular-nums font-bold text-neutral-900 dark:text-white">
+                      <td className="px-4 py-3 tabular-nums text-muted">{Number(item.dayWage).toFixed(2)} SAR</td>
+                      <td className="px-4 py-3 tabular-nums font-semibold text-danger">
                         -{Number(item.totalDeductions).toFixed(2)} SAR
                       </td>
                       <td className="px-4 py-3 text-center">
                         {item.capExceeded ? (
-                          <span className="border border-neutral-900 dark:border-white px-1 py-0.5 bg-neutral-200 dark:bg-neutral-800 font-bold text-[10px]">
+                          <span className="border border-danger/40 px-1.5 py-0.5 rounded bg-danger-soft text-danger text-[10px] font-semibold">
                             Cap Reached ({Number(item.disciplinaryCapAmount).toFixed(0)} SAR)
                           </span>
                         ) : (
-                          <span className="text-[10px] text-neutral-400">Within Limit</span>
+                          <span className="text-[10px] text-muted font-sans">Within Limit</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 tabular-nums text-neutral-800 dark:text-neutral-200">
+                      <td className="px-4 py-3 tabular-nums text-accent">
                         +{Number(item.bonuses).toFixed(2)} SAR
                       </td>
-                      <td className="px-4 py-3 tabular-nums font-black text-sm text-neutral-950 dark:text-white border-b-2 border-neutral-900 dark:border-white">
+                      <td className="px-4 py-3 tabular-nums font-semibold text-sm text-text">
                         {Number(item.netPay).toFixed(2)} SAR
                       </td>
                     </tr>
@@ -722,8 +607,6 @@ export const DeductionsPage: React.FC = () => {
         </div>
       )}
 
-      {/* 4. MODALS */}
-
       {/* Dispute Modal */}
       <LedgerModal
         isOpen={Boolean(disputeDeduction)}
@@ -732,7 +615,7 @@ export const DeductionsPage: React.FC = () => {
       >
         {disputeDeduction && (
           <div className="space-y-4 text-xs">
-            <div className="border border-neutral-900 dark:border-white p-3 font-mono space-y-1">
+            <div className="border border-border rounded-lg bg-bg p-3 space-y-1">
               <p>
                 <strong>Deduction:</strong> {getTypeLabel(disputeDeduction.type)}
               </p>
@@ -745,17 +628,17 @@ export const DeductionsPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold mb-1">Dispute Reason &amp; Supporting Circumstances (Required):</label>
+              <label className="block text-xs font-semibold text-text mb-1">Dispute Reason &amp; Supporting Circumstances (*):</label>
               <textarea
                 rows={4}
                 value={disputeReason}
                 onChange={(e) => setDisputeReason(e.target.value)}
                 placeholder="Explain the emergency or attached excuse..."
-                className="w-full border-1.5 border-neutral-900 dark:border-white p-2.5 bg-white dark:bg-black outline-none"
+                className="w-full border border-border rounded-lg p-2.5 bg-card text-text outline-none focus:border-accent shadow-subtle"
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+            <div className="flex justify-end gap-2 pt-2 border-t border-border">
               <LedgerButton variant="secondary" size="sm" onClick={() => setDisputeDeduction(null)}>
                 Cancel
               </LedgerButton>
@@ -780,7 +663,7 @@ export const DeductionsPage: React.FC = () => {
       >
         {reviewingDispute && (
           <div className="space-y-4 text-xs">
-            <div className="border border-neutral-900 dark:border-white p-3 font-mono space-y-1">
+            <div className="border border-border rounded-lg bg-bg p-3 space-y-1">
               <p>
                 <strong>Employee:</strong> {reviewingDispute.name}
               </p>
@@ -793,17 +676,17 @@ export const DeductionsPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold mb-1">Official Manager Notes:</label>
+              <label className="block text-xs font-semibold text-text mb-1">Official Manager Notes:</label>
               <textarea
                 rows={3}
                 value={reviewNotes}
                 onChange={(e) => setReviewNotes(e.target.value)}
                 placeholder="Enter formal rationale..."
-                className="w-full border-1.5 border-neutral-900 dark:border-white p-2.5 bg-white dark:bg-black outline-none"
+                className="w-full border border-border rounded-lg p-2.5 bg-card text-text outline-none focus:border-accent shadow-subtle"
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+            <div className="flex justify-end gap-2 pt-2 border-t border-border">
               <LedgerButton variant="secondary" size="sm" onClick={() => setReviewingDispute(null)}>
                 Cancel
               </LedgerButton>
@@ -834,11 +717,11 @@ export const DeductionsPage: React.FC = () => {
       >
         <div className="space-y-4 text-xs">
           <div>
-            <label className="block text-xs font-bold mb-1">Target Employee:</label>
+            <label className="block text-xs font-semibold text-text mb-1">Target Employee:</label>
             <select
               value={adjustmentUserId}
               onChange={(e) => setAdjustmentUserId(e.target.value)}
-              className="w-full border-1.5 border-neutral-900 dark:border-white p-2 bg-white dark:bg-black outline-none font-bold"
+              className="w-full border border-border rounded-lg p-2 bg-card text-text outline-none focus:border-accent shadow-subtle"
             >
               <option value="">Select Employee...</option>
               {allUsers.map((u) => (
@@ -850,26 +733,26 @@ export const DeductionsPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold mb-1">Adjustment Type:</label>
+            <label className="block text-xs font-semibold text-text mb-1">Adjustment Type:</label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setAdjustmentType('bonus')}
-                className={`py-2 px-3 text-xs font-bold border-2 transition-colors cursor-pointer ${
+                className={`p-2 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
                   adjustmentType === 'bonus'
-                    ? 'border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-black'
-                    : 'border-neutral-400 text-neutral-600 dark:text-neutral-400'
+                    ? 'bg-accent-soft text-accent border-accent'
+                    : 'bg-card border-border text-muted'
                 }`}
               >
-                Bonus / Incentive (+)
+                Performance Bonus (+)
               </button>
               <button
                 type="button"
                 onClick={() => setAdjustmentType('manual_deduction')}
-                className={`py-2 px-3 text-xs font-bold border-2 transition-colors cursor-pointer ${
+                className={`p-2 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
                   adjustmentType === 'manual_deduction'
-                    ? 'border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white dark:text-black'
-                    : 'border-neutral-400 text-neutral-600 dark:text-neutral-400'
+                    ? 'bg-danger-soft text-danger border-danger'
+                    : 'bg-card border-border text-muted'
                 }`}
               >
                 Manual Deduction (-)
@@ -878,40 +761,47 @@ export const DeductionsPage: React.FC = () => {
           </div>
 
           <div>
-            <LedgerInput
-              label="Amount (SAR):"
+            <label className="block text-xs font-semibold text-text mb-1">Amount (SAR):</label>
+            <input
               type="number"
-              min="0"
               step="0.01"
               value={adjustmentAmount}
               onChange={(e) => setAdjustmentAmount(e.target.value)}
-              placeholder="e.g. 250"
-              isMono
+              placeholder="e.g. 500.00"
+              className="w-full border border-border rounded-lg p-2 bg-card text-text outline-none focus:border-accent shadow-subtle font-mono"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold mb-1">Written Justification (Audit Required):</label>
+            <label className="block text-xs font-semibold text-text mb-1">Reason / Statement:</label>
             <textarea
-              rows={2}
+              rows={3}
               value={adjustmentReason}
               onChange={(e) => setAdjustmentReason(e.target.value)}
-              placeholder="e.g. Outstanding performance on priority deliverable..."
-              className="w-full border-1.5 border-neutral-900 dark:border-white p-2.5 bg-white dark:bg-black outline-none"
+              placeholder="State the justification for this bonus or deduction..."
+              className="w-full border border-border rounded-lg p-2 bg-card text-text outline-none focus:border-accent shadow-subtle"
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+          <div className="flex justify-end gap-2 pt-2 border-t border-border">
             <LedgerButton variant="secondary" size="sm" onClick={() => setIsAdjustmentModalOpen(false)}>
               Cancel
             </LedgerButton>
             <LedgerButton
               variant="primary"
               size="sm"
-              disabled={!adjustmentUserId || !adjustmentAmount || !adjustmentReason.trim() || createAdjustmentMutation.isPending}
-              onClick={() => createAdjustmentMutation.mutate()}
+              disabled={!adjustmentUserId || !adjustmentAmount || !adjustmentReason.trim() || addAdjustmentMutation.isPending}
+              onClick={() =>
+                addAdjustmentMutation.mutate({
+                  userId: adjustmentUserId,
+                  period: selectedMonth,
+                  type: adjustmentType,
+                  amount: parseFloat(adjustmentAmount),
+                  reason: adjustmentReason.trim(),
+                })
+              }
             >
-              {createAdjustmentMutation.isPending ? 'Recording...' : 'Save Financial Adjustment'}
+              {addAdjustmentMutation.isPending ? 'Saving...' : 'Commit Adjustment'}
             </LedgerButton>
           </div>
         </div>
@@ -921,24 +811,30 @@ export const DeductionsPage: React.FC = () => {
       <LedgerModal
         isOpen={isClosePeriodConfirmOpen}
         onClose={() => setIsClosePeriodConfirmOpen(false)}
-        title={`Finalize & Lock Payroll for ${selectedMonth}`}
+        title={`Confirm Final Close for Period ${selectedMonth}`}
       >
         <div className="space-y-4 text-xs">
-          <p className="leading-relaxed border border-neutral-900 dark:border-white p-3 font-mono bg-neutral-100 dark:bg-neutral-900">
-            Financial Audit Notice: Closing the cycle is <strong>permanent and irrevocable</strong>. All deductions will be marked <code className="font-bold">closed_in_payroll</code>, and further modifications will be rejected.
-          </p>
+          <div className="border border-border rounded-lg bg-bg p-3.5 space-y-2">
+            <div className="flex items-center gap-2 text-danger font-semibold">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>Permanent Administrative Action</span>
+            </div>
+            <p className="text-muted leading-relaxed">
+              Closing the period will lock all shift logs and deductions for <strong>{selectedMonth}</strong> from further modifications. Official PDF receipts will be marked as FINAL CLOSED.
+            </p>
+          </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+          <div className="flex justify-end gap-2 pt-2 border-t border-border">
             <LedgerButton variant="secondary" size="sm" onClick={() => setIsClosePeriodConfirmOpen(false)}>
-              Go Back
+              Cancel
             </LedgerButton>
             <LedgerButton
-              variant="danger"
+              variant="primary"
               size="sm"
               disabled={closePeriodMutation.isPending}
-              onClick={() => closePeriodMutation.mutate()}
+              onClick={() => closePeriodMutation.mutate(selectedMonth)}
             >
-              {closePeriodMutation.isPending ? 'Finalizing...' : 'Yes, Lock & Finalize Cycle'}
+              {closePeriodMutation.isPending ? 'Closing Cycle...' : 'Confirm and Close Period'}
             </LedgerButton>
           </div>
         </div>
@@ -946,5 +842,3 @@ export const DeductionsPage: React.FC = () => {
     </MotionPage>
   );
 };
-
-export default DeductionsPage;

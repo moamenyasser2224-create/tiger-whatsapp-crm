@@ -10,8 +10,11 @@ import {
   Save,
   Eye,
   Info,
+  Check,
+  AlertCircle,
 } from 'lucide-react';
 import { MotionPage } from '../components/motion/MotionPage.js';
+import { LedgerButton } from '../components/common/LedgerComponents.js';
 
 export const TemplatesPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -96,26 +99,22 @@ export const TemplatesPage: React.FC = () => {
   return (
     <MotionPage className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-black text-neutral-900 dark:text-white">WhatsApp Message Templates</h1>
-        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-          Customize automated dispatch scripts per pipeline status, with live rendering and variable interpolation
+      <div className="border-b border-border pb-4">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted font-medium">
+          <span>Communication</span>
+          <span>/</span>
+          <span>Messaging Templates</span>
+        </div>
+        <h1 className="text-xl sm:text-2xl font-semibold text-text mt-1">
+          WhatsApp Message Templates
+        </h1>
+        <p className="text-xs text-muted mt-0.5">
+          Standardized communication copy personalized for each customer pipeline stage.
         </p>
       </div>
 
-      {/* Instruction Tip */}
-      <div className="flex items-start gap-3 rounded-2xl border border-neutral-300 bg-neutral-100/60 p-4 dark:border-neutral-700 dark:bg-neutral-800/40 text-neutral-800 dark:text-neutral-200">
-        <Info className="h-5 w-5 flex-shrink-0 text-neutral-700 dark:text-neutral-300 mt-0.5" />
-        <div className="text-xs space-y-1">
-          <p className="font-bold">How do WhatsApp templates function in Tiger?</p>
-          <p className="opacity-90">
-            Clicking the WhatsApp action trigger beside any customer launches WhatsApp Web pre-loaded with the stage-specific message template. The variable <code className="bg-neutral-200 dark:bg-neutral-700 px-1 py-0.5 rounded font-mono font-bold">{'{name}'}</code> is automatically replaced by the customer's real name.
-          </p>
-        </div>
-      </div>
-
-      {/* Status Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-neutral-200 pb-3 dark:border-neutral-800">
+      {/* Stage Selector Tabs */}
+      <div className="flex flex-wrap gap-1.5 p-1 bg-bg border border-border rounded-lg">
         {availableStatuses.map((st) => {
           const isActive = activeStatus === st;
           return (
@@ -123,104 +122,119 @@ export const TemplatesPage: React.FC = () => {
               key={st}
               onClick={() => {
                 setActiveStatus(st);
-                setSaveError(null);
                 setSaveSuccess(null);
+                setSaveError(null);
               }}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+              className={`px-3 py-1.5 text-xs rounded-md transition-colors cursor-pointer ${
                 isActive
-                  ? 'bg-black text-white dark:bg-white dark:text-black border border-neutral-900 dark:border-white shadow-sm'
-                  : 'bg-white text-neutral-700 hover:bg-neutral-100 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 border border-neutral-300 dark:border-neutral-700'
+                  ? 'bg-card text-accent font-semibold shadow-subtle border border-accent/20'
+                  : 'text-muted hover:text-text font-normal'
               }`}
             >
-              <span>{getStatusLabel(st)}</span>
+              {getStatusLabel(st)}
             </button>
           );
         })}
       </div>
 
-      {/* Editor & Live Preview Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Editor Box */}
-        <div className="lg:col-span-7 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-              <MessageSquareQuote className="h-4 w-4 text-neutral-800 dark:text-neutral-200" />
-              <span>Editing Template for [{getStatusLabel(activeStatus)}]</span>
-            </h3>
+      {/* Notification Alerts */}
+      {saveSuccess && (
+        <div className="flex items-center gap-2 border border-accent/40 bg-accent-soft p-3 rounded-lg text-xs text-accent font-medium">
+          <Check className="w-4 h-4 shrink-0" />
+          <span>{saveSuccess}</span>
+        </div>
+      )}
 
+      {saveError && (
+        <div className="flex items-center gap-2 border border-danger/40 bg-danger-soft p-3 rounded-lg text-xs text-danger font-medium">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{saveError}</span>
+        </div>
+      )}
+
+      {/* Main Two-Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left: Template Editor */}
+        <div className="rounded-xl border border-border bg-card p-6 shadow-subtle space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
+            <h2 className="text-sm font-semibold text-text flex items-center gap-2">
+              <MessageSquareQuote className="h-4 w-4 text-accent" />
+              <span>Editing: {getStatusLabel(activeStatus)}</span>
+            </h2>
             <button
               onClick={() => resetMutation.mutate(activeStatus)}
               disabled={resetMutation.isPending}
-              className="flex items-center gap-1 text-xs font-semibold text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+              className="flex items-center gap-1.5 text-xs text-muted hover:text-text transition-colors cursor-pointer"
+              title="Reset to default text"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              <span>Restore Default</span>
+              <span>Reset Default</span>
             </button>
           </div>
 
-          {saveSuccess && (
-            <div className="rounded-xl border border-neutral-900 bg-neutral-100 p-3 text-xs font-bold text-neutral-900 dark:border-white dark:bg-neutral-800 dark:text-white">
-              {saveSuccess}
-            </div>
-          )}
-
-          {saveError && (
-            <div className="rounded-xl border-2 border-neutral-900 bg-neutral-200 p-3 text-xs font-bold text-neutral-900 dark:border-white dark:bg-neutral-950 dark:text-white">
-              {saveError}
-            </div>
-          )}
-
           <div>
+            <label className="block text-xs font-semibold text-text mb-1.5">
+              Message Content
+            </label>
             <textarea
-              rows={6}
+              rows={8}
               value={currentBody}
               onChange={(e) => handleBodyChange(e.target.value)}
-              placeholder="Compose your message script here. Make sure to include {name}..."
-              className="w-full rounded-2xl border border-neutral-300 p-4 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
+              placeholder="Write your template message... (use {name} for customer name)"
+              className="w-full rounded-lg border border-border bg-card p-3 text-xs sm:text-sm text-text placeholder:text-muted outline-none focus:border-accent shadow-subtle transition-colors leading-relaxed"
             />
-            <div className="flex items-center justify-between mt-1 text-[11px] text-neutral-400">
-              <span>Supported token: <code className="text-black dark:text-white font-bold font-mono">{'{name}'}</code></span>
-              <span>{currentBody.length} characters</span>
-            </div>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs text-muted bg-bg p-3 rounded-lg border border-border">
+            <Info className="h-4 w-4 shrink-0 text-accent" />
+            <span>Use the <code className="bg-card px-1.5 py-0.5 rounded border border-border font-mono text-[11px] text-text font-semibold">&#123;name&#125;</code> variable to insert the recipient client's name automatically.</span>
           </div>
 
           <div className="flex justify-end pt-2">
-            <button
+            <LedgerButton
+              variant="primary"
+              size="sm"
               onClick={handleSave}
               disabled={saveMutation.isPending}
-              className="flex items-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-6 py-2.5 text-xs font-bold disabled:opacity-50 transition-colors"
             >
               <Save className="h-4 w-4" />
-              <span>{saveMutation.isPending ? 'Saving...' : 'Save Changes'}</span>
-            </button>
+              <span>{saveMutation.isPending ? 'Saving...' : 'Save Template'}</span>
+            </LedgerButton>
           </div>
         </div>
 
-        {/* Interactive Live WhatsApp Chat Preview */}
-        <div className="lg:col-span-5 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-              <Eye className="h-4 w-4 text-neutral-700 dark:text-neutral-300" />
-              <span>Live Simulation Preview</span>
-            </h3>
-            <div className="flex items-center gap-1.5 text-xs">
-              <span className="text-neutral-500">Sample Name:</span>
-              <input
-                type="text"
-                value={previewName}
-                onChange={(e) => setPreviewName(e.target.value)}
-                className="w-28 rounded-lg border border-neutral-300 px-2 py-0.5 text-xs text-center dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-              />
-            </div>
+        {/* Right: Live Preview */}
+        <div className="rounded-xl border border-border bg-card p-6 shadow-subtle space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
+            <h2 className="text-sm font-semibold text-text flex items-center gap-2">
+              <Eye className="h-4 w-4 text-accent" />
+              <span>Live WhatsApp Message Preview</span>
+            </h2>
           </div>
 
-          {/* WhatsApp UI Simulation Box (Monochrome) */}
-          <div className="rounded-2xl border border-neutral-300 bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-950 p-4 shadow-inner min-h-[220px] flex flex-col justify-end">
-            {/* WhatsApp Chat Bubble */}
-            <div className="self-end max-w-[85%] rounded-2xl rounded-tr-none bg-white border border-neutral-300 dark:bg-neutral-800 dark:border-neutral-700 p-3.5 shadow-sm text-neutral-900 dark:text-white">
-              <p className="text-xs leading-relaxed whitespace-pre-wrap">{formattedPreview}</p>
-              <div className="text-[10px] text-neutral-400 dark:text-neutral-400 text-right mt-1">
-                12:45 PM ✓✓
+          <div>
+            <label className="block text-xs font-semibold text-text mb-1">
+              Simulated Client Name
+            </label>
+            <input
+              type="text"
+              value={previewName}
+              onChange={(e) => setPreviewName(e.target.value)}
+              placeholder="Type a sample name..."
+              className="w-full rounded-lg border border-border bg-card px-3 py-2 text-xs sm:text-sm text-text outline-none focus:border-accent shadow-subtle"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-text">
+              Rendered Outbound Bubble
+            </label>
+            <div className="rounded-xl border border-border bg-bg p-6 flex flex-col items-end">
+              <div className="max-w-md rounded-xl rounded-tr-sm bg-accent p-4 text-xs sm:text-sm text-white shadow-subtle leading-relaxed whitespace-pre-wrap">
+                {formattedPreview || <span className="opacity-60 italic">No content configured yet...</span>}
+                <div className="mt-2 text-right text-[10px] text-white/70">
+                  12:00 PM &bull; Delivered
+                </div>
               </div>
             </div>
           </div>

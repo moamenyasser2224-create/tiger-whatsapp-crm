@@ -49,39 +49,39 @@ export const ForceChangePasswordModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" dir="ltr">
-      <div className="w-full max-w-md bg-white dark:bg-black border-2 border-black dark:border-white shadow-2xl p-6 rounded-none text-black dark:text-white">
-        <div className="flex items-center gap-3 border-b-2 border-black dark:border-white pb-4 mb-5">
-          <div className="p-2 border-2 border-black dark:border-white bg-black dark:bg-white text-white dark:text-black">
-            <KeyRound className="w-6 h-6" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" dir="ltr">
+      <div className="w-full max-w-md bg-card border border-border rounded-xl shadow-lg p-6 text-text">
+        <div className="flex items-center gap-3 border-b border-border pb-4 mb-5">
+          <div className="p-2.5 rounded-lg border border-accent/20 bg-accent-soft text-accent">
+            <KeyRound className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-black">Mandatory Password Update</h2>
-            <p className="text-xs text-neutral-600 dark:text-neutral-400 font-bold">
+            <h2 className="text-lg font-semibold text-text">Mandatory Password Update</h2>
+            <p className="text-xs text-muted">
               New account — please replace your temporary password to continue
             </p>
           </div>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 border-2 border-black dark:border-white bg-neutral-100 dark:bg-neutral-900 flex items-center gap-2 text-sm font-bold">
-            <ShieldAlert className="w-5 h-5 shrink-0" />
+          <div className="mb-4 p-3 rounded-lg border border-danger/30 bg-danger-soft text-danger flex items-center gap-2 text-xs font-medium">
+            <ShieldAlert className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {success ? (
-          <div className="p-6 text-center border-2 border-black dark:border-white bg-neutral-100 dark:bg-neutral-900">
-            <CheckCircle2 className="w-12 h-12 mx-auto mb-3" />
-            <h3 className="text-lg font-black">Password Changed Successfully!</h3>
-            <p className="text-sm font-bold text-neutral-600 dark:text-neutral-400 mt-1">
+          <div className="p-6 text-center rounded-lg border border-border bg-bg">
+            <CheckCircle2 className="w-10 h-10 mx-auto mb-2 text-accent" />
+            <h3 className="text-base font-semibold text-text">Password Changed Successfully!</h3>
+            <p className="text-xs text-muted mt-1">
               Entering Tiger workspace...
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
             <div>
-              <label className="block text-xs font-black uppercase mb-1">
+              <label className="block text-xs font-medium text-muted mb-1">
                 Current Temporary Password
               </label>
               <input
@@ -90,12 +90,12 @@ export const ForceChangePasswordModal: React.FC = () => {
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Enter current password"
-                className="w-full px-3 py-2 border-2 border-black dark:border-white bg-transparent text-sm focus:outline-none font-mono"
+                className="w-full px-3.5 py-2 rounded-lg border border-border bg-bg text-text text-xs focus:border-accent focus:outline-none font-mono"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-black uppercase mb-1">
+              <label className="block text-xs font-medium text-muted mb-1">
                 New Password (minimum 8 characters)
               </label>
               <input
@@ -105,12 +105,12 @@ export const ForceChangePasswordModal: React.FC = () => {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Enter strong new password"
-                className="w-full px-3 py-2 border-2 border-black dark:border-white bg-transparent text-sm focus:outline-none font-mono"
+                className="w-full px-3.5 py-2 rounded-lg border border-border bg-bg text-text text-xs focus:border-accent focus:outline-none font-mono"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-black uppercase mb-1">
+              <label className="block text-xs font-medium text-muted mb-1">
                 Confirm New Password
               </label>
               <input
@@ -118,16 +118,16 @@ export const ForceChangePasswordModal: React.FC = () => {
                 required
                 minLength={8}
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Confirm new password"
-                className="w-full px-3 py-2 border-2 border-black dark:border-white bg-transparent text-sm focus:outline-none font-mono"
+                className="w-full px-3.5 py-2 rounded-lg border border-border bg-bg text-text text-xs focus:border-accent focus:outline-none font-mono"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-wider text-xs border-2 border-black dark:border-white hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors disabled:opacity-50 cursor-pointer"
+              className="w-full mt-2 py-2.5 rounded-lg bg-accent text-white font-medium text-xs hover:bg-accent-hover transition-colors disabled:opacity-50 cursor-pointer"
             >
               {loading ? 'Updating...' : 'Set Password & Enter Workspace'}
             </button>

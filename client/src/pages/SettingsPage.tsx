@@ -5,6 +5,7 @@ import { api } from '../lib/api.js';
 import type { ListOption, Settings } from '../types/index.js';
 import { ProfilePhotoModal } from '../components/ProfilePhotoModal.js';
 import { FaceBiometricsModal } from '../components/FaceBiometricsModal.js';
+import { StatusBadge } from '../components/common/StatusBadge.js';
 import {
   ShieldCheck,
   QrCode,
@@ -15,7 +16,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   Building,
-  ListPlus,
   Plus,
   Layers,
   Save,
@@ -25,7 +25,7 @@ import {
   ScanFace,
   Copy,
   Check,
-  Key,
+  X,
 } from 'lucide-react';
 import { MotionPage } from '../components/motion/MotionPage.js';
 
@@ -91,7 +91,7 @@ export const SettingsPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
-      setSettingsSuccess('Organization name updated successfully!');
+      setSettingsSuccess('Organization name updated successfully');
       setTimeout(() => setSettingsSuccess(null), 3000);
     },
   });
@@ -288,34 +288,34 @@ export const SettingsPage: React.FC = () => {
     <MotionPage className="space-y-6 max-w-4xl">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-black text-neutral-900 dark:text-white">System & Account Settings</h1>
-        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-text">System &amp; Account Settings</h1>
+        <p className="text-xs text-muted mt-1">
           Manage Tiger system parameters, team accounts, dynamic options, security (2FA), and data privacy
         </p>
       </div>
 
       {setupSuccess && (
-        <div className="rounded-2xl border border-neutral-900 bg-neutral-100 p-4 text-xs font-bold text-neutral-900 dark:border-white dark:bg-neutral-800 dark:text-white flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4" />
+        <div className="rounded-xl border border-accent/20 bg-accent-soft p-3 text-xs font-medium text-accent flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
           <span>{setupSuccess}</span>
         </div>
       )}
 
       {/* Admin Section: Employee Accounts Management */}
       {isAdmin && (
-        <div className="rounded-2xl border border-neutral-300 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 space-y-4">
+        <div className="rounded-xl border border-border bg-card p-6 shadow-subtle space-y-4 text-text">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-neutral-900 dark:text-white" />
-                <h2 className="text-base font-bold text-neutral-900 dark:text-white">
+                <Users className="h-4 w-4 text-accent" />
+                <h2 className="text-sm font-semibold text-text">
                   Employee Accounts Management
                 </h2>
-                <span className="rounded-md border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 text-[11px] font-bold text-neutral-800 dark:text-neutral-200">
+                <span className="rounded-full border border-border bg-bg px-2 py-0.5 text-[10px] text-muted">
                   Admin Only
                 </span>
               </div>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+              <p className="text-xs text-muted mt-1">
                 Create new staff credentials with temporary passwords required to be reset on first sign-in.
               </p>
             </div>
@@ -325,7 +325,7 @@ export const SettingsPage: React.FC = () => {
                 setEmployeeError(null);
                 setIsAddEmployeeOpen(true);
               }}
-              className="flex items-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-4 py-2 text-xs font-bold transition-colors shrink-0"
+              className="flex items-center gap-2 rounded-lg bg-accent text-white hover:bg-accent-hover px-3.5 py-2 text-xs font-medium transition-colors shrink-0 cursor-pointer"
             >
               <UserPlus className="h-4 w-4" />
               <span>Add New Employee</span>
@@ -333,78 +333,64 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           {/* Employees Table */}
-          <div className="overflow-x-auto border border-neutral-200 dark:border-neutral-800 rounded-xl">
+          <div className="overflow-x-auto border border-border rounded-xl">
             <table className="w-full text-left text-xs">
-              <thead className="bg-neutral-100 dark:bg-neutral-800/60 border-b border-neutral-200 dark:border-neutral-800">
+              <thead className="bg-bg border-b border-border text-muted font-medium">
                 <tr>
-                  <th className="p-3 font-black">Employee</th>
-                  <th className="p-3 font-black">Email</th>
-                  <th className="p-3 font-black">Role</th>
-                  <th className="p-3 font-black">Biometric Face</th>
-                  <th className="p-3 font-black">Password Status</th>
-                  <th className="p-3 font-black">Created Date</th>
+                  <th className="p-3">Employee</th>
+                  <th className="p-3">Email</th>
+                  <th className="p-3">Role</th>
+                  <th className="p-3">Biometrics</th>
+                  <th className="p-3">Password Status</th>
+                  <th className="p-3">Created Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+              <tbody className="divide-y divide-border">
                 {loadingEmployees ? (
                   <tr>
-                    <td colSpan={6} className="p-6 text-center text-neutral-500 font-bold">
+                    <td colSpan={6} className="p-6 text-center text-muted">
                       Loading employee directory...
                     </td>
                   </tr>
                 ) : employeesData.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-6 text-center text-neutral-500 font-bold">
+                    <td colSpan={6} className="p-6 text-center text-muted">
                       No staff members registered yet.
                     </td>
                   </tr>
                 ) : (
                   employeesData.map((emp: any) => (
-                    <tr key={emp.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/30">
+                    <tr key={emp.id} className="hover:bg-bg/50 transition-colors">
                       <td className="p-3 flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full border border-neutral-400 bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="w-7 h-7 rounded-full border border-border bg-bg flex items-center justify-center overflow-hidden shrink-0">
                           {emp.photoUrl ? (
-                            <img src={emp.photoUrl} alt={emp.name} className="w-full h-full object-cover grayscale" />
+                            <img src={emp.photoUrl} alt={emp.name} className="w-full h-full object-cover" />
                           ) : (
-                            <span className="font-bold text-xs">{emp.name?.[0]?.toUpperCase()}</span>
+                            <span className="font-medium text-xs text-muted">{emp.name?.[0]?.toUpperCase()}</span>
                           )}
                         </div>
-                        <span className="font-bold text-neutral-900 dark:text-white">{emp.name}</span>
+                        <span className="font-medium text-text">{emp.name}</span>
                       </td>
-                      <td className="p-3 font-mono">{emp.email}</td>
+                      <td className="p-3 font-mono text-muted">{emp.email}</td>
                       <td className="p-3">
-                        <span className={`inline-block px-2 py-0.5 rounded border text-[10px] font-bold ${
-                          emp.role === 'admin'
-                            ? 'bg-black text-white dark:bg-white dark:text-black border-neutral-900 dark:border-white'
-                            : 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700'
-                        }`}>
-                          {emp.role === 'admin' ? 'Administrator' : 'Staff'}
-                        </span>
+                        <StatusBadge
+                          label={emp.role === 'admin' ? 'Administrator' : 'Staff'}
+                          variant={emp.role === 'admin' ? 'positive' : 'muted'}
+                        />
                       </td>
                       <td className="p-3">
-                        {emp.hasFaceEnrolled ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-black dark:text-white">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Enrolled</span>
-                          </span>
-                        ) : (
-                          <span className="text-[11px] font-bold text-neutral-400">
-                            Not Enrolled
-                          </span>
-                        )}
+                        <StatusBadge
+                          label={emp.hasFaceEnrolled ? 'Enrolled' : 'Not Enrolled'}
+                          variant={emp.hasFaceEnrolled ? 'positive' : 'muted'}
+                        />
                       </td>
                       <td className="p-3">
-                        {emp.mustChangePassword ? (
-                          <span className="inline-block px-2 py-0.5 rounded border border-neutral-400 bg-neutral-100 dark:bg-neutral-800 text-[10px] font-bold text-neutral-800 dark:text-neutral-200">
-                            Temporary (Reset Required)
-                          </span>
-                        ) : (
-                          <span className="text-[11px] font-bold text-black dark:text-white">
-                            Active
-                          </span>
-                        )}
+                        <StatusBadge
+                          label={emp.mustChangePassword ? 'Reset Required' : 'Active'}
+                          variant={emp.mustChangePassword ? 'negative' : 'positive'}
+                        />
                       </td>
-                      <td className="p-3 text-neutral-500 font-mono text-[11px]">
+                      <td className="p-3 text-muted font-mono tabular-nums text-[11px]">
                         {new Date(emp.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                       </td>
                     </tr>
@@ -418,23 +404,23 @@ export const SettingsPage: React.FC = () => {
 
       {/* Admin Section: Organization Identity */}
       {isAdmin && (
-        <div className="rounded-2xl border border-neutral-300 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 space-y-4">
+        <div className="rounded-xl border border-border bg-card p-6 shadow-subtle space-y-4 text-text">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-              <Building className="h-5 w-5 text-neutral-900 dark:text-white" />
+            <h2 className="text-sm font-semibold text-text flex items-center gap-2">
+              <Building className="h-4 w-4 text-accent" />
               <span>Organization Identity</span>
             </h2>
-            <span className="rounded-md border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 text-[11px] font-bold text-neutral-800 dark:text-neutral-200">
+            <span className="rounded-full border border-border bg-bg px-2 py-0.5 text-[10px] text-muted">
               Admin Only
             </span>
           </div>
 
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          <p className="text-xs text-muted">
             This name appears across the masthead, header, and official documents for all system users.
           </p>
 
           {settingsSuccess && (
-            <div className="rounded-xl border border-neutral-900 bg-neutral-100 p-3 text-xs font-bold text-neutral-900 dark:border-white dark:bg-neutral-800 dark:text-white">
+            <div className="rounded-lg border border-accent/20 bg-accent-soft p-3 text-xs font-medium text-accent">
               {settingsSuccess}
             </div>
           )}
@@ -445,14 +431,14 @@ export const SettingsPage: React.FC = () => {
               value={orgNameInput}
               onChange={(e) => setOrgNameInput(e.target.value)}
               placeholder="e.g. Tiger"
-              className="flex-1 rounded-xl border border-neutral-300 px-3.5 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
+              className="flex-1 rounded-lg border border-border px-3.5 py-2 text-xs bg-bg text-text focus:border-accent focus:outline-none"
             />
             <button
               onClick={() => updateSettingsMutation.mutate(orgNameInput)}
               disabled={updateSettingsMutation.isPending || !orgNameInput.trim()}
-              className="flex items-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-5 py-2 text-xs font-bold transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 rounded-lg bg-accent text-white hover:bg-accent-hover px-4 py-2 text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer"
             >
-              <Save className="h-4 w-4" />
+              <Save className="h-3.5 w-3.5" />
               <span>{updateSettingsMutation.isPending ? 'Saving...' : 'Save Name'}</span>
             </button>
           </div>
@@ -461,39 +447,39 @@ export const SettingsPage: React.FC = () => {
 
       {/* Admin Section: Dynamic List Options Manager */}
       {isAdmin && (
-        <div className="rounded-2xl border border-neutral-300 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 space-y-4">
+        <div className="rounded-xl border border-border bg-card p-6 shadow-subtle space-y-4 text-text">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-              <Layers className="h-5 w-5 text-neutral-900 dark:text-white" />
-              <span>Dynamic Pipeline & Source Options</span>
+            <h2 className="text-sm font-semibold text-text flex items-center gap-2">
+              <Layers className="h-4 w-4 text-accent" />
+              <span>Dynamic Pipeline &amp; Source Options</span>
             </h2>
-            <span className="rounded-md border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 text-[11px] font-bold text-neutral-800 dark:text-neutral-200">
+            <span className="rounded-full border border-border bg-bg px-2 py-0.5 text-[10px] text-muted">
               Database
             </span>
           </div>
 
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          <p className="text-xs text-muted">
             Add and modify pipeline stages or customer lead sources. Updates reflect instantly across tables and filters.
           </p>
 
           {/* Option Type Switcher */}
-          <div className="flex items-center gap-2 border-b border-neutral-200 dark:border-neutral-800 pb-3">
+          <div className="flex items-center gap-2 border-b border-border pb-3">
             <button
               onClick={() => setOptionTypeTab('status')}
-              className={`rounded-xl px-4 py-1.5 text-xs font-bold transition-all ${
+              className={`rounded-full px-3.5 py-1 text-xs font-medium transition-all cursor-pointer ${
                 optionTypeTab === 'status'
-                  ? 'bg-black text-white dark:bg-white dark:text-black border border-neutral-900 dark:border-white'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 border border-neutral-300 dark:border-neutral-700'
+                  ? 'bg-accent text-white'
+                  : 'text-muted hover:text-text hover:bg-bg'
               }`}
             >
               Customer Stages (Status)
             </button>
             <button
               onClick={() => setOptionTypeTab('source')}
-              className={`rounded-xl px-4 py-1.5 text-xs font-bold transition-all ${
+              className={`rounded-full px-3.5 py-1 text-xs font-medium transition-all cursor-pointer ${
                 optionTypeTab === 'source'
-                  ? 'bg-black text-white dark:bg-white dark:text-black border border-neutral-900 dark:border-white'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 border border-neutral-300 dark:border-neutral-700'
+                  ? 'bg-accent text-white'
+                  : 'text-muted hover:text-text hover:bg-bg'
               }`}
             >
               Lead Sources
@@ -501,7 +487,7 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           {optionError && (
-            <div className="rounded-xl border border-neutral-900 bg-neutral-100 p-3 text-xs font-bold text-neutral-900 dark:border-white dark:bg-neutral-800 dark:text-white">
+            <div className="rounded-lg border border-danger/30 bg-danger-soft p-3 text-xs font-medium text-danger">
               {optionError}
             </div>
           )}
@@ -511,12 +497,12 @@ export const SettingsPage: React.FC = () => {
             {currentOptions.map((opt) => (
               <div
                 key={opt.id}
-                className="flex items-center justify-between rounded-xl border border-neutral-200 dark:border-neutral-800 p-3 bg-neutral-50/50 dark:bg-neutral-800/30"
+                className="flex items-center justify-between rounded-lg border border-border p-3 bg-bg"
               >
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-xs text-neutral-900 dark:text-white">{opt.label}</span>
+                  <span className="font-medium text-xs text-text">{opt.label}</span>
                   {opt.isDefault && (
-                    <span className="rounded border border-neutral-400 bg-neutral-200 px-1.5 py-0.5 text-[10px] font-bold text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200">
+                    <span className="rounded border border-border bg-card px-1.5 py-0.5 text-[10px] text-muted">
                       Default
                     </span>
                   )}
@@ -525,10 +511,10 @@ export const SettingsPage: React.FC = () => {
                 <button
                   onClick={() => deleteOptionMutation.mutate(opt.id)}
                   disabled={deleteOptionMutation.isPending}
-                  className="rounded-lg border border-neutral-300 p-1.5 text-neutral-600 hover:bg-neutral-200 dark:border-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800 transition-colors"
+                  className="rounded-lg border border-border p-1.5 text-muted hover:text-danger hover:border-danger/30 hover:bg-danger-soft transition-colors cursor-pointer"
                   title="Delete option"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
             ))}
@@ -554,15 +540,15 @@ export const SettingsPage: React.FC = () => {
               value={newOptionLabel}
               onChange={(e) => setNewOptionLabel(e.target.value)}
               placeholder={`Enter new ${optionTypeTab === 'status' ? 'stage' : 'source'} name...`}
-              className="flex-1 w-full rounded-xl border border-neutral-300 px-3.5 py-2 text-xs focus:border-black focus:outline-none focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-white dark:focus:ring-white"
+              className="flex-1 w-full rounded-lg border border-border px-3.5 py-2 text-xs bg-bg text-text focus:border-accent focus:outline-none"
             />
 
-            <label className="flex items-center gap-2 text-xs font-semibold text-neutral-700 dark:text-neutral-300 cursor-pointer whitespace-nowrap">
+            <label className="flex items-center gap-2 text-xs text-muted cursor-pointer whitespace-nowrap">
               <input
                 type="checkbox"
                 checked={newOptionIsDefault}
                 onChange={(e) => setNewOptionIsDefault(e.target.checked)}
-                className="rounded border-neutral-300 text-black focus:ring-black dark:border-neutral-700"
+                className="rounded border-border text-accent focus:ring-accent"
               />
               <span>Set as Default</span>
             </label>
@@ -570,9 +556,9 @@ export const SettingsPage: React.FC = () => {
             <button
               type="submit"
               disabled={addOptionMutation.isPending || !newOptionLabel.trim()}
-              className="flex items-center gap-1.5 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-4 py-2 text-xs font-bold transition-colors disabled:opacity-50 whitespace-nowrap"
+              className="flex items-center gap-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover px-4 py-2 text-xs font-medium transition-colors disabled:opacity-50 whitespace-nowrap cursor-pointer"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3.5 w-3.5" />
               <span>Add Option</span>
             </button>
           </form>
@@ -580,43 +566,43 @@ export const SettingsPage: React.FC = () => {
       )}
 
       {/* Profile Overview */}
-      <div className="rounded-2xl border border-neutral-300 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 space-y-4">
-        <h2 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-          <User className="h-5 w-5 text-neutral-900 dark:text-white" />
+      <div className="rounded-xl border border-border bg-card p-6 shadow-subtle space-y-4 text-text">
+        <h2 className="text-sm font-semibold text-text flex items-center gap-2">
+          <User className="h-4 w-4 text-accent" />
           <span>User Profile</span>
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="rounded-xl border border-neutral-200 p-3.5 dark:border-neutral-800">
-            <span className="text-xs text-neutral-500 dark:text-neutral-400 block mb-1">Full Name:</span>
-            <p className="font-bold text-sm text-neutral-900 dark:text-white">{user?.name}</p>
+          <div className="rounded-lg border border-border p-3.5 bg-bg">
+            <span className="text-xs text-muted block mb-1">Full Name:</span>
+            <p className="font-semibold text-sm text-text">{user?.name}</p>
           </div>
 
-          <div className="rounded-xl border border-neutral-200 p-3.5 dark:border-neutral-800">
-            <span className="text-xs text-neutral-500 dark:text-neutral-400 block mb-1">Email Address:</span>
-            <p className="font-mono text-sm text-neutral-900 dark:text-white">{user?.email}</p>
+          <div className="rounded-lg border border-border p-3.5 bg-bg">
+            <span className="text-xs text-muted block mb-1">Email Address:</span>
+            <p className="font-mono text-sm text-text">{user?.email}</p>
           </div>
         </div>
       </div>
 
       {/* Profile Photo & Biometric Face Authentication */}
-      <div className="rounded-2xl border border-neutral-300 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 space-y-6">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-subtle space-y-6 text-text">
         {/* Photo subsection */}
-        <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-6">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4 border-b border-border pb-6">
           <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-full border-2 border-black dark:border-white overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 relative shadow-inner">
+            <div className="w-16 h-16 rounded-full border border-border overflow-hidden bg-bg flex items-center justify-center shrink-0 relative">
               {user?.photoUrl ? (
-                <img src={user.photoUrl} alt={user.name} className="w-full h-full object-cover grayscale" />
+                <img src={user.photoUrl} alt={user.name} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-2xl font-black text-neutral-400">{user?.name?.[0]?.toUpperCase()}</span>
+                <span className="text-xl font-semibold text-muted">{user?.name?.[0]?.toUpperCase()}</span>
               )}
             </div>
             <div>
-              <h3 className="font-bold text-sm text-neutral-900 dark:text-white flex items-center gap-2">
-                <Camera className="w-4 h-4" />
+              <h3 className="font-semibold text-sm text-text flex items-center gap-2">
+                <Camera className="w-4 h-4 text-accent" />
                 <span>Profile Photo</span>
               </h3>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 max-w-md">
+              <p className="text-xs text-muted mt-1 max-w-md">
                 Your portrait appears alongside your name in team chats, attendance logs, and mastheads.
               </p>
             </div>
@@ -624,9 +610,9 @@ export const SettingsPage: React.FC = () => {
 
           <button
             onClick={() => setIsPhotoModalOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-4 py-2 text-xs font-bold transition-colors"
+            className="flex items-center gap-2 rounded-lg bg-accent text-white hover:bg-accent-hover px-3.5 py-2 text-xs font-medium transition-colors cursor-pointer"
           >
-            <Camera className="w-4 h-4" />
+            <Camera className="w-3.5 h-3.5" />
             <span>Update Photo</span>
           </button>
         </div>
@@ -635,40 +621,34 @@ export const SettingsPage: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
-              <h3 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                <ScanFace className="h-5 w-5 text-neutral-900 dark:text-white" />
+              <h3 className="text-sm font-semibold text-text flex items-center gap-2">
+                <ScanFace className="h-4 w-4 text-accent" />
                 <span>Facial Biometrics Authentication</span>
               </h3>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-xl">
+              <p className="text-xs text-muted max-w-xl">
                 Encrypted biometric facial vector (AES-256-GCM) with liveness detection used for rapid time-clock check-in and 2FA fallback.
               </p>
             </div>
 
             <div>
-              {user?.hasFaceEnrolled ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-neutral-900 bg-black px-3 py-1 text-xs font-black text-white dark:border-white dark:bg-white dark:text-black">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  <span>Enrolled & Active</span>
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 rounded-full border border-neutral-400 bg-neutral-100 px-3 py-1 text-xs font-bold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
-                  <span>Not Enrolled</span>
-                </span>
-              )}
+              <StatusBadge
+                label={user?.hasFaceEnrolled ? 'Enrolled & Active' : 'Not Enrolled'}
+                variant={user?.hasFaceEnrolled ? 'positive' : 'muted'}
+              />
             </div>
           </div>
 
           {faceDeleteSuccess && (
-            <div className="rounded-xl border border-neutral-900 bg-neutral-100 p-3 text-xs font-bold text-neutral-900 dark:border-white dark:bg-neutral-800 dark:text-white flex items-center gap-2">
+            <div className="rounded-lg border border-accent/20 bg-accent-soft p-3 text-xs font-medium text-accent flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4" />
               <span>{faceDeleteSuccess}</span>
             </div>
           )}
 
           {user?.hasFaceEnrolled ? (
-            <div className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="text-xs text-neutral-600 dark:text-neutral-400 space-y-1">
-                <p className="font-bold text-neutral-900 dark:text-white">
+            <div className="p-4 rounded-lg border border-border bg-bg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="text-xs text-muted space-y-1">
+                <p className="font-medium text-text">
                   Biometric mathematical vector is fully encrypted. You can revoke consent and purge vectors anytime.
                 </p>
                 <p>Purging deletes the mathematical embedding permanently without residual backups.</p>
@@ -677,16 +657,16 @@ export const SettingsPage: React.FC = () => {
               <button
                 onClick={handleDeleteFaceData}
                 disabled={isDeletingFace}
-                className="flex items-center gap-2 rounded-xl border border-neutral-400 px-4 py-2 text-xs font-bold text-neutral-800 hover:bg-neutral-200 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-800 transition-colors shrink-0"
+                className="flex items-center gap-2 rounded-lg border border-border px-3.5 py-2 text-xs font-medium text-muted hover:text-danger hover:border-danger/30 hover:bg-danger-soft transition-colors shrink-0 cursor-pointer"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-3.5 h-3.5" />
                 <span>{isDeletingFace ? 'Purging...' : 'Delete Biometrics & Revoke Consent'}</span>
               </button>
             </div>
           ) : (
-            <div className="p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="text-xs text-neutral-600 dark:text-neutral-400">
-                <p className="font-bold text-neutral-900 dark:text-white mb-1">
+            <div className="p-4 rounded-lg border border-border bg-bg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="text-xs text-muted">
+                <p className="font-medium text-text mb-1">
                   You have not enrolled your face biometrics yet.
                 </p>
                 <p>Enrollment requires explicit legal consent and an active camera liveness challenge.</p>
@@ -694,9 +674,9 @@ export const SettingsPage: React.FC = () => {
 
               <button
                 onClick={() => setIsFaceModalOpen(true)}
-                className="flex items-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-5 py-2.5 text-xs font-bold transition-colors shrink-0"
+                className="flex items-center gap-2 rounded-lg bg-accent text-white hover:bg-accent-hover px-4 py-2 text-xs font-medium transition-colors shrink-0 cursor-pointer"
               >
-                <ScanFace className="w-4 h-4" />
+                <ScanFace className="w-3.5 h-3.5" />
                 <span>Enroll Face Biometrics</span>
               </button>
             </div>
@@ -705,34 +685,28 @@ export const SettingsPage: React.FC = () => {
       </div>
 
       {/* Two-Factor Authentication (2FA) */}
-      <div className="rounded-2xl border border-neutral-300 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 space-y-4">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-subtle space-y-4 text-text">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <h2 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-neutral-900 dark:text-white" />
+            <h2 className="text-sm font-semibold text-text flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-accent" />
               <span>Two-Factor Authentication (TOTP 2FA)</span>
             </h2>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-xl">
+            <p className="text-xs text-muted max-w-xl">
               Add a defense layer using time-based one-time passcodes from apps like Google Authenticator, 1Password, or Authy.
             </p>
           </div>
 
           <div>
-            {user?.isTwoFactorEnabled ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-neutral-900 bg-black px-3 py-1 text-xs font-black text-white dark:border-white dark:bg-white dark:text-black">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                <span>Enabled</span>
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 rounded-full border border-neutral-400 bg-neutral-100 px-3 py-1 text-xs font-bold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
-                <span>Disabled</span>
-              </span>
-            )}
+            <StatusBadge
+              label={user?.isTwoFactorEnabled ? 'Enabled' : 'Disabled'}
+              variant={user?.isTwoFactorEnabled ? 'positive' : 'muted'}
+            />
           </div>
         </div>
 
         {setupError && (
-          <div className="rounded-xl border border-neutral-900 bg-neutral-100 p-3 text-xs font-bold text-neutral-900 dark:border-white dark:bg-neutral-800 dark:text-white">
+          <div className="rounded-lg border border-danger/30 bg-danger-soft p-3 text-xs font-medium text-danger">
             {setupError}
           </div>
         )}
@@ -742,29 +716,29 @@ export const SettingsPage: React.FC = () => {
             {!is2FASetupOpen ? (
               <button
                 onClick={handleStart2FASetup}
-                className="flex items-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-5 py-2.5 text-xs font-bold transition-colors"
+                className="flex items-center gap-2 rounded-lg bg-accent text-white hover:bg-accent-hover px-4 py-2 text-xs font-medium transition-colors cursor-pointer"
               >
-                <QrCode className="h-4 w-4" />
+                <QrCode className="h-3.5 w-3.5" />
                 <span>Begin 2FA Setup</span>
               </button>
             ) : (
-              <div className="rounded-2xl border border-neutral-300 bg-neutral-50/50 p-5 dark:border-neutral-700 dark:bg-neutral-800/40 space-y-4">
-                <p className="text-xs font-bold text-neutral-700 dark:text-neutral-300">
+              <div className="rounded-xl border border-border bg-bg p-5 space-y-4">
+                <p className="text-xs font-medium text-text">
                   1. Scan this QR code using your authenticator application:
                 </p>
 
                 {twoFactorData && (
                   <div className="flex flex-col sm:flex-row items-center gap-6">
-                    <div className="rounded-2xl bg-white p-3 shadow-md border border-neutral-200">
+                    <div className="rounded-xl bg-white p-3 shadow-sm border border-border">
                       <img
                         src={twoFactorData.qrCodeDataUrl}
                         alt="2FA QR Code"
-                        className="h-44 w-44"
+                        className="h-40 w-40"
                       />
                     </div>
-                    <div className="space-y-2 text-xs text-neutral-600 dark:text-neutral-400">
+                    <div className="space-y-2 text-xs text-muted">
                       <p>Or manually enter this secret setup key:</p>
-                      <code className="block rounded-lg bg-neutral-200 p-2 font-mono text-xs font-bold dark:bg-neutral-900 select-all">
+                      <code className="block rounded-lg bg-card border border-border p-2 font-mono text-xs font-medium text-text select-all">
                         {twoFactorData.secret}
                       </code>
                     </div>
@@ -772,7 +746,7 @@ export const SettingsPage: React.FC = () => {
                 )}
 
                 <form onSubmit={handleEnable2FA} className="space-y-3 pt-2">
-                  <p className="text-xs font-bold text-neutral-700 dark:text-neutral-300">
+                  <p className="text-xs font-medium text-text">
                     2. Enter the 6-digit verification code to activate:
                   </p>
                   <div className="flex items-center gap-3">
@@ -783,18 +757,18 @@ export const SettingsPage: React.FC = () => {
                       value={totpVerifyCode}
                       onChange={(e) => setTotpVerifyCode(e.target.value.replace(/\D/g, ''))}
                       placeholder="123456"
-                      className="w-40 rounded-xl border border-neutral-300 px-3 py-2 text-center font-mono text-sm tracking-widest focus:border-black dark:border-neutral-700 dark:bg-neutral-800"
+                      className="w-36 rounded-lg border border-border bg-card px-3 py-2 text-center font-mono text-sm tracking-widest text-text focus:border-accent focus:outline-none"
                     />
                     <button
                       type="submit"
-                      className="rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-5 py-2 text-xs font-bold"
+                      className="rounded-lg bg-accent text-white hover:bg-accent-hover px-4 py-2 text-xs font-medium transition-colors cursor-pointer"
                     >
-                      Verify & Activate 2FA
+                      Verify &amp; Activate 2FA
                     </button>
                     <button
                       type="button"
                       onClick={() => setIs2FASetupOpen(false)}
-                      className="rounded-xl border border-neutral-300 px-4 py-2 text-xs font-semibold text-neutral-700 dark:border-neutral-700 dark:text-neutral-300"
+                      className="rounded-lg border border-border px-3.5 py-2 text-xs font-medium text-muted hover:text-text hover:bg-card transition-colors cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -808,7 +782,7 @@ export const SettingsPage: React.FC = () => {
             {!disabling2FA ? (
               <button
                 onClick={() => setDisabling2FA(true)}
-                className="rounded-xl border border-neutral-400 px-4 py-2 text-xs font-bold text-neutral-800 hover:bg-neutral-200 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                className="rounded-lg border border-border px-3.5 py-2 text-xs font-medium text-muted hover:text-danger hover:border-danger/30 hover:bg-danger-soft transition-colors cursor-pointer"
               >
                 Disable Two-Factor Authentication
               </button>
@@ -820,18 +794,18 @@ export const SettingsPage: React.FC = () => {
                   value={disablePassword}
                   onChange={(e) => setDisablePassword(e.target.value)}
                   placeholder="Enter password to confirm"
-                  className="w-64 rounded-xl border border-neutral-300 px-3 py-2 text-xs focus:border-black dark:border-neutral-700 dark:bg-neutral-800"
+                  className="w-60 rounded-lg border border-border bg-bg px-3 py-2 text-xs text-text focus:border-accent focus:outline-none"
                 />
                 <button
                   type="submit"
-                  className="rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-4 py-2 text-xs font-bold"
+                  className="rounded-lg bg-accent text-white hover:bg-accent-hover px-4 py-2 text-xs font-medium cursor-pointer"
                 >
                   Confirm Disable
                 </button>
                 <button
                   type="button"
                   onClick={() => setDisabling2FA(false)}
-                  className="rounded-xl border border-neutral-300 px-3 py-2 text-xs font-semibold"
+                  className="rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted hover:text-text hover:bg-bg cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -842,30 +816,30 @@ export const SettingsPage: React.FC = () => {
       </div>
 
       {/* Data Privacy & Export */}
-      <div className="rounded-2xl border border-neutral-300 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 space-y-3">
-        <h2 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-          <Download className="h-5 w-5 text-neutral-900 dark:text-white" />
-          <span>Export All Data (GDPR & Data Portability)</span>
+      <div className="rounded-xl border border-border bg-card p-6 shadow-subtle space-y-3 text-text">
+        <h2 className="text-sm font-semibold text-text flex items-center gap-2">
+          <Download className="h-4 w-4 text-accent" />
+          <span>Export All Data (GDPR &amp; Data Portability)</span>
         </h2>
-        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+        <p className="text-xs text-muted">
           Download a comprehensive machine-readable archive (.json) containing your profile records, customer ledger entries, WhatsApp templates, and audit logs.
         </p>
         <button
           onClick={handleExportAllData}
-          className="flex items-center gap-2 rounded-xl border border-neutral-400 bg-neutral-100 px-4 py-2 text-xs font-bold text-neutral-800 hover:bg-neutral-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+          className="flex items-center gap-2 rounded-lg border border-border bg-card hover:bg-bg px-4 py-2 text-xs font-medium text-text transition-colors cursor-pointer"
         >
-          <Download className="h-4 w-4" />
+          <Download className="h-3.5 w-3.5 text-muted" />
           <span>Export JSON Archive</span>
         </button>
       </div>
 
       {/* Danger Zone: Permanent Account Deletion */}
-      <div className="rounded-2xl border-2 border-neutral-900 dark:border-neutral-400 bg-neutral-50/60 p-6 dark:bg-neutral-900/40 space-y-4">
-        <div className="flex items-center gap-2 text-neutral-900 dark:text-white">
-          <AlertTriangle className="h-5 w-5" />
-          <h2 className="text-base font-black">Danger Zone: Permanent Account Deletion</h2>
+      <div className="rounded-xl border border-danger/30 bg-danger-soft/30 p-6 space-y-4 text-text">
+        <div className="flex items-center gap-2 text-danger">
+          <AlertTriangle className="h-4 w-4" />
+          <h2 className="text-sm font-semibold">Danger Zone: Permanent Account Deletion</h2>
         </div>
-        <p className="text-xs text-neutral-700 dark:text-neutral-300">
+        <p className="text-xs text-muted">
           This operation will permanently purge your user profile, customer entries, message drafts, and credentials from the system. This cannot be undone.
         </p>
 
@@ -875,53 +849,53 @@ export const SettingsPage: React.FC = () => {
             setDeleteError(null);
             setIsDeleteModalOpen(true);
           }}
-          className="flex items-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border-2 border-neutral-900 dark:border-white px-5 py-2.5 text-xs font-extrabold transition-colors"
+          className="flex items-center gap-2 rounded-lg bg-danger text-white hover:bg-red-700 px-4 py-2 text-xs font-medium transition-colors cursor-pointer"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="h-3.5 w-3.5" />
           <span>Delete Account Permanently</span>
         </button>
       </div>
 
       {/* Delete Confirmation Dialog */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-neutral-900 border-2 border-neutral-900 dark:border-neutral-400">
-            <h3 className="text-base font-black text-neutral-900 dark:text-white mb-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl bg-card border border-border p-6 shadow-lg text-text">
+            <h3 className="text-base font-semibold text-text mb-2">
               Confirm Account Deletion
             </h3>
-            <p className="text-xs text-neutral-600 dark:text-neutral-300 mb-4">
+            <p className="text-xs text-muted mb-4">
               Enter your current password to authorize final deletion. You cannot revert this action:
             </p>
 
             {deleteError && (
-              <div className="mb-3 rounded-lg border border-neutral-900 bg-neutral-100 p-2.5 text-xs font-bold text-neutral-900 dark:border-white dark:bg-neutral-800 dark:text-white">
+              <div className="mb-3 rounded-lg border border-danger/30 bg-danger-soft p-2.5 text-xs font-medium text-danger">
                 {deleteError}
               </div>
             )}
 
             <div className="relative mb-4">
-              <Lock className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
+              <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted" />
               <input
                 type="password"
                 required
                 value={deletePassword}
                 onChange={(e) => setDeletePassword(e.target.value)}
                 placeholder="Current Password"
-                className="w-full rounded-xl border border-neutral-300 pl-9 pr-3 py-2 text-xs focus:border-black focus:ring-1 focus:ring-black dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                className="w-full rounded-lg border border-border bg-bg pl-9 pr-3 py-2 text-xs text-text focus:border-accent focus:outline-none"
               />
             </div>
 
-            <div className="flex items-center justify-end gap-3">
+            <div className="flex items-center justify-end gap-2.5">
               <button
                 onClick={() => setIsDeleteModalOpen(false)}
-                className="rounded-xl border border-neutral-300 px-4 py-2 text-xs font-semibold text-neutral-700 dark:border-neutral-700 dark:text-neutral-300"
+                className="rounded-lg border border-border px-3.5 py-2 text-xs font-medium text-muted hover:text-text hover:bg-bg cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteAccount}
                 disabled={isDeleting || !deletePassword}
-                className="rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border-2 border-neutral-900 dark:border-white px-5 py-2 text-xs font-bold disabled:opacity-50 transition-colors"
+                className="rounded-lg bg-danger text-white hover:bg-red-700 px-4 py-2 text-xs font-medium disabled:opacity-50 transition-colors cursor-pointer"
               >
                 {isDeleting ? 'Deleting...' : 'Confirm Deletion'}
               </button>
@@ -948,23 +922,25 @@ export const SettingsPage: React.FC = () => {
 
       {/* Add Employee Modal (Admin Only) */}
       {isAddEmployeeOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-neutral-900 border-2 border-black dark:border-white text-black dark:text-white">
-            <div className="flex items-center justify-between border-b-2 border-black dark:border-white pb-3 mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl bg-card border border-border p-6 shadow-lg text-text">
+            <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
               <div className="flex items-center gap-2">
-                <UserPlus className="w-5 h-5" />
-                <h3 className="font-black text-base">Add New Staff Member</h3>
+                <span className="p-1.5 rounded-lg border border-accent/20 bg-accent-soft text-accent">
+                  <UserPlus className="w-4 h-4" />
+                </span>
+                <h3 className="font-semibold text-base text-text">Add New Staff Member</h3>
               </div>
               <button
                 onClick={() => setIsAddEmployeeOpen(false)}
-                className="text-xs font-bold p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                className="p-1 rounded-lg border border-border hover:bg-bg text-muted hover:text-text cursor-pointer transition-colors"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {employeeError && (
-              <div className="mb-4 p-3 border-2 border-black dark:border-white bg-neutral-100 dark:bg-neutral-800 text-xs font-bold">
+              <div className="mb-4 p-3 rounded-lg border border-danger/30 bg-danger-soft text-danger text-xs font-medium">
                 {employeeError}
               </div>
             )}
@@ -981,48 +957,48 @@ export const SettingsPage: React.FC = () => {
               className="space-y-4 text-xs"
             >
               <div>
-                <label className="block font-black uppercase mb-1">Full Name</label>
+                <label className="block font-medium text-muted mb-1">Full Name</label>
                 <input
                   type="text"
                   required
                   value={newEmployeeName}
                   onChange={(e) => setNewEmployeeName(e.target.value)}
                   placeholder="e.g. John Doe"
-                  className="w-full rounded-xl border border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
+                  className="w-full rounded-lg border border-border bg-bg px-3.5 py-2 text-xs text-text focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-black uppercase mb-1">Corporate Email</label>
+                <label className="block font-medium text-muted mb-1">Corporate Email</label>
                 <input
                   type="email"
                   required
                   value={newEmployeeEmail}
                   onChange={(e) => setNewEmployeeEmail(e.target.value)}
                   placeholder="john@tiger.com"
-                  className="w-full rounded-xl border border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white font-mono"
+                  className="w-full rounded-lg border border-border bg-bg px-3.5 py-2 text-xs text-text focus:border-accent focus:outline-none font-mono"
                 />
               </div>
 
-              <div className="p-3 border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/40 rounded-xl space-y-1">
-                <p className="font-bold">Security Notice:</p>
-                <p className="text-neutral-600 dark:text-neutral-400">
+              <div className="p-3 border border-border bg-bg rounded-lg space-y-1">
+                <p className="font-medium text-text">Security Notice:</p>
+                <p className="text-muted">
                   The system generates a secure temporary password. The employee will be prompted to reset their credentials upon first sign-in, upload their photo, and enroll biometric verification.
                 </p>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setIsAddEmployeeOpen(false)}
-                  className="px-4 py-2 border border-neutral-300 dark:border-neutral-700 rounded-xl font-bold"
+                  className="px-3.5 py-2 border border-border rounded-lg text-muted hover:text-text hover:bg-bg font-medium transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createEmployeeMutation.isPending}
-                  className="px-5 py-2 bg-black dark:bg-white text-white dark:text-black font-black rounded-xl border border-black dark:border-white disabled:opacity-50"
+                  className="px-4 py-2 bg-accent text-white font-medium rounded-lg hover:bg-accent-hover transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {createEmployeeMutation.isPending ? 'Creating...' : 'Create Account'}
                 </button>
@@ -1034,52 +1010,54 @@ export const SettingsPage: React.FC = () => {
 
       {/* Created Employee Credentials Modal */}
       {createdEmployeeCreds && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-neutral-900 border-2 border-black dark:border-white text-black dark:text-white space-y-4">
-            <div className="flex items-center gap-2 border-b-2 border-black dark:border-white pb-3">
-              <CheckCircle2 className="w-6 h-6 text-black dark:text-white" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-xl bg-card border border-border p-6 shadow-lg text-text space-y-4">
+            <div className="flex items-center gap-2.5 border-b border-border pb-3">
+              <span className="p-1.5 rounded-lg border border-accent/20 bg-accent-soft text-accent">
+                <CheckCircle2 className="w-5 h-5" />
+              </span>
               <div>
-                <h3 className="font-black text-base">Employee Account Created!</h3>
-                <p className="text-[11px] text-neutral-500 font-bold">Copy these temporary credentials and provide them securely to the employee</p>
+                <h3 className="font-semibold text-base text-text">Employee Account Created!</h3>
+                <p className="text-xs text-muted">Copy these temporary credentials and provide them securely to the employee</p>
               </div>
             </div>
 
-            <div className="space-y-3 p-4 border border-neutral-300 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/40 rounded-xl text-xs">
+            <div className="space-y-3 p-4 border border-border bg-bg rounded-lg text-xs">
               <div className="flex justify-between items-center">
-                <span className="font-bold text-neutral-500">Employee Name:</span>
-                <span className="font-black">{createdEmployeeCreds.name}</span>
+                <span className="text-muted">Employee Name:</span>
+                <span className="font-semibold text-text">{createdEmployeeCreds.name}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="font-bold text-neutral-500">Email:</span>
-                <span className="font-mono font-bold">{createdEmployeeCreds.email}</span>
+                <span className="text-muted">Email:</span>
+                <span className="font-mono text-text">{createdEmployeeCreds.email}</span>
               </div>
-              <div className="pt-2 border-t border-neutral-200 dark:border-neutral-700">
-                <span className="font-bold text-neutral-500 block mb-1">Temporary Password:</span>
+              <div className="pt-2 border-t border-border">
+                <span className="text-muted block mb-1">Temporary Password:</span>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 bg-black text-white dark:bg-white dark:text-black p-2 rounded-lg font-mono text-sm font-bold text-center tracking-wider select-all">
+                  <code className="flex-1 bg-card border border-border p-2 rounded-lg font-mono text-xs font-semibold text-text text-center tracking-wider select-all">
                     {createdEmployeeCreds.temporaryPassword}
                   </code>
                   <button
                     onClick={handleCopyPassword}
-                    className="p-2 border-2 border-black dark:border-white rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors flex items-center gap-1 font-bold text-xs"
+                    className="p-2 border border-border rounded-lg bg-card hover:bg-bg text-text transition-colors flex items-center gap-1 font-medium text-xs cursor-pointer"
                     title="Copy password"
                   >
-                    {copiedPass ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    {copiedPass ? <Check className="w-3.5 h-3.5 text-accent" /> : <Copy className="w-3.5 h-3.5 text-muted" />}
                     <span>{copiedPass ? 'Copied!' : 'Copy'}</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            <p className="text-[11px] text-neutral-600 dark:text-neutral-400 font-bold">
+            <p className="text-xs text-muted">
               * The employee will be forced to change this password on their initial login.
             </p>
 
             <button
               onClick={() => setCreatedEmployeeCreds(null)}
-              className="w-full py-2.5 bg-black dark:bg-white text-white dark:text-black font-black text-xs uppercase rounded-xl border border-black dark:border-white"
+              className="w-full py-2.5 bg-accent text-white font-medium text-xs rounded-lg hover:bg-accent-hover transition-colors cursor-pointer"
             >
-              Done & Close
+              Done &amp; Close
             </button>
           </div>
         </div>

@@ -246,7 +246,7 @@ export const PromotCompanyPage: React.FC = () => {
                   : 'bg-white/10 text-neutral-300 hover:bg-white/20 border border-white/10'
               }`}
             >
-              ★ Tiger Video (Flow Edition - 1080p)
+              Tiger Video (Flow Edition - 1080p)
             </button>
             <button
               type="button"
@@ -476,7 +476,7 @@ export const PromotCompanyPage: React.FC = () => {
                   </div>
                 </div>
                 <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-purple-600 text-[10px] font-mono font-bold text-white shadow">
-                  ★ FLOW PRODUCTION (1080p)
+                  FLOW PRODUCTION (1080p)
                 </span>
                 <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/80 text-[10px] font-mono text-emerald-400 font-bold">
                   Exclusive Tiger Film
@@ -748,9 +748,9 @@ export const PromotCompanyPage: React.FC = () => {
               </span>
               <button
                 onClick={() => setIsVideoModalOpen(false)}
-                className="p-1 rounded text-neutral-400 hover:text-white cursor-pointer font-bold"
+                className="px-2 py-0.5 text-xs rounded text-neutral-400 hover:text-white cursor-pointer font-bold border border-white/20"
               >
-                ✕
+                Close
               </button>
             </div>
             <div className="aspect-video w-full bg-black flex items-center justify-center">

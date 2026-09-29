@@ -4,6 +4,7 @@ import { api } from '../lib/api.js';
 import type { Customer, MessageTemplate } from '../types/index.js';
 import { formatDate, isOverdue, generateWhatsAppUrl, getStatusLabel } from '../lib/utils.js';
 import { Clock, AlertCircle, MessageCircle, Calendar } from 'lucide-react';
+import { StatusBadge } from './common/StatusBadge.js';
 
 interface DueTodayBannerProps {
   onCustomerClick?: (customer: Customer) => void;
@@ -29,23 +30,23 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({ onCustomerClick 
 
   if (isLoading) {
     return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 animate-pulse">
-        <div className="h-5 w-48 bg-gray-200 dark:bg-gray-800 rounded mb-3" />
-        <div className="h-16 bg-gray-100 dark:bg-gray-800/50 rounded-xl" />
+      <div className="rounded-xl border border-border bg-card p-4 shadow-subtle animate-pulse mb-6">
+        <div className="h-4 w-48 bg-border rounded mb-3" />
+        <div className="h-16 bg-bg rounded-lg" />
       </div>
     );
   }
 
   if (dueCustomers.length === 0) {
     return (
-      <div className="rounded-2xl border border-neutral-300 bg-neutral-100/70 p-4 dark:border-neutral-800 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 flex items-center justify-between" dir="ltr">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-subtle text-text flex items-center justify-between mb-6" dir="ltr">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white">
-            <Clock className="h-5 w-5" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-bg text-muted">
+            <Clock className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="text-sm font-bold">No follow-ups due today or overdue</h3>
-            <p className="text-xs opacity-80">All clients are actively updated and on schedule.</p>
+            <h3 className="text-xs font-semibold text-text">No Follow-ups Due Today</h3>
+            <p className="text-xs text-muted">All client accounts are updated and on schedule.</p>
           </div>
         </div>
       </div>
@@ -61,20 +62,20 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({ onCustomerClick 
   };
 
   return (
-    <div className="rounded-2xl border-2 border-neutral-900 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900/60 p-5 shadow-sm mb-6" dir="ltr">
+    <div className="rounded-xl border border-border bg-card p-5 shadow-subtle mb-6" dir="ltr">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-black text-white dark:bg-white dark:text-black shadow-sm">
-            <AlertCircle className="h-5 w-5" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-soft text-accent">
+            <AlertCircle className="h-4 w-4" />
           </div>
           <div>
-            <h2 className="text-base font-black text-neutral-900 dark:text-white">
-              Today &amp; Overdue Follow-ups ({dueCustomers.length})
+            <h2 className="text-sm font-semibold text-text">
+              Action Required ({dueCustomers.length})
             </h2>
-            <p className="text-xs text-neutral-600 dark:text-neutral-400">
+            <p className="text-xs text-muted">
               {overdueList.length > 0 && (
-                <span className="font-extrabold text-black dark:text-white underline decoration-2">
-                  {overdueList.length} Overdue •{' '}
+                <span className="text-danger font-medium">
+                  {overdueList.length} Overdue &bull;{' '}
                 </span>
               )}
               {todayList.length} Due Today
@@ -92,54 +93,53 @@ export const DueTodayBanner: React.FC<DueTodayBannerProps> = ({ onCustomerClick 
           return (
             <div
               key={customer.id}
-              className={`flex flex-col justify-between rounded-xl p-3.5 transition-all bg-white dark:bg-neutral-900 shadow-sm ${
+              className={`flex flex-col justify-between rounded-lg p-3.5 transition-colors bg-card shadow-subtle ${
                 overdue
-                  ? 'border-2 border-neutral-900 dark:border-neutral-200'
-                  : 'border border-neutral-300 dark:border-neutral-700'
+                  ? 'border border-danger/60'
+                  : 'border border-border hover:border-accent'
               }`}
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-1.5">
                   <button
                     onClick={() => onCustomerClick?.(customer)}
-                    className="font-bold text-sm text-neutral-900 dark:text-white hover:underline text-left transition-colors cursor-pointer"
+                    className="font-semibold text-xs text-text hover:text-accent text-left transition-colors cursor-pointer truncate"
                   >
                     {customer.name}
                   </button>
                   <span
-                    className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                    className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
                       overdue
-                        ? 'bg-black text-white dark:bg-white dark:text-black font-extrabold'
-                        : 'border border-neutral-900 text-neutral-900 dark:border-white dark:text-white'
+                        ? 'bg-danger-soft text-danger'
+                        : 'bg-accent-soft text-accent'
                     }`}
                   >
-                    {overdue ? 'OVERDUE' : 'TODAY'}
+                    {overdue ? 'Overdue' : 'Today'}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400 mb-2">
+                <div className="flex items-center gap-1.5 text-xs text-muted mb-2">
                   <Calendar className="h-3.5 w-3.5" />
-                  <span>Next: {formatDate(customer.next)}</span>
+                  <span className="tabular-nums">Next: {formatDate(customer.next)}</span>
                 </div>
 
                 {customer.company && (
-                  <p className="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-1 mb-2">
+                  <p className="text-xs text-muted line-clamp-1 mb-2">
                     {customer.company}
                   </p>
                 )}
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-neutral-200 dark:border-neutral-800 gap-2">
-                <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                  Status: <span className="font-bold text-neutral-900 dark:text-white">{getStatusLabel(customer.status)}</span>
-                </span>
+              <div className="flex items-center justify-between pt-2.5 border-t border-border gap-2">
+                <StatusBadge label={getStatusLabel(customer.status)} statusKey={customer.status} />
+
                 <a
                   href={waUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-lg border border-neutral-900 dark:border-neutral-300 px-3 py-1.5 text-xs font-bold text-neutral-900 dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-text hover:bg-bg transition-colors"
                 >
-                  <MessageCircle className="h-3.5 w-3.5" />
+                  <MessageCircle className="h-3.5 w-3.5 text-muted" />
                   <span>WhatsApp</span>
                 </a>
               </div>

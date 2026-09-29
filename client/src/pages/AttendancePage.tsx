@@ -12,8 +12,8 @@ import {
   LedgerModal,
   PunchedCard,
 } from '../components/common/LedgerComponents.js';
-import { RubberStamp } from '../components/common/RubberStamp.js';
-import { LedgerIcon } from '../components/icons/LedgerIcons.js';
+import { StatusBadge } from '../components/common/StatusBadge.js';
+import { Camera, Calendar, Clock, Edit2, Plus, Users, CheckCircle, XCircle } from 'lucide-react';
 import type { Attendance, LeaveRequest, AttendanceCorrection } from '../types/index.js';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from 'date-fns';
 
@@ -26,7 +26,6 @@ export const AttendancePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'card' | 'monthly' | 'requests' | 'admin'>('card');
   const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'yyyy-MM'));
   const [isFaceModalOpen, setIsFaceModalOpen] = useState(false);
-  const [isSoundEnabled, setIsSoundEnabled] = useState(false);
 
   // Leave Modal State
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
@@ -99,35 +98,14 @@ export const AttendancePage: React.FC = () => {
     };
   }, [socket, queryClient]);
 
-  const playPunchSound = () => {
-    if (!isSoundEnabled) return;
-    try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(320, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.08);
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.08);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.08);
-    } catch {
-      // Audio context disabled
-    }
-  };
-
-  // Check-In Mutation
+  // Check In Mutation
   const checkInMutation = useMutation({
     mutationFn: async () => {
-      const res = await api.post('/attendance/check-in');
+      const res = await api.post('/attendance/check-in', {});
       return res.data;
     },
     onSuccess: (data) => {
-      playPunchSound();
-      addToast(data.message || 'Time card stamped for Clock In', 'success');
+      addToast(data.message || 'Clock In timestamp registered', 'success');
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
     },
     onError: (err: any) => {
@@ -135,15 +113,14 @@ export const AttendancePage: React.FC = () => {
     },
   });
 
-  // Check-Out Mutation
+  // Check Out Mutation
   const checkOutMutation = useMutation({
     mutationFn: async () => {
-      const res = await api.post('/attendance/check-out');
+      const res = await api.post('/attendance/check-out', {});
       return res.data;
     },
     onSuccess: (data) => {
-      playPunchSound();
-      addToast(data.message || 'Time card stamped for Clock Out', 'success');
+      addToast(data.message || 'Clock Out timestamp registered', 'success');
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
     },
     onError: (err: any) => {
@@ -185,7 +162,7 @@ export const AttendancePage: React.FC = () => {
       return res.data;
     },
     onSuccess: () => {
-      addToast('Punch correction request escalated for manager review', 'success');
+      addToast('Correction request submitted for manager review', 'success');
       setIsCorrectionModalOpen(false);
       setCorrectionReason('');
       queryClient.invalidateQueries({ queryKey: ['attendance', 'corrections'] });
@@ -225,23 +202,6 @@ export const AttendancePage: React.FC = () => {
     },
   });
 
-  // Admin: Trigger Absence Job
-  const triggerAbsenceJobMutation = useMutation({
-    mutationFn: async () => {
-      const res = await api.post('/attendance/trigger-absence-job', {
-        date: format(new Date(), 'yyyy-MM-dd'),
-      });
-      return res.data;
-    },
-    onSuccess: (data) => {
-      addToast(`Absence check finished: recorded ${data.data?.absencesRecorded || 0} absences`, 'success');
-      queryClient.invalidateQueries({ queryKey: ['attendance'] });
-    },
-    onError: (err: any) => {
-      addToast(err.response?.data?.error || 'Failed to trigger absence job', 'error');
-    },
-  });
-
   const hasCheckedIn = Boolean(myStatus?.checkIn);
   const hasCheckedOut = Boolean(myStatus?.checkOut);
 
@@ -249,104 +209,88 @@ export const AttendancePage: React.FC = () => {
     if (!isoString) return '';
     try {
       const d = new Date(isoString);
-      return d.toTimeString().split(' ')[0];
+      return format(d, 'HH:mm:ss');
     } catch {
       return '';
     }
   };
 
-  const currentMonthDate = new Date(`${selectedMonth}-01`);
+  const selectedMonthDate = new Date(`${selectedMonth}-01`);
   const daysInMonth = eachDayOfInterval({
-    start: startOfMonth(currentMonthDate),
-    end: endOfMonth(currentMonthDate),
+    start: startOfMonth(selectedMonthDate),
+    end: endOfMonth(selectedMonthDate),
   });
 
   return (
-    <div className="space-y-8" dir="ltr">
-      {/* Page Header */}
-      <div className="border-b-2 border-neutral-900 dark:border-white pb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="space-y-6">
+      {/* 1. Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-mono font-bold uppercase tracking-widest px-1.5 py-0.5 border border-neutral-900 dark:border-white">
-              TIGER TIME &amp; ATTENDANCE
-            </span>
-            <span className="text-xs font-mono text-neutral-500">Record #ATT-2026</span>
+          <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted font-medium">
+            <span>Workforce Management</span>
+            <span>/</span>
+            <span>Time &amp; Attendance</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-neutral-950 dark:text-white">
+          <h1 className="text-xl sm:text-2xl font-semibold text-text mt-1">
             Workforce Shifts &amp; Time Tracking
-          </h2>
-          <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-            Physical-style time cards, facial biometric verification, leave workflows, and punch dispute resolutions.
+          </h1>
+          <p className="text-xs text-muted mt-0.5">
+            Transparent work logs, shift verification, leaves workflow, and timestamp dispute management.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Sound Toggle */}
+        {/* View Tab Switchers */}
+        <div className="inline-flex rounded-lg border border-border bg-bg p-0.5">
           <button
-            type="button"
-            onClick={() => setIsSoundEnabled(!isSoundEnabled)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono font-bold border-2 border-neutral-900 dark:border-white transition-colors cursor-pointer ${
-              isSoundEnabled ? 'bg-neutral-900 text-white dark:bg-white dark:text-black' : 'bg-white dark:bg-neutral-900'
+            onClick={() => setActiveTab('card')}
+            className={`px-3 py-1.5 text-xs rounded-md transition-colors cursor-pointer ${
+              activeTab === 'card'
+                ? 'bg-card text-text font-semibold shadow-subtle'
+                : 'text-muted hover:text-text font-normal'
             }`}
-            title="Toggle mechanical punch sound effect"
           >
-            <LedgerIcon name={isSoundEnabled ? 'sound-on' : 'sound-off'} size={14} />
-            <span>Sound FX: {isSoundEnabled ? 'ON' : 'OFF'}</span>
+            Time Card
           </button>
-
-          {/* View Tab Switchers */}
-          <div className="flex border-2 border-neutral-900 dark:border-white font-mono text-xs">
+          <button
+            onClick={() => setActiveTab('monthly')}
+            className={`px-3 py-1.5 text-xs rounded-md transition-colors cursor-pointer ${
+              activeTab === 'monthly'
+                ? 'bg-card text-text font-semibold shadow-subtle'
+                : 'text-muted hover:text-text font-normal'
+            }`}
+          >
+            Monthly Log
+          </button>
+          <button
+            onClick={() => setActiveTab('requests')}
+            className={`px-3 py-1.5 text-xs rounded-md transition-colors cursor-pointer ${
+              activeTab === 'requests'
+                ? 'bg-card text-text font-semibold shadow-subtle'
+                : 'text-muted hover:text-text font-normal'
+            }`}
+          >
+            Requests ({leaves.length + corrections.length})
+          </button>
+          {user?.role === 'admin' && (
             <button
-              onClick={() => setActiveTab('card')}
-              className={`px-3 py-1 font-bold cursor-pointer ${
-                activeTab === 'card'
-                  ? 'bg-neutral-900 text-white dark:bg-white dark:text-black'
-                  : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
+              onClick={() => setActiveTab('admin')}
+              className={`px-3 py-1.5 text-xs rounded-md transition-colors cursor-pointer ${
+                activeTab === 'admin'
+                  ? 'bg-card text-text font-semibold shadow-subtle'
+                  : 'text-muted hover:text-text font-normal'
               }`}
             >
-              Time Card
+              Manager Audit
             </button>
-            <button
-              onClick={() => setActiveTab('monthly')}
-              className={`px-3 py-1 font-bold border-l border-neutral-900 dark:border-white cursor-pointer ${
-                activeTab === 'monthly'
-                  ? 'bg-neutral-900 text-white dark:bg-white dark:text-black'
-                  : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
-              }`}
-            >
-              Monthly Log
-            </button>
-            <button
-              onClick={() => setActiveTab('requests')}
-              className={`px-3 py-1 font-bold border-l border-neutral-900 dark:border-white cursor-pointer ${
-                activeTab === 'requests'
-                  ? 'bg-neutral-900 text-white dark:bg-white dark:text-black'
-                  : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
-              }`}
-            >
-              Requests ({leaves.length + corrections.length})
-            </button>
-            {user?.role === 'admin' && (
-              <button
-                onClick={() => setActiveTab('admin')}
-                className={`px-3 py-1 font-bold border-l border-neutral-900 dark:border-white cursor-pointer ${
-                  activeTab === 'admin'
-                    ? 'bg-neutral-900 text-white dark:bg-white dark:text-black'
-                    : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
-                }`}
-              >
-                Manager Audit
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
-      {/* VIEW 1: PUNCH CARD & TEAM LEDGER */}
+      {/* VIEW 1: TIME CARD & TEAM PRESENCE */}
       {activeTab === 'card' && (
-        <div className="space-y-10">
+        <div className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            {/* The Punched Card */}
+            {/* The Time Card */}
             <div className="lg:col-span-1 space-y-4">
               <PunchedCard
                 employeeName={user?.name || 'Staff'}
@@ -378,32 +322,33 @@ export const AttendancePage: React.FC = () => {
               />
 
               {/* Action Buttons: Face Scan, Leave, Correction */}
-              <div className="flex flex-col gap-2 max-w-sm font-mono text-xs">
+              <div className="flex flex-col gap-2 max-w-md">
                 <LedgerButton
                   variant="secondary"
-                  icon="camera"
+                  size="sm"
                   onClick={() => setIsFaceModalOpen(true)}
-                  className="w-full text-center"
+                  className="w-full"
                 >
-                  Quick Facial Punch (Face Kiosk)
+                  <Camera className="w-4 h-4 text-muted" />
+                  <span>Facial Biometric Punch</span>
                 </LedgerButton>
 
                 <div className="grid grid-cols-2 gap-2">
                   <LedgerButton
-                    variant="ghost"
-                    icon="calendar"
+                    variant="secondary"
                     size="sm"
                     onClick={() => setIsLeaveModalOpen(true)}
                   >
-                    Request Leave
+                    <Calendar className="w-3.5 h-3.5 text-muted" />
+                    <span>Request Leave</span>
                   </LedgerButton>
                   <LedgerButton
-                    variant="ghost"
-                    icon="edit"
+                    variant="secondary"
                     size="sm"
                     onClick={() => setIsCorrectionModalOpen(true)}
                   >
-                    Correct Punch
+                    <Edit2 className="w-3.5 h-3.5 text-muted" />
+                    <span>Correct Punch</span>
                   </LedgerButton>
                 </div>
               </div>
@@ -411,33 +356,33 @@ export const AttendancePage: React.FC = () => {
 
             {/* Today's Presence Ledger Table */}
             <div className="lg:col-span-2 space-y-3">
-              <div className="flex items-center justify-between border-b border-neutral-300 dark:border-neutral-700 pb-2">
+              <div className="flex items-center justify-between border-b border-border pb-2">
                 <div className="flex items-center gap-2">
-                  <LedgerIcon name="users" size={16} />
-                  <h3 className="font-bold text-base text-neutral-950 dark:text-white">
+                  <Users className="w-4 h-4 text-accent" />
+                  <h3 className="font-semibold text-sm text-text">
                     Team Presence Log Today (Live Sync)
                   </h3>
                 </div>
-                <span className="text-xs font-mono font-bold border border-neutral-900 dark:border-white px-2 py-0.5">
+                <span className="text-xs text-muted font-medium px-2 py-0.5 rounded-full bg-bg border border-border">
                   {teamAttendance.length} registered
                 </span>
               </div>
 
               <LedgerTable>
                 <thead>
-                  <tr className="border-b-2 border-neutral-900 dark:border-white font-bold bg-neutral-100 dark:bg-neutral-900">
+                  <tr className="bg-bg text-muted font-medium text-xs border-b border-border">
                     <th className="p-3">Employee</th>
                     <th className="p-3">Clock In</th>
                     <th className="p-3">Clock Out</th>
                     <th className="p-3">Late Mins</th>
-                    <th className="p-3">Status Stamp</th>
+                    <th className="p-3 text-center">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 font-mono">
+                <tbody className="divide-y divide-border text-xs">
                   {teamAttendance.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-xs text-neutral-500">
-                        No team members have stamped their time card yet today.
+                      <td colSpan={5} className="p-8 text-center text-muted">
+                        No team members have registered attendance today yet.
                       </td>
                     </tr>
                   ) : (
@@ -447,29 +392,29 @@ export const AttendancePage: React.FC = () => {
                       const isLate = Boolean((record as any).lateMinutes && (record as any).lateMinutes > 0);
 
                       return (
-                        <tr key={record.id} className="hover:bg-neutral-50 dark:hover:bg-neutral-900/50">
-                          <td className="p-3 font-bold text-neutral-900 dark:text-white">
+                        <tr key={record.id} className="hover:bg-bg/40 transition-colors">
+                          <td className="p-3 font-semibold text-text">
                             <div>{record.user?.name || 'Staff'}</div>
-                            <div className="text-[10px] font-mono text-neutral-500">{record.user?.email}</div>
+                            <div className="text-[11px] font-normal text-muted">{record.user?.email}</div>
                           </td>
-                          <td className="p-3 font-mono font-bold tabular-nums">
+                          <td className="p-3 font-mono tabular-nums text-text">
                             {formatTime(record.checkIn) || '—'}
                           </td>
-                          <td className="p-3 font-mono tabular-nums text-neutral-600 dark:text-neutral-400">
+                          <td className="p-3 font-mono tabular-nums text-muted">
                             {formatTime(record.checkOut) || '—'}
                           </td>
                           <td className="p-3 font-mono tabular-nums">
-                            {isLate ? `${(record as any).lateMinutes} min` : '—'}
+                            {isLate ? <span className="text-danger font-medium">{(record as any).lateMinutes} min</span> : '—'}
                           </td>
-                          <td className="p-3">
+                          <td className="p-3 text-center">
                             {isDeparted ? (
-                              <RubberStamp label="DEPARTED" recordId={record.id} />
+                              <StatusBadge label="Departed" statusKey="departed" tone="muted" />
                             ) : isLate ? (
-                              <RubberStamp label={`LATE ${(record as any).lateMinutes}M`} recordId={record.id} />
+                              <StatusBadge label={`Late ${(record as any).lateMinutes}m`} statusKey="late" tone="danger" />
                             ) : isPresent ? (
-                              <RubberStamp label="PRESENT" recordId={record.id} subtext="ON DUTY" />
+                              <StatusBadge label="Present" statusKey="present" tone="accent" />
                             ) : (
-                              <span className="text-xs text-neutral-400">—</span>
+                              <span className="text-xs text-muted">—</span>
                             )}
                           </td>
                         </tr>
@@ -483,36 +428,36 @@ export const AttendancePage: React.FC = () => {
         </div>
       )}
 
-      {/* VIEW 2: MONTHLY ATTENDANCE LEDGER */}
+      {/* VIEW 2: MONTHLY ATTENDANCE LOG */}
       {activeTab === 'monthly' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-neutral-300 dark:border-neutral-700 pb-2">
+          <div className="flex items-center justify-between border-b border-border pb-2">
             <div className="flex items-center gap-2">
-              <LedgerIcon name="calendar" size={16} />
-              <h3 className="font-bold text-base text-neutral-950 dark:text-white">
-                My Attendance Log for {selectedMonth}
+              <Calendar className="w-4 h-4 text-accent" />
+              <h3 className="font-semibold text-sm text-text">
+                Monthly Attendance Log for {selectedMonth}
               </h3>
             </div>
             <input
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="bg-white dark:bg-neutral-900 border-2 border-neutral-900 dark:border-white px-2.5 py-1 text-xs font-mono font-bold"
+              className="bg-card border border-border rounded-lg px-2.5 py-1 text-xs text-text shadow-subtle outline-none focus:border-accent"
             />
           </div>
 
           <LedgerTable>
             <thead>
-              <tr className="border-b-2 border-neutral-900 dark:border-white font-bold bg-neutral-100 dark:bg-neutral-900">
+              <tr className="bg-bg text-muted font-medium text-xs border-b border-border">
                 <th className="p-3">Date</th>
                 <th className="p-3">Clock In</th>
                 <th className="p-3">Clock Out</th>
                 <th className="p-3">Worked Hours</th>
                 <th className="p-3">Lateness</th>
-                <th className="p-3">Status Stamp</th>
+                <th className="p-3 text-center">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 font-mono">
+            <tbody className="divide-y divide-border text-xs font-mono">
               {daysInMonth.map((dayDate) => {
                 const dateStr = format(dayDate, 'yyyy-MM-dd');
                 const rec = monthlyRecords.find((r) => r.date === dateStr);
@@ -525,30 +470,30 @@ export const AttendancePage: React.FC = () => {
                 return (
                   <tr
                     key={dateStr}
-                    className={`hover:bg-neutral-50 dark:hover:bg-neutral-900/50 ${
-                      isToday ? 'bg-neutral-100 dark:bg-neutral-900 font-bold' : ''
+                    className={`hover:bg-bg/40 transition-colors ${
+                      isToday ? 'bg-accent-soft/30 font-medium' : ''
                     }`}
                   >
-                    <td className="p-3 tabular-nums">{dateStr}</td>
-                    <td className="p-3 tabular-nums">{formatTime(rec?.checkIn) || '—'}</td>
-                    <td className="p-3 tabular-nums">{formatTime(rec?.checkOut) || '—'}</td>
-                    <td className="p-3 tabular-nums">
+                    <td className="p-3 tabular-nums text-text">{dateStr}</td>
+                    <td className="p-3 tabular-nums text-text">{formatTime(rec?.checkIn) || '—'}</td>
+                    <td className="p-3 tabular-nums text-muted">{formatTime(rec?.checkOut) || '—'}</td>
+                    <td className="p-3 tabular-nums text-text">
                       {(rec as any)?.workedMinutes ? `${Math.floor((rec as any).workedMinutes / 60)}h ${(rec as any).workedMinutes % 60}m` : '—'}
                     </td>
                     <td className="p-3 tabular-nums">
-                      {isLate ? `${(rec as any).lateMinutes} min` : '—'}
+                      {isLate ? <span className="text-danger font-medium">{(rec as any).lateMinutes} min</span> : '—'}
                     </td>
-                    <td className="p-3">
+                    <td className="p-3 text-center">
                       {isPresent && !isLate ? (
-                        <RubberStamp label="PRESENT" recordId={dateStr} />
+                        <StatusBadge label="Present" statusKey="present" tone="accent" />
                       ) : isLate ? (
-                        <RubberStamp label={`LATE ${(rec as any).lateMinutes}M`} recordId={dateStr} />
+                        <StatusBadge label={`Late ${(rec as any).lateMinutes}m`} statusKey="late" tone="danger" />
                       ) : isAbsent ? (
-                        <RubberStamp label="ABSENT" recordId={dateStr} subtext="UNEXCUSED" />
+                        <StatusBadge label="Absent" statusKey="absent" tone="danger" />
                       ) : isExcused ? (
-                        <RubberStamp label="LEAVE" recordId={dateStr} subtext="APPROVED" />
+                        <StatusBadge label="Leave (Approved)" statusKey="leave" tone="muted" />
                       ) : (
-                        <span className="text-xs text-neutral-400">—</span>
+                        <span className="text-xs text-muted">—</span>
                       )}
                     </td>
                   </tr>
@@ -563,43 +508,44 @@ export const AttendancePage: React.FC = () => {
       {activeTab === 'requests' && (
         <div className="space-y-8">
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-neutral-300 dark:border-neutral-700 pb-2">
-              <h3 className="font-bold text-base">Leave Requests Log ({leaves.length})</h3>
-              <LedgerButton size="sm" icon="plus" onClick={() => setIsLeaveModalOpen(true)}>
-                New Leave Request
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <h3 className="font-semibold text-sm text-text">Leave Requests Log ({leaves.length})</h3>
+              <LedgerButton size="sm" variant="primary" onClick={() => setIsLeaveModalOpen(true)}>
+                <Plus className="w-3.5 h-3.5" />
+                <span>New Leave Request</span>
               </LedgerButton>
             </div>
 
             <LedgerTable>
               <thead>
-                <tr className="border-b-2 border-neutral-900 dark:border-white font-bold bg-neutral-100 dark:bg-neutral-900">
+                <tr className="bg-bg text-muted font-medium text-xs border-b border-border">
                   <th className="p-3">Type</th>
                   <th className="p-3">From Date</th>
                   <th className="p-3">To Date</th>
-                  <th className="p-3">Reason / Statement</th>
-                  <th className="p-3">Official Status</th>
+                  <th className="p-3">Reason</th>
+                  <th className="p-3 text-center">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 font-mono">
+              <tbody className="divide-y divide-border text-xs font-mono">
                 {leaves.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-6 text-center text-xs text-neutral-500">
+                    <td colSpan={5} className="p-6 text-center text-muted">
                       No leave requests recorded.
                     </td>
                   </tr>
                 ) : (
                   leaves.map((l) => (
                     <tr key={l.id}>
-                      <td className="p-3 font-bold">
+                      <td className="p-3 font-semibold text-text">
                         {l.type === 'annual' ? 'Annual Leave' : l.type === 'sick' ? 'Sick Leave' : l.type === 'unpaid' ? 'Unpaid Leave' : 'Emergency Leave'}
                       </td>
-                      <td className="p-3 tabular-nums">{l.startDate}</td>
-                      <td className="p-3 tabular-nums">{l.endDate}</td>
-                      <td className="p-3 text-xs">{l.reason || '—'}</td>
-                      <td className="p-3">
-                        <RubberStamp
-                          label={l.status === 'approved' ? 'APPROVED' : l.status === 'rejected' ? 'REJECTED' : 'PENDING'}
-                          recordId={l.id}
+                      <td className="p-3 tabular-nums text-text">{l.startDate}</td>
+                      <td className="p-3 tabular-nums text-text">{l.endDate}</td>
+                      <td className="p-3 text-muted font-sans">{l.reason || '—'}</td>
+                      <td className="p-3 text-center">
+                        <StatusBadge
+                          label={l.status.toUpperCase()}
+                          statusKey={l.status}
                         />
                       </td>
                     </tr>
@@ -610,41 +556,42 @@ export const AttendancePage: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-neutral-300 dark:border-neutral-700 pb-2">
-              <h3 className="font-bold text-base">Punch Correction Requests ({corrections.length})</h3>
-              <LedgerButton size="sm" icon="plus" onClick={() => setIsCorrectionModalOpen(true)}>
-                New Correction Request
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <h3 className="font-semibold text-sm text-text">Punch Corrections Log ({corrections.length})</h3>
+              <LedgerButton size="sm" variant="secondary" onClick={() => setIsCorrectionModalOpen(true)}>
+                <Plus className="w-3.5 h-3.5" />
+                <span>Submit Correction</span>
               </LedgerButton>
             </div>
 
             <LedgerTable>
               <thead>
-                <tr className="border-b-2 border-neutral-900 dark:border-white font-bold bg-neutral-100 dark:bg-neutral-900">
-                  <th className="p-3">Date</th>
-                  <th className="p-3">Requested In</th>
-                  <th className="p-3">Requested Out</th>
-                  <th className="p-3">Reason</th>
-                  <th className="p-3">Decision</th>
+                <tr className="bg-bg text-muted font-medium text-xs border-b border-border">
+                  <th className="p-3">Shift Date</th>
+                  <th className="p-3">Corrected Check In</th>
+                  <th className="p-3">Corrected Check Out</th>
+                  <th className="p-3">Explanation</th>
+                  <th className="p-3 text-center">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 font-mono">
+              <tbody className="divide-y divide-border text-xs font-mono">
                 {corrections.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-6 text-center text-xs text-neutral-500">
-                      No punch corrections recorded.
+                    <td colSpan={5} className="p-6 text-center text-muted">
+                      No timestamp corrections recorded.
                     </td>
                   </tr>
                 ) : (
                   corrections.map((c) => (
                     <tr key={c.id}>
-                      <td className="p-3 tabular-nums font-bold">{c.date}</td>
-                      <td className="p-3 tabular-nums">{c.requestedCheckIn || '—'}</td>
-                      <td className="p-3 tabular-nums">{c.requestedCheckOut || '—'}</td>
-                      <td className="p-3 text-xs">{c.reason}</td>
-                      <td className="p-3">
-                        <RubberStamp
-                          label={c.status === 'approved' ? 'APPROVED' : c.status === 'rejected' ? 'REJECTED' : 'PENDING'}
-                          recordId={c.id}
+                      <td className="p-3 tabular-nums text-text">{c.date}</td>
+                      <td className="p-3 tabular-nums text-text">{formatTime(c.requestedCheckIn) || '—'}</td>
+                      <td className="p-3 tabular-nums text-muted">{formatTime(c.requestedCheckOut) || '—'}</td>
+                      <td className="p-3 text-muted font-sans">{c.reason}</td>
+                      <td className="p-3 text-center">
+                        <StatusBadge
+                          label={c.status.toUpperCase()}
+                          statusKey={c.status}
                         />
                       </td>
                     </tr>
@@ -656,60 +603,60 @@ export const AttendancePage: React.FC = () => {
         </div>
       )}
 
-      {/* VIEW 4: ADMIN AUDIT & APPROVALS */}
+      {/* VIEW 4: ADMIN AUDIT */}
       {activeTab === 'admin' && user?.role === 'admin' && (
         <div className="space-y-6">
-          <div className="p-4 border-2 border-neutral-900 dark:border-white bg-[#fafafa] dark:bg-[#151515] flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h3 className="font-bold text-base">Administrative Operations</h3>
-              <p className="text-xs text-neutral-500 font-mono">Execute Idempotent Absence Verification Job</p>
-            </div>
-            <LedgerButton
-              onClick={() => triggerAbsenceJobMutation.mutate()}
-              disabled={triggerAbsenceJobMutation.isPending}
-              icon="punch-card"
-            >
-              {triggerAbsenceJobMutation.isPending ? 'Checking...' : 'Run Automated Absence Check Now'}
-            </LedgerButton>
+          <div className="border-b border-border pb-3">
+            <h3 className="text-base font-semibold text-text">Manager Attendance Reviews</h3>
+            <p className="text-xs text-muted">Review leave submissions and punch timestamp modifications.</p>
           </div>
 
-          {/* Pending Leaves Review */}
-          <div className="space-y-3">
-            <h4 className="font-bold text-sm">Pending Leave Requests Awaiting Review</h4>
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-text">Pending Leave Requests</h4>
             <LedgerTable>
               <thead>
-                <tr className="border-b-2 border-neutral-900 dark:border-white font-bold bg-neutral-100 dark:bg-neutral-900">
+                <tr className="bg-bg text-muted font-medium text-xs border-b border-border">
                   <th className="p-3">Employee</th>
                   <th className="p-3">Type</th>
-                  <th className="p-3">Duration</th>
+                  <th className="p-3">Dates</th>
                   <th className="p-3">Reason</th>
-                  <th className="p-3 text-right">Action</th>
+                  <th className="p-3 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800 font-mono text-xs">
+              <tbody className="divide-y divide-border text-xs">
                 {leaves.filter((l) => l.status === 'pending').length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-6 text-center text-neutral-500">No pending leave requests.</td>
+                    <td colSpan={5} className="p-6 text-center text-muted">
+                      No pending leave reviews at this time.
+                    </td>
                   </tr>
                 ) : (
-                  leaves
-                    .filter((l) => l.status === 'pending')
-                    .map((l) => (
-                      <tr key={l.id}>
-                        <td className="p-3 font-bold">{l.user?.name}</td>
-                        <td className="p-3">{l.type}</td>
-                        <td className="p-3 tabular-nums">{l.startDate} to {l.endDate}</td>
-                        <td className="p-3">{l.reason || '—'}</td>
-                        <td className="p-3 text-right space-x-2">
-                          <LedgerButton size="sm" onClick={() => reviewLeaveMutation.mutate({ id: l.id, decision: 'approved' })}>
+                  leaves.filter((l) => l.status === 'pending').map((l) => (
+                    <tr key={l.id}>
+                      <td className="p-3 font-semibold text-text">{(l as any).user?.name || 'Staff'}</td>
+                      <td className="p-3 font-medium text-text">{l.type}</td>
+                      <td className="p-3 font-mono tabular-nums text-text">{l.startDate} to {l.endDate}</td>
+                      <td className="p-3 text-muted">{l.reason || '—'}</td>
+                      <td className="p-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <LedgerButton
+                            size="sm"
+                            variant="primary"
+                            onClick={() => reviewLeaveMutation.mutate({ id: l.id, decision: 'approved' })}
+                          >
                             Approve
                           </LedgerButton>
-                          <LedgerButton size="sm" variant="danger" onClick={() => reviewLeaveMutation.mutate({ id: l.id, decision: 'rejected' })}>
+                          <LedgerButton
+                            size="sm"
+                            variant="danger"
+                            onClick={() => reviewLeaveMutation.mutate({ id: l.id, decision: 'rejected' })}
+                          >
                             Reject
                           </LedgerButton>
-                        </td>
-                      </tr>
-                    ))
+                        </div>
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </LedgerTable>
@@ -717,62 +664,67 @@ export const AttendancePage: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL: Leave Request */}
+      {/* Leave Modal */}
       <LedgerModal
         isOpen={isLeaveModalOpen}
         onClose={() => setIsLeaveModalOpen(false)}
-        title="Submit Official Leave Request"
+        title="Submit Leave Request"
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-bold mb-1">Leave Category</label>
+            <label className="block text-xs font-semibold text-text mb-1">Leave Type</label>
             <select
               value={leaveType}
               onChange={(e) => setLeaveType(e.target.value as any)}
-              className="w-full bg-white dark:bg-neutral-900 border-2 border-neutral-900 dark:border-white p-2 text-xs sm:text-sm font-bold"
+              className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs sm:text-sm text-text outline-none focus:border-accent shadow-subtle"
             >
               <option value="annual">Annual Leave</option>
               <option value="sick">Sick Leave</option>
-              <option value="unpaid">Unpaid Leave</option>
               <option value="emergency">Emergency Leave</option>
+              <option value="unpaid">Unpaid Leave</option>
             </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <LedgerInput
-              label="Start Date"
-              type="date"
-              value={leaveStartDate}
-              onChange={(e) => setLeaveStartDate(e.target.value)}
-              isMono
-            />
-            <LedgerInput
-              label="End Date"
-              type="date"
-              value={leaveEndDate}
-              onChange={(e) => setLeaveEndDate(e.target.value)}
-              isMono
-            />
+            <div>
+              <label className="block text-xs font-semibold text-text mb-1">Start Date</label>
+              <input
+                type="date"
+                value={leaveStartDate}
+                onChange={(e) => setLeaveStartDate(e.target.value)}
+                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs sm:text-sm font-mono text-text outline-none focus:border-accent shadow-subtle"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-text mb-1">End Date</label>
+              <input
+                type="date"
+                value={leaveEndDate}
+                onChange={(e) => setLeaveEndDate(e.target.value)}
+                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs sm:text-sm font-mono text-text outline-none focus:border-accent shadow-subtle"
+              />
+            </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold mb-1">Reason &amp; Documentation</label>
+            <label className="block text-xs font-semibold text-text mb-1">Reason / Statement</label>
             <textarea
               rows={3}
               value={leaveReason}
               onChange={(e) => setLeaveReason(e.target.value)}
-              placeholder="State reason for absence..."
-              className="w-full bg-white dark:bg-neutral-900 border-2 border-neutral-900 dark:border-white p-2 text-xs sm:text-sm outline-none"
+              placeholder="Provide context for the requested leave duration..."
+              className="w-full bg-card border border-border rounded-lg p-3 text-xs sm:text-sm text-text placeholder:text-muted outline-none focus:border-accent shadow-subtle"
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
-            <LedgerButton variant="ghost" size="sm" onClick={() => setIsLeaveModalOpen(false)}>
+          <div className="flex justify-end gap-2 pt-3 border-t border-border">
+            <LedgerButton variant="secondary" size="sm" onClick={() => setIsLeaveModalOpen(false)}>
               Cancel
             </LedgerButton>
             <LedgerButton
+              variant="primary"
               size="sm"
-              disabled={leaveMutation.isPending}
+              disabled={leaveMutation.isPending || !leaveStartDate || !leaveEndDate}
               onClick={() => leaveMutation.mutate()}
             >
               {leaveMutation.isPending ? 'Submitting...' : 'Submit Request'}
@@ -781,56 +733,63 @@ export const AttendancePage: React.FC = () => {
         </div>
       </LedgerModal>
 
-      {/* MODAL: Attendance Correction */}
+      {/* Correction Modal */}
       <LedgerModal
         isOpen={isCorrectionModalOpen}
         onClose={() => setIsCorrectionModalOpen(false)}
-        title="Request Time Punch Correction"
+        title="Submit Timestamp Correction"
       >
         <div className="space-y-4">
-          <LedgerInput
-            label="Date to Correct"
-            type="date"
-            value={correctionDate}
-            onChange={(e) => setCorrectionDate(e.target.value)}
-            isMono
-          />
-
-          <div className="grid grid-cols-2 gap-3">
-            <LedgerInput
-              label="Actual In Time"
-              type="time"
-              value={correctionCheckIn}
-              onChange={(e) => setCorrectionCheckIn(e.target.value)}
-              isMono
-            />
-            <LedgerInput
-              label="Actual Out Time"
-              type="time"
-              value={correctionCheckOut}
-              onChange={(e) => setCorrectionCheckOut(e.target.value)}
-              isMono
+          <div>
+            <label className="block text-xs font-semibold text-text mb-1">Shift Date</label>
+            <input
+              type="date"
+              value={correctionDate}
+              onChange={(e) => setCorrectionDate(e.target.value)}
+              className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs sm:text-sm font-mono text-text outline-none focus:border-accent shadow-subtle"
             />
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-text mb-1">Corrected Check In</label>
+              <input
+                type="time"
+                value={correctionCheckIn}
+                onChange={(e) => setCorrectionCheckIn(e.target.value)}
+                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs sm:text-sm font-mono text-text outline-none focus:border-accent shadow-subtle"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-text mb-1">Corrected Check Out</label>
+              <input
+                type="time"
+                value={correctionCheckOut}
+                onChange={(e) => setCorrectionCheckOut(e.target.value)}
+                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs sm:text-sm font-mono text-text outline-none focus:border-accent shadow-subtle"
+              />
+            </div>
+          </div>
+
           <div>
-            <label className="block text-xs font-bold mb-1">Justification Reason (Audit Required)</label>
+            <label className="block text-xs font-semibold text-text mb-1">Reason for Modification</label>
             <textarea
               rows={3}
               value={correctionReason}
               onChange={(e) => setCorrectionReason(e.target.value)}
-              placeholder="Explain why the physical punch was missed..."
-              className="w-full bg-white dark:bg-neutral-900 border-2 border-neutral-900 dark:border-white p-2 text-xs sm:text-sm outline-none"
+              placeholder="State the exact reason for the punch timestamp discrepancy..."
+              className="w-full bg-card border border-border rounded-lg p-3 text-xs sm:text-sm text-text placeholder:text-muted outline-none focus:border-accent shadow-subtle"
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
-            <LedgerButton variant="ghost" size="sm" onClick={() => setIsCorrectionModalOpen(false)}>
+          <div className="flex justify-end gap-2 pt-3 border-t border-border">
+            <LedgerButton variant="secondary" size="sm" onClick={() => setIsCorrectionModalOpen(false)}>
               Cancel
             </LedgerButton>
             <LedgerButton
+              variant="primary"
               size="sm"
-              disabled={!correctionReason.trim() || correctionMutation.isPending}
+              disabled={correctionMutation.isPending || !correctionReason.trim()}
               onClick={() => correctionMutation.mutate()}
             >
               {correctionMutation.isPending ? 'Submitting...' : 'Submit Correction'}
@@ -840,18 +799,17 @@ export const AttendancePage: React.FC = () => {
       </LedgerModal>
 
       {/* Face Biometrics Modal */}
-      <FaceBiometricsModal
-        isOpen={isFaceModalOpen}
-        onClose={() => setIsFaceModalOpen(false)}
-        mode="verify_attendance"
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['attendance'] });
-          playPunchSound();
-          addToast('Verified and stamped via facial biometrics', 'success');
-        }}
-      />
+      {isFaceModalOpen && (
+        <FaceBiometricsModal
+          isOpen={isFaceModalOpen}
+          onClose={() => setIsFaceModalOpen(false)}
+          mode="verify_attendance"
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['attendance'] });
+            setIsFaceModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 };
-
-export default AttendancePage;

@@ -15,10 +15,9 @@ import {
   MessageSquareQuote,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
 import { MotionPage } from '../components/motion/MotionPage.js';
-import { SpotlightCard } from '../components/motion/SpotlightCard.js';
 import { CountUp } from '../components/motion/CountUp.js';
+import { LedgerButton } from '../components/common/LedgerComponents.js';
 
 export const DashboardPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -60,41 +59,48 @@ export const DashboardPage: React.FC = () => {
   return (
     <MotionPage className="space-y-6">
       {/* Top Header & Quick Action Buttons */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted font-medium">
+            <span>Executive Overview</span>
+            <span>/</span>
+            <span>Metrics &amp; KPIs</span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-semibold text-text mt-1">
             Performance KPIs &amp; Executive Analytics
           </h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          <p className="text-xs text-muted mt-0.5">
             Real-time tracking of sales pipeline conversion, customer accounts, and scheduled follow-ups.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
-          <button
+          <LedgerButton
+            variant="primary"
+            size="sm"
             onClick={() => {
               setSelectedCustomer(null);
               setIsCustomerModalOpen(true);
             }}
-            className="flex items-center gap-2 rounded-xl bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-neutral-900 dark:border-white px-4 py-2.5 text-xs font-bold transition-colors cursor-pointer"
           >
             <UserPlus className="h-4 w-4" />
             <span>Add Customer</span>
-          </button>
+          </LedgerButton>
 
-          <button
+          <LedgerButton
+            variant="secondary"
+            size="sm"
             onClick={handleExportCsv}
-            className="flex items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-xs font-bold text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 transition-colors cursor-pointer"
           >
-            <FileSpreadsheet className="h-4 w-4 text-neutral-700 dark:text-neutral-300" />
+            <FileSpreadsheet className="h-4 w-4 text-muted" />
             <span>Export CSV</span>
-          </button>
+          </LedgerButton>
 
           <Link
             to="/templates"
-            className="flex items-center gap-2 rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-xs font-bold text-neutral-800 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-text hover:bg-bg transition-colors shadow-subtle"
           >
-            <MessageSquareQuote className="h-4 w-4 text-neutral-700 dark:text-neutral-300" />
+            <MessageSquareQuote className="h-4 w-4 text-muted" />
             <span>WhatsApp Templates</span>
           </Link>
         </div>
@@ -108,67 +114,67 @@ export const DashboardPage: React.FC = () => {
         }}
       />
 
-      {/* KPI Cards with Spotlight & CountUp */}
+      {/* KPI Cards with Quiet Professionalism */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Customers */}
-        <SpotlightCard className="p-5">
+        <div className="bg-card border border-border rounded-xl p-5 shadow-subtle hover:border-accent transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">Total Customers</p>
-              <h3 className="text-2xl font-black text-neutral-900 dark:text-white mt-1">
+              <p className="text-xs font-medium text-muted">Total Customers</p>
+              <h3 className="text-2xl font-semibold text-text mt-1 tabular-nums">
                 {statsLoading ? '...' : <CountUp end={stats?.totalCustomers || 0} />}
               </h3>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white">
-              <Users className="h-6 w-6" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-soft text-accent">
+              <Users className="h-5 w-5 stroke-[1.5]" />
             </div>
           </div>
-        </SpotlightCard>
+        </div>
 
         {/* Due Today & Overdue */}
-        <SpotlightCard className="p-5 border-2 border-neutral-900 dark:border-neutral-400">
+        <div className="bg-card border border-border rounded-xl p-5 shadow-subtle hover:border-accent transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">Due Today &amp; Overdue</p>
-              <h3 className="text-2xl font-black text-black dark:text-white mt-1">
+              <p className="text-xs font-medium text-muted">Action Required Today</p>
+              <h3 className="text-2xl font-semibold text-text mt-1 tabular-nums">
                 {statsLoading ? '...' : <CountUp end={stats?.dueTodayCount || 0} />}
               </h3>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-white dark:bg-white dark:text-black">
-              <Clock className="h-6 w-6" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-soft text-accent">
+              <Clock className="h-5 w-5 stroke-[1.5]" />
             </div>
           </div>
-        </SpotlightCard>
+        </div>
 
         {/* Conversion Rate */}
-        <SpotlightCard className="p-5">
+        <div className="bg-card border border-border rounded-xl p-5 shadow-subtle hover:border-accent transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">Conversion Rate</p>
-              <h3 className="text-2xl font-black text-neutral-900 dark:text-white mt-1">
+              <p className="text-xs font-medium text-muted">Pipeline Conversion</p>
+              <h3 className="text-2xl font-semibold text-text mt-1 tabular-nums">
                 {statsLoading ? '...' : <><CountUp end={stats?.conversionRate || 0} decimals={1} />%</>}
               </h3>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white">
-              <TrendingUp className="h-6 w-6" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-soft text-accent">
+              <TrendingUp className="h-5 w-5 stroke-[1.5]" />
             </div>
           </div>
-        </SpotlightCard>
+        </div>
 
         {/* Sold Count */}
-        <SpotlightCard className="p-5">
+        <div className="bg-card border border-border rounded-xl p-5 shadow-subtle hover:border-accent transition-colors">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">Closed Deals</p>
-              <h3 className="text-2xl font-black text-neutral-900 dark:text-white mt-1">
-                {statsLoading ? '...' : <CountUp end={(stats?.statusDistribution as any)?.['Closed Won'] || (stats?.statusDistribution as any)?.['\u062A\u0645 \u0627\u0644\u0628\u064A\u0639'] || 0} />}
+              <p className="text-xs font-medium text-muted">Closed Won Deals</p>
+              <h3 className="text-2xl font-semibold text-text mt-1 tabular-nums">
+                {statsLoading ? '...' : <CountUp end={(stats?.statusDistribution as any)?.['Closed Won'] || 0} />}
               </h3>
             </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white">
-              <CheckCircle className="h-6 w-6" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-soft text-accent">
+              <CheckCircle className="h-5 w-5 stroke-[1.5]" />
             </div>
           </div>
-        </SpotlightCard>
+        </div>
       </div>
 
       {/* Analytics Charts */}

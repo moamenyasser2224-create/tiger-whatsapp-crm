@@ -4,8 +4,25 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api.js';
 import { useAuth } from '../../contexts/AuthContext.js';
 import { useTheme } from '../../contexts/ThemeContext.js';
-import { LedgerIcon, LedgerIconName } from '../icons/LedgerIcons.js';
-import { OdometerClock } from './OdometerClock.js';
+import {
+  Users,
+  Clock,
+  Receipt,
+  MessageSquare,
+  BarChart3,
+  FileText,
+  Palette,
+  Settings as SettingsIcon,
+  Search,
+  Bell,
+  HelpCircle,
+  Sun,
+  Moon,
+  LogOut,
+  Menu,
+  X,
+  ExternalLink,
+} from 'lucide-react';
 import { CommandPalette } from './CommandPalette.js';
 import { KeyboardShortcutsModal } from './KeyboardShortcutsModal.js';
 import { NotificationsCenter } from './NotificationsCenter.js';
@@ -14,18 +31,18 @@ interface NavItem {
   id: string;
   name: string;
   href: string;
-  icon: LedgerIconName;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 export const LEDGER_NAV_ITEMS: NavItem[] = [
-  { id: 'customers', name: 'Customers Ledger', href: '/customers', icon: 'users' },
-  { id: 'attendance', name: 'Time Clock', href: '/attendance', icon: 'punch-card' },
-  { id: 'deductions', name: 'Payroll & Slips', href: '/deductions', icon: 'receipt' },
-  { id: 'chat', name: 'Team Chat', href: '/chat', icon: 'chat' },
-  { id: 'dashboard', name: 'Metrics & KPIs', href: '/dashboard', icon: 'dashboard' },
-  { id: 'templates', name: 'WhatsApp Templates', href: '/templates', icon: 'template' },
-  { id: 'design-lab', name: 'Design Tokens', href: '/design-lab', icon: 'stamp' },
-  { id: 'settings', name: 'System Settings', href: '/settings', icon: 'settings' },
+  { id: 'customers', name: 'Customers', href: '/customers', icon: Users },
+  { id: 'attendance', name: 'Attendance', href: '/attendance', icon: Clock },
+  { id: 'deductions', name: 'Payroll & Slips', href: '/deductions', icon: Receipt },
+  { id: 'chat', name: 'Team Chat', href: '/chat', icon: MessageSquare },
+  { id: 'dashboard', name: 'Metrics & KPIs', href: '/dashboard', icon: BarChart3 },
+  { id: 'templates', name: 'WhatsApp Templates', href: '/templates', icon: FileText },
+  { id: 'design-lab', name: 'Design Tokens', href: '/design-lab', icon: Palette },
+  { id: 'settings', name: 'Settings', href: '/settings', icon: SettingsIcon },
 ];
 
 export const LedgerLayout: React.FC = () => {
@@ -82,7 +99,7 @@ export const LedgerLayout: React.FC = () => {
           navigate('/chat');
         } else if (e.key === '5') {
           e.preventDefault();
-          navigate('/');
+          navigate('/dashboard');
         } else if (e.key.toLowerCase() === 't') {
           e.preventDefault();
           toggleTheme();
@@ -119,7 +136,6 @@ export const LedgerLayout: React.FC = () => {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
-    year: 'numeric',
   }).format(now);
 
   const orgName = settings?.orgName || 'Tiger';
@@ -131,177 +147,181 @@ export const LedgerLayout: React.FC = () => {
     : 'Not Started';
 
   return (
-    <div className="min-h-screen bg-[#fafafa] text-[#111111] dark:bg-[#0d0d0d] dark:text-[#f5f5f5] flex flex-col font-sans antialiased selection:bg-black selection:text-white dark:selection:bg-white dark:selection:text-black bg-industrial-grid" dir="ltr">
-      {/* Hidden SVG Filters for rubber stamp distress edge effect */}
-      <svg width="0" height="0" className="hidden absolute pointer-events-none">
-        <defs>
-          <filter id="stampDistressFilter">
-            <feTurbulence type="fractalNoise" baseFrequency="0.2" numOctaves="3" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.4" xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-        </defs>
-      </svg>
-
-      {/* TOP MASTHEAD */}
-      <header className="border-b-2 border-neutral-900 dark:border-neutral-100 bg-[#ffffff] dark:bg-[#141414] px-4 sm:px-8 py-3.5">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Masthead Title & Ledger Subtext */}
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-widest px-1.5 py-0.5 border border-neutral-900 dark:border-white font-bold bg-white dark:bg-black">
-                CORE SYSTEM // TIGER-OS
+    <div className="min-h-screen bg-bg text-text flex flex-col font-sans antialiased" dir="ltr">
+      {/* TOP HEADER */}
+      <header className="sticky top-0 z-30 bg-card border-b border-border shadow-subtle px-4 sm:px-8 py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          {/* Logo & Workspace Title */}
+          <div className="flex items-center gap-3">
+            <NavLink to="/dashboard" className="flex items-center gap-2 group">
+              <span className="w-8 h-8 rounded-lg bg-accent text-white flex items-center justify-center font-bold text-sm tracking-wider shadow-subtle">
+                T
               </span>
-              <a
-                href="/"
-                className="text-[11px] font-mono underline font-bold hover:text-purple-600 transition-colors"
-                title="View Public Company Site & Video Showcase"
-              >
-                [Company Site &amp; Videos ↗]
-              </a>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-neutral-950 dark:text-white tracking-tight">
-              {orgName}
-            </h1>
+              <div>
+                <div className="font-semibold text-base sm:text-lg text-text tracking-tight group-hover:text-accent transition-colors">
+                  {orgName}
+                </div>
+                <div className="text-[11px] text-muted -mt-0.5">
+                  Management &amp; Financial Platform
+                </div>
+              </div>
+            </NavLink>
+
+            <a
+              href="/"
+              className="hidden lg:inline-flex items-center gap-1 text-xs text-muted hover:text-accent transition-colors ml-4 px-2 py-1 rounded-md hover:bg-bg"
+              title="View Public Showcase"
+            >
+              <span>Public Showcase</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
 
-          {/* Dates & Mechanical Live Clock & Shift Badge */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-xs font-mono">
-            {/* System Date */}
-            <div className="border-l-2 border-neutral-300 dark:border-neutral-700 pl-3 sm:pl-4 space-y-0.5 text-left">
-              <div className="font-bold text-neutral-900 dark:text-neutral-100">
-                {formattedDate}
-              </div>
-              <div className="text-[11px] text-neutral-500 dark:text-neutral-400 tabular-nums">
-                UTC +03:00 / RIYADH
-              </div>
+          {/* Right Header Controls */}
+          <div className="flex items-center gap-3 sm:gap-4 text-xs">
+            {/* System Date & Shift */}
+            <div className="hidden sm:flex items-center gap-2.5 border-r border-border pr-4 text-muted">
+              <span className="font-medium text-text">{formattedDate}</span>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-card border border-border text-[11px]">
+                <span
+                  className={`w-[6px] h-[6px] rounded-full ${
+                    myStatus?.checkIn && !myStatus?.checkOut ? 'bg-accent' : 'bg-muted'
+                  }`}
+                />
+                <span className="text-text font-medium">{userShiftText}</span>
+              </span>
             </div>
 
-            {/* Odometer Clock */}
-            <div className="flex items-center gap-2">
-              <OdometerClock />
-            </div>
+            {/* Quick Search Trigger (Ctrl+K) */}
+            <button
+              type="button"
+              onClick={() => setIsPaletteOpen(true)}
+              title="Quick Search (Ctrl+K)"
+              className="flex items-center gap-1.5 bg-card border border-border hover:border-accent text-muted hover:text-text px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer shadow-subtle"
+            >
+              <Search className="w-3.5 h-3.5 text-muted" />
+              <span className="hidden md:inline font-normal">Search</span>
+              <kbd className="hidden md:inline bg-bg border border-border px-1.5 py-0.2 rounded text-[10px] text-muted font-mono">
+                ⌘K
+              </kbd>
+            </button>
 
-            {/* Shift Status & User Details */}
-            <div className="flex items-center gap-2.5 pr-1">
-              <div className="text-left">
-                <div className="font-bold text-neutral-900 dark:text-white text-xs">
-                  {user?.name}
-                </div>
-                <div className="text-[10px] text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
-                  <span className={`h-1.5 w-1.5 rounded-full ${myStatus?.checkIn && !myStatus?.checkOut ? 'bg-emerald-500 animate-pulse' : 'bg-neutral-400'}`} />
-                  <span>{userShiftText}</span>
-                </div>
+            {/* Notifications Button */}
+            <button
+              type="button"
+              onClick={() => setIsNotificationsOpen(true)}
+              title="Notifications"
+              className="relative p-2 rounded-lg text-muted hover:text-text hover:bg-bg border border-border transition-colors cursor-pointer shadow-subtle"
+            >
+              <Bell className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-accent text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Help / Shortcuts */}
+            <button
+              type="button"
+              onClick={() => setIsShortcutsOpen(true)}
+              title="Keyboard Shortcuts (?)"
+              className="hidden sm:inline-flex p-2 rounded-lg text-muted hover:text-text hover:bg-bg border border-border transition-colors cursor-pointer shadow-subtle"
+            >
+              <HelpCircle className="w-4 h-4" />
+            </button>
+
+            {/* Theme Toggle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              title="Toggle Theme"
+              className="p-2 rounded-lg text-muted hover:text-text hover:bg-bg border border-border transition-colors cursor-pointer shadow-subtle"
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+
+            {/* User Profile & Logout */}
+            <div className="flex items-center gap-2 pl-2 border-l border-border">
+              <div className="hidden md:block text-right">
+                <div className="font-semibold text-xs text-text">{user?.name}</div>
+                <div className="text-[10px] text-muted capitalize">{user?.role}</div>
               </div>
-
-              {/* Quick Search & Palette Trigger */}
               <button
                 type="button"
-                onClick={() => setIsPaletteOpen(true)}
-                title="Quick Search & Commands (Ctrl+K)"
-                className="flex items-center gap-1.5 border border-neutral-900 dark:border-white px-2 py-1 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors font-mono cursor-pointer"
+                onClick={logout}
+                title="Sign Out"
+                className="p-2 rounded-lg text-muted hover:text-danger hover:bg-danger-soft transition-colors cursor-pointer"
               >
-                <LedgerIcon name="search" size={13} />
-                <span className="hidden sm:inline font-bold">Search</span>
-                <kbd className="hidden md:inline border border-neutral-400 dark:border-neutral-600 px-1 text-[10px]">⌘K</kbd>
+                <LogOut className="w-4 h-4" />
               </button>
-
-              {/* Notifications Button */}
-              <button
-                type="button"
-                onClick={() => setIsNotificationsOpen(true)}
-                title="System Notifications"
-                className="relative flex items-center justify-center border border-neutral-900 dark:border-white p-1.5 text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors font-mono cursor-pointer"
-              >
-                <LedgerIcon name="bell" size={14} />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-neutral-950 text-white dark:bg-white dark:text-black text-[9px] font-mono font-bold px-1 border border-white dark:border-black min-w-[16px] text-center">
-                    {unreadCount > 9 ? '+9' : unreadCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Theme Toggle, Help & Logout */}
-              <div className="flex items-center border border-neutral-900 dark:border-white">
-                <button
-                  type="button"
-                  onClick={() => setIsShortcutsOpen(true)}
-                  title="Keyboard Shortcuts (?)"
-                  className="p-1.5 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-                >
-                  <LedgerIcon name="help" size={15} />
-                </button>
-                <button
-                  type="button"
-                  onClick={toggleTheme}
-                  title="Toggle Theme (Light / Dark)"
-                  className="p-1.5 border-l border-neutral-900 dark:border-white hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-                >
-                  <LedgerIcon name={theme === 'dark' ? 'eye' : 'eye-off'} size={15} />
-                </button>
-                <button
-                  type="button"
-                  onClick={logout}
-                  title="Sign Out"
-                  className="p-1.5 border-l border-neutral-900 dark:border-white hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-                >
-                  <LedgerIcon name="lock" size={15} />
-                </button>
-              </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* DESKTOP TAB NAVIGATION */}
-      <nav className="hidden md:block bg-[#f0f0f0] dark:bg-[#111111] border-b-2 border-neutral-900 dark:border-neutral-100 px-6 pt-2">
-        <div className="max-w-7xl mx-auto flex items-end gap-1.5">
-          {LEDGER_NAV_ITEMS.map((item) => {
-            const isActive = location.pathname === item.href || (item.href !== '/' && location.pathname.startsWith(item.href));
-            return (
-              <NavLink
-                key={item.id}
-                to={item.href}
-                className={`relative px-4 py-2 text-xs font-bold transition-all border-t-2 border-x-2 select-none flex items-center gap-2 ${
-                  isActive
-                    ? 'bg-[#ffffff] text-neutral-950 dark:bg-[#141414] dark:text-white border-neutral-900 dark:border-neutral-100 translate-y-[2px] z-10'
-                    : 'bg-[#e5e5e5] text-neutral-600 dark:bg-[#1c1c1c] dark:text-neutral-400 border-neutral-400 dark:border-neutral-700 hover:bg-[#ebebeb] dark:hover:bg-[#262626] hover:text-neutral-900 dark:hover:text-white'
-                }`}
-                style={{
-                  clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
-                }}
-              >
-                <LedgerIcon name={item.icon} size={15} />
-                <span>{item.name}</span>
-                {isActive && (
-                  <span className="w-1.5 h-1.5 bg-neutral-900 dark:bg-white" />
-                )}
-              </NavLink>
-            );
-          })}
-        </div>
-      </nav>
+      {/* BODY WITH FIXED SIDEBAR + COMFORTABLE CONTENT AREA */}
+      <div className="flex-1 max-w-7xl w-full mx-auto flex">
+        {/* DESKTOP SIDEBAR */}
+        <aside className="w-60 shrink-0 bg-card border-r border-border p-4 hidden md:flex flex-col justify-between sticky top-[57px] h-[calc(100vh-57px)]">
+          <div className="space-y-4">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted px-3">
+              Navigation
+            </div>
 
-      {/* MAIN CONTENT AREA */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-8 bg-[#ffffff] dark:bg-[#141414] ledger-notebook-spine my-4 border-y border-neutral-200 dark:border-neutral-800 shadow-solid-sm sm:shadow-solid">
-        <Outlet />
-      </main>
+            <nav className="space-y-1">
+              {LEDGER_NAV_ITEMS.map((item) => {
+                const Icon = item.icon;
+                const isActive =
+                  location.pathname === item.href ||
+                  (item.href !== '/' && location.pathname.startsWith(item.href));
+
+                return (
+                  <NavLink
+                    key={item.id}
+                    to={item.href}
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs transition-colors duration-150 ${
+                      isActive
+                        ? 'bg-accent-soft text-accent font-semibold border-s-2 border-accent'
+                        : 'text-muted hover:bg-bg hover:text-text font-normal'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 shrink-0 stroke-[1.5]" />
+                    <span>{item.name}</span>
+                  </NavLink>
+                );
+              })}
+            </nav>
+          </div>
+
+          {/* Sidebar Footer info */}
+          <div className="border-t border-border pt-4 px-2 text-[11px] text-muted space-y-1">
+            <div className="font-medium text-text">Tiger Workspace</div>
+            <div className="text-[10px]">Version 2.4.0 &bull; Financial Standard</div>
+          </div>
+        </aside>
+
+        {/* MAIN COMFORTABLE CONTENT AREA */}
+        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+          <Outlet />
+        </main>
+      </div>
 
       {/* MOBILE BOTTOM NAVIGATION BAR */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#ffffff] dark:bg-[#141414] border-t-2 border-neutral-900 dark:border-neutral-100 py-1 px-2 flex items-center justify-around">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border py-2 px-3 flex items-center justify-around shadow-subtle">
         {LEDGER_NAV_ITEMS.slice(0, 4).map((item) => {
+          const Icon = item.icon;
           const isActive = location.pathname === item.href;
           return (
             <NavLink
               key={item.id}
               to={item.href}
-              className={`flex flex-col items-center py-1 px-2 text-[10px] font-bold ${
-                isActive
-                  ? 'text-neutral-950 dark:text-white border-t-2 border-neutral-900 dark:border-white -mt-1'
-                  : 'text-neutral-500 dark:text-neutral-400'
+              className={`flex flex-col items-center py-1 px-2 text-[10px] transition-colors ${
+                isActive ? 'text-accent font-semibold' : 'text-muted hover:text-text'
               }`}
             >
-              <LedgerIcon name={item.icon} size={18} />
-              <span className="mt-0.5">{item.name.split(' ')[0]}</span>
+              <Icon className="w-4 h-4" />
+              <span className="mt-1">{item.name.split(' ')[0]}</span>
             </NavLink>
           );
         })}
@@ -310,52 +330,48 @@ export const LedgerLayout: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsMobileMoreOpen(!isMobileMoreOpen)}
-          className={`flex flex-col items-center py-1 px-2 text-[10px] font-bold cursor-pointer ${
-            isMobileMoreOpen ? 'text-neutral-950 dark:text-white' : 'text-neutral-500 dark:text-neutral-400'
-          }`}
+          className="flex flex-col items-center py-1 px-2 text-[10px] text-muted hover:text-text cursor-pointer"
         >
-          <LedgerIcon name="more-horizontal" size={18} />
-          <span className="mt-0.5">More</span>
+          {isMobileMoreOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          <span className="mt-1">More</span>
         </button>
       </nav>
 
       {/* Mobile More Popout Sheet */}
       {isMobileMoreOpen && (
-        <div className="md:hidden fixed inset-0 z-50 bg-diagonal-hatch flex flex-col justify-end p-4">
-          <div className="bg-white dark:bg-neutral-900 border-2 border-neutral-900 dark:border-white p-4 space-y-3">
-            <div className="flex items-center justify-between border-b-2 border-neutral-900 pb-2">
-              <span className="font-bold text-sm">System Navigation</span>
+        <div className="md:hidden fixed inset-0 z-50 bg-black/40 flex flex-col justify-end p-4">
+          <div className="bg-card border border-border rounded-xl shadow-subtle p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <span className="font-semibold text-sm text-text">All Navigation</span>
               <button
                 type="button"
                 onClick={() => setIsMobileMoreOpen(false)}
-                className="p-1 border border-neutral-900"
+                className="p-1 rounded-lg text-muted hover:text-text"
               >
-                <LedgerIcon name="x" size={16} />
+                <X className="w-4 h-4" />
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs">
-              {LEDGER_NAV_ITEMS.slice(4).map((item) => (
-                <NavLink
-                  key={item.id}
-                  to={item.href}
-                  onClick={() => setIsMobileMoreOpen(false)}
-                  className="flex items-center gap-2 p-2 border border-neutral-300 dark:border-neutral-700 font-bold hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                >
-                  <LedgerIcon name={item.icon} size={16} />
-                  <span>{item.name}</span>
-                </NavLink>
-              ))}
+              {LEDGER_NAV_ITEMS.slice(4).map((item) => {
+                const Icon = item.icon;
+                return (
+                  <NavLink
+                    key={item.id}
+                    to={item.href}
+                    onClick={() => setIsMobileMoreOpen(false)}
+                    className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-card text-muted hover:text-text hover:bg-bg font-medium transition-colors"
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span>{item.name}</span>
+                  </NavLink>
+                );
+              })}
             </div>
           </div>
         </div>
       )}
 
-      {/* Bottom Ledger Footer */}
-      <footer className="border-t border-neutral-300 dark:border-neutral-800 py-3 px-6 text-center text-[11px] font-mono text-neutral-500 dark:text-neutral-400">
-        Tiger Internal Business OS &bull; Authenticated &amp; Encrypted
-      </footer>
-
-      {/* Global Command Palette & Mechanical Shortcuts Modals */}
+      {/* Global Command Palette & Modals */}
       <CommandPalette
         isOpen={isPaletteOpen}
         onClose={() => setIsPaletteOpen(false)}

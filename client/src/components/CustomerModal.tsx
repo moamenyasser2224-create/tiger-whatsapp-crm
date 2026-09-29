@@ -5,10 +5,10 @@ import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
 import type { Customer, ListOption } from '../types/index.js';
-import { LedgerIcon } from './icons/LedgerIcons.js';
 import { LedgerButton } from './common/LedgerComponents.js';
 import { DuplicatePhoneModal } from './DuplicatePhoneModal.js';
 import { formatDate, getStatusLabel, getSourceLabel } from '../lib/utils.js';
+import { X, AlertCircle, Plus, Calendar, Clock, Check } from 'lucide-react';
 
 const customerFormSchema = z.object({
   name: z.string().min(2, 'Customer name must be at least 2 characters').max(120, 'Name is too long'),
@@ -104,12 +104,14 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
     enabled: Boolean(initialData?.id && isOpen),
   });
 
+  const queryClient = useQueryClient();
+
   // Add Activity Mutation
   const addActivityMutation = useMutation({
     mutationFn: async (payload: { type: string; content: string }) => {
       if (!initialData?.id) return;
       const res = await api.post(`/crm/customers/${initialData.id}/activities`, payload);
-      return res.data.data;
+      return res.data;
     },
     onSuccess: () => {
       setActivityContent('');
@@ -122,7 +124,7 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
     mutationFn: async (payload: { title: string; dueAt: string }) => {
       if (!initialData?.id) return;
       const res = await api.post(`/crm/customers/${initialData.id}/tasks`, payload);
-      return res.data.data;
+      return res.data;
     },
     onSuccess: () => {
       setTaskTitle('');
@@ -131,14 +133,15 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
     },
   });
 
-  // Toggle Task Status Mutation
+  // Toggle Task Mutation
   const toggleTaskMutation = useMutation({
     mutationFn: async ({ taskId, done }: { taskId: string; done: boolean }) => {
-      const res = await api.patch(`/crm/tasks/${taskId}`, { done });
-      return res.data.data;
+      const res = await api.put(`/crm/tasks/${taskId}`, { done });
+      return res.data;
     },
     onSuccess: () => {
       refetchTasks();
+      queryClient.invalidateQueries({ queryKey: ['customers', 'due-today'] });
     },
   });
 
@@ -154,10 +157,8 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
       company: '',
       phone: '',
       city: '',
-      sourceId: sources[0]?.id || '',
-      statusId: statuses[0]?.id || '',
-      source: 'WhatsApp',
-      status: 'New',
+      sourceId: '',
+      statusId: '',
       dealValue: null,
       expectedCloseDate: '',
       last: '',
@@ -169,24 +170,19 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
 
   useEffect(() => {
     if (initialData) {
-      const matchedSource = sources.find((s) => s.id === initialData.sourceId || s.label === initialData.source);
-      const matchedStatus = statuses.find((s) => s.id === initialData.statusId || s.label === initialData.status);
-
       reset({
-        name: initialData.name,
+        name: initialData.name || '',
         company: initialData.company || '',
-        phone: initialData.phone,
+        phone: initialData.phone || '',
         city: initialData.city || '',
-        sourceId: matchedSource?.id || initialData.sourceId || '',
-        statusId: matchedStatus?.id || initialData.statusId || '',
-        source: initialData.source,
-        status: initialData.status,
+        sourceId: initialData.sourceId || (sources.find((s) => s.label === initialData.source)?.id || ''),
+        statusId: initialData.statusId || (statuses.find((s) => s.label === initialData.status)?.id || ''),
         dealValue: initialData.dealValue || null,
-        expectedCloseDate: initialData.expectedCloseDate ? new Date(initialData.expectedCloseDate).toISOString().split('T')[0] : '',
-        last: initialData.last ? new Date(initialData.last).toISOString().split('T')[0] : '',
-        next: initialData.next ? new Date(initialData.next).toISOString().split('T')[0] : '',
+        expectedCloseDate: initialData.expectedCloseDate ? initialData.expectedCloseDate.split('T')[0] : '',
+        last: initialData.last ? initialData.last.split('T')[0] : '',
+        next: initialData.next ? initialData.next.split('T')[0] : '',
         notes: initialData.notes || '',
-        consent: initialData.consent,
+        consent: Boolean(initialData.consent),
       });
     } else {
       reset({
@@ -256,39 +252,36 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-40 flex items-center justify-center p-3 sm:p-5 bg-diagonal-hatch overflow-y-auto" dir="ltr">
-        <div className="relative w-full max-w-3xl border-2 border-neutral-900 dark:border-white bg-[#ffffff] dark:bg-[#141414] shadow-solid-lg my-8 p-4 sm:p-6 select-text">
+      <div className="fixed inset-0 z-40 flex items-center justify-center p-3 sm:p-5 bg-black/40 overflow-y-auto" dir="ltr">
+        <div className="relative w-full max-w-3xl border border-border bg-card rounded-xl shadow-subtle my-8 p-6 select-text">
           {/* Header */}
-          <div className="flex items-center justify-between border-b-2 border-neutral-900 dark:border-neutral-100 pb-3 mb-4">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 bg-neutral-900 dark:bg-white" />
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-neutral-950 dark:text-white">
-                  {initialData ? `Customer File: ${initialData.name}` : 'New Customer Record'}
-                </h2>
-                <div className="text-[11px] font-mono text-neutral-500">
-                  {initialData ? `Record ID #${initialData.id.slice(0, 8)}` : 'Tiger Sales & Client Directory'}
-                </div>
+          <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
+            <div>
+              <h2 className="text-base sm:text-lg font-semibold text-text">
+                {initialData ? `Customer File: ${initialData.name}` : 'New Customer Account'}
+              </h2>
+              <div className="text-xs text-muted">
+                {initialData ? `Record ID #${initialData.id.slice(0, 8)}` : 'Tiger Sales & Client Directory'}
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-1 border border-neutral-900 dark:border-white hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
+              className="p-1.5 rounded-lg text-muted hover:text-text hover:bg-bg transition-colors cursor-pointer"
             >
-              <LedgerIcon name="x" size={16} />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Tab Switcher */}
           {initialData && (
-            <div className="flex border-b-2 border-neutral-900 dark:border-white mb-4 gap-1">
+            <div className="flex bg-bg p-1 rounded-lg border border-border mb-5 gap-1">
               <button
                 type="button"
                 onClick={() => setActiveTab('details')}
-                className={`px-4 py-1.5 text-xs font-bold border-t-2 border-x-2 transition-all cursor-pointer ${
+                className={`px-3 py-1.5 text-xs rounded-md transition-colors cursor-pointer ${
                   activeTab === 'details'
-                    ? 'bg-neutral-900 text-white dark:bg-white dark:text-black border-neutral-900 dark:border-white'
-                    : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700'
+                    ? 'bg-card text-text font-semibold shadow-subtle'
+                    : 'text-muted hover:text-text font-normal'
                 }`}
               >
                 Record Details
@@ -296,28 +289,28 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('activities')}
-                className={`px-4 py-1.5 text-xs font-bold border-t-2 border-x-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 text-xs rounded-md transition-colors flex items-center gap-1.5 cursor-pointer ${
                   activeTab === 'activities'
-                    ? 'bg-neutral-900 text-white dark:bg-white dark:text-black border-neutral-900 dark:border-white'
-                    : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700'
+                    ? 'bg-card text-text font-semibold shadow-subtle'
+                    : 'text-muted hover:text-text font-normal'
                 }`}
               >
                 <span>Activity Timeline</span>
-                <span className="font-mono text-[10px] px-1 border border-current">
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-border text-muted">
                   {activities.length}
                 </span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('tasks')}
-                className={`px-4 py-1.5 text-xs font-bold border-t-2 border-x-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 text-xs rounded-md transition-colors flex items-center gap-1.5 cursor-pointer ${
                   activeTab === 'tasks'
-                    ? 'bg-neutral-900 text-white dark:bg-white dark:text-black border-neutral-900 dark:border-white'
-                    : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-300 dark:border-neutral-700'
+                    ? 'bg-card text-text font-semibold shadow-subtle'
+                    : 'text-muted hover:text-text font-normal'
                 }`}
               >
                 <span>Tasks &amp; Follow-ups</span>
-                <span className="font-mono text-[10px] px-1 border border-current">
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-border text-muted">
                   {tasks.length}
                 </span>
               </button>
@@ -326,8 +319,8 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
 
           {/* Server Error Alert */}
           {serverError && (
-            <div className="mb-4 border-2 border-neutral-900 bg-neutral-100 p-2.5 text-xs font-mono font-bold text-neutral-900 dark:border-white dark:bg-neutral-900 dark:text-white flex items-center gap-2">
-              <LedgerIcon name="alert-triangle" size={16} />
+            <div className="mb-4 border border-danger/40 bg-danger-soft text-danger p-3 rounded-lg text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{serverError}</span>
             </div>
           )}
@@ -338,17 +331,17 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                 {/* Name */}
                 <div>
-                  <label className="block text-xs font-bold text-neutral-900 dark:text-neutral-200 mb-1">
+                  <label className="block text-xs font-semibold text-text mb-1">
                     Customer Name (*)
                   </label>
                   <input
                     {...register('name')}
                     type="text"
                     placeholder="e.g. Alexander Vance"
-                    className="w-full border-1.5 border-neutral-900 dark:border-white bg-white dark:bg-neutral-900 px-3 py-1.5 text-xs sm:text-sm text-neutral-950 dark:text-white outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-white rounded-none"
+                    className="w-full border border-border bg-card px-3 py-2 text-xs sm:text-sm text-text placeholder:text-muted rounded-lg outline-none focus:border-accent shadow-subtle transition-colors"
                   />
                   {errors.name && (
-                    <p className="mt-1 text-[11px] font-mono font-bold text-neutral-900 dark:text-white underline">
+                    <p className="mt-1 text-xs text-danger">
                       {errors.name.message}
                     </p>
                   )}
@@ -356,17 +349,17 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
 
                 {/* Phone */}
                 <div>
-                  <label className="block text-xs font-bold text-neutral-900 dark:text-neutral-200 mb-1">
-                    Phone Number (digits only, int'l format without +) (*)
+                  <label className="block text-xs font-semibold text-text mb-1">
+                    Phone Number (int'l digits without +) (*)
                   </label>
                   <input
                     {...register('phone')}
                     type="text"
                     placeholder="966501234567"
-                    className="w-full border-1.5 border-neutral-900 dark:border-white bg-white dark:bg-neutral-900 px-3 py-1.5 text-xs sm:text-sm font-mono text-left text-neutral-950 dark:text-white outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-white rounded-none"
+                    className="w-full border border-border bg-card px-3 py-2 text-xs sm:text-sm font-mono text-left text-text placeholder:text-muted rounded-lg outline-none focus:border-accent shadow-subtle transition-colors"
                   />
                   {errors.phone && (
-                    <p className="mt-1 text-[11px] font-mono font-bold text-neutral-900 dark:text-white underline">
+                    <p className="mt-1 text-xs text-danger">
                       {errors.phone.message}
                     </p>
                   )}
@@ -374,38 +367,38 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
 
                 {/* Company */}
                 <div>
-                  <label className="block text-xs font-bold text-neutral-900 dark:text-neutral-200 mb-1">
+                  <label className="block text-xs font-semibold text-text mb-1">
                     Company / Organization
                   </label>
                   <input
                     {...register('company')}
                     type="text"
                     placeholder="Optional"
-                    className="w-full border-1.5 border-neutral-900 dark:border-white bg-white dark:bg-neutral-900 px-3 py-1.5 text-xs sm:text-sm text-neutral-950 dark:text-white outline-none rounded-none"
+                    className="w-full border border-border bg-card px-3 py-2 text-xs sm:text-sm text-text placeholder:text-muted rounded-lg outline-none focus:border-accent shadow-subtle transition-colors"
                   />
                 </div>
 
                 {/* City */}
                 <div>
-                  <label className="block text-xs font-bold text-neutral-900 dark:text-neutral-200 mb-1">
+                  <label className="block text-xs font-semibold text-text mb-1">
                     City
                   </label>
                   <input
                     {...register('city')}
                     type="text"
                     placeholder="e.g. Riyadh"
-                    className="w-full border-1.5 border-neutral-900 dark:border-white bg-white dark:bg-neutral-900 px-3 py-1.5 text-xs sm:text-sm text-neutral-950 dark:text-white outline-none rounded-none"
+                    className="w-full border border-border bg-card px-3 py-2 text-xs sm:text-sm text-text placeholder:text-muted rounded-lg outline-none focus:border-accent shadow-subtle transition-colors"
                   />
                 </div>
 
                 {/* Source */}
                 <div>
-                  <label className="block text-xs font-bold text-neutral-900 dark:text-neutral-200 mb-1">
+                  <label className="block text-xs font-semibold text-text mb-1">
                     Lead Source
                   </label>
                   <select
                     {...register('sourceId')}
-                    className="w-full border-1.5 border-neutral-900 dark:border-white bg-white dark:bg-neutral-900 px-3 py-1.5 text-xs sm:text-sm text-neutral-950 dark:text-white outline-none rounded-none"
+                    className="w-full border border-border bg-card px-3 py-2 text-xs sm:text-sm text-text rounded-lg outline-none focus:border-accent shadow-subtle transition-colors"
                   >
                     {sources.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -417,12 +410,12 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
 
                 {/* Status */}
                 <div>
-                  <label className="block text-xs font-bold text-neutral-900 dark:text-neutral-200 mb-1">
+                  <label className="block text-xs font-semibold text-text mb-1">
                     Pipeline Status
                   </label>
                   <select
                     {...register('statusId')}
-                    className="w-full border-1.5 border-neutral-900 dark:border-white bg-white dark:bg-neutral-900 px-3 py-1.5 text-xs sm:text-sm text-neutral-950 dark:text-white outline-none rounded-none"
+                    className="w-full border border-border bg-card px-3 py-2 text-xs sm:text-sm text-text rounded-lg outline-none focus:border-accent shadow-subtle transition-colors"
                   >
                     {statuses.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -434,7 +427,7 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
 
                 {/* Deal Value */}
                 <div>
-                  <label className="block text-xs font-bold text-neutral-900 dark:text-neutral-200 mb-1">
+                  <label className="block text-xs font-semibold text-text mb-1">
                     Deal Value (SAR)
                   </label>
                   <input
@@ -442,98 +435,107 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                     type="number"
                     step="0.01"
                     placeholder="0.00"
-                    className="w-full border-1.5 border-neutral-900 dark:border-white bg-white dark:bg-neutral-900 px-3 py-1.5 text-xs sm:text-sm font-mono text-left text-neutral-950 dark:text-white outline-none rounded-none"
+                    className="w-full border border-border bg-card px-3 py-2 text-xs sm:text-sm font-mono text-left text-text placeholder:text-muted rounded-lg outline-none focus:border-accent shadow-subtle transition-colors"
                   />
                 </div>
 
                 {/* Expected Close Date */}
                 <div>
-                  <label className="block text-xs font-bold text-neutral-900 dark:text-neutral-200 mb-1">
+                  <label className="block text-xs font-semibold text-text mb-1">
                     Expected Close Date
                   </label>
                   <input
                     {...register('expectedCloseDate')}
                     type="date"
-                    className="w-full border-1.5 border-neutral-900 dark:border-white bg-white dark:bg-neutral-900 px-3 py-1.5 text-xs sm:text-sm font-mono text-neutral-950 dark:text-white outline-none rounded-none"
+                    className="w-full border border-border bg-card px-3 py-2 text-xs sm:text-sm font-mono text-text rounded-lg outline-none focus:border-accent shadow-subtle transition-colors"
                   />
                 </div>
 
                 {/* Last Follow-up */}
                 <div>
-                  <label className="block text-xs font-bold text-neutral-900 dark:text-neutral-200 mb-1">
-                    Last Contacted Date
+                  <label className="block text-xs font-semibold text-text mb-1">
+                    Last Interaction Date
                   </label>
                   <input
                     {...register('last')}
                     type="date"
-                    className="w-full border-1.5 border-neutral-900 dark:border-white bg-white dark:bg-neutral-900 px-3 py-1.5 text-xs sm:text-sm font-mono text-neutral-950 dark:text-white outline-none rounded-none"
+                    className="w-full border border-border bg-card px-3 py-2 text-xs sm:text-sm font-mono text-text rounded-lg outline-none focus:border-accent shadow-subtle transition-colors"
                   />
                 </div>
 
                 {/* Next Follow-up */}
                 <div>
-                  <label className="block text-xs font-bold text-neutral-900 dark:text-neutral-200 mb-1">
-                    Next Follow-up Due Date
+                  <label className="block text-xs font-semibold text-text mb-1">
+                    Next Follow-up Due
                   </label>
                   <input
                     {...register('next')}
                     type="date"
-                    className="w-full border-1.5 border-neutral-900 dark:border-white bg-white dark:bg-neutral-900 px-3 py-1.5 text-xs sm:text-sm font-mono text-neutral-950 dark:text-white outline-none rounded-none"
+                    className="w-full border border-border bg-card px-3 py-2 text-xs sm:text-sm font-mono text-text rounded-lg outline-none focus:border-accent shadow-subtle transition-colors"
                   />
                 </div>
               </div>
 
               {/* Notes */}
               <div>
-                <label className="block text-xs font-bold text-neutral-900 dark:text-neutral-200 mb-1">
-                  Notes &amp; Interaction Details
+                <label className="block text-xs font-semibold text-text mb-1">
+                  Customer Profile &amp; Notes
                 </label>
                 <textarea
                   {...register('notes')}
-                  rows={2}
-                  placeholder="Record customer preferences, requirements, or conversation summaries..."
-                  className="w-full border-1.5 border-neutral-900 dark:border-white bg-white dark:bg-neutral-900 p-2 text-xs sm:text-sm text-neutral-950 dark:text-white outline-none rounded-none"
+                  rows={3}
+                  placeholder="Record customer preferences, timeline expectations, background notes..."
+                  className="w-full border border-border bg-card p-3 text-xs sm:text-sm text-text placeholder:text-muted rounded-lg outline-none focus:border-accent shadow-subtle transition-colors"
                 />
               </div>
 
-              {/* Consent Checkbox */}
-              <div className="border-2 border-neutral-900 dark:border-white p-3 bg-[#fafafa] dark:bg-[#111111]">
+              {/* Explicit Consent Requirement */}
+              <div className="border border-border bg-bg p-3.5 rounded-lg">
                 <label className="flex items-start gap-2.5 cursor-pointer select-none">
-                  <input type="checkbox" {...register('consent')} className="mt-1" />
+                  <input
+                    {...register('consent')}
+                    type="checkbox"
+                    className="mt-0.5 h-4 w-4 rounded border-border text-accent focus:ring-accent"
+                  />
                   <div>
-                    <div className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-white">
-                      I confirm explicit customer consent to be contacted via WhatsApp (Mandatory)
-                    </div>
-                    <div className="text-[11px] font-mono text-neutral-500 mt-0.5">
-                      Consent timestamp is cryptographically archived in the audit log.
-                      {initialData?.consentDate && (
-                        <span className="block mt-0.5 font-bold">
-                          Original recorded date: {formatDate(initialData.consentDate)}
-                        </span>
-                      )}
-                    </div>
+                    <span className="text-xs font-semibold text-text block">
+                      Explicit Consent Confirmed
+                    </span>
+                    <span className="text-xs text-muted leading-relaxed block mt-0.5">
+                      The client has explicitly opted in to receive business communications and updates via WhatsApp in compliance with privacy guidelines.
+                    </span>
                   </div>
                 </label>
                 {errors.consent && (
-                  <p className="mt-1 text-[11px] font-mono font-bold text-neutral-900 dark:text-white underline">
+                  <p className="mt-1.5 text-xs text-danger font-medium">
                     {errors.consent.message}
                   </p>
                 )}
               </div>
 
-              {/* Submit Buttons */}
-              <div className="flex items-center justify-end gap-2 pt-3 border-t-2 border-neutral-900 dark:border-white">
-                <LedgerButton type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+              {/* Modal Footer Actions */}
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
+                <LedgerButton
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={onClose}
+                >
                   Cancel
                 </LedgerButton>
-                <LedgerButton type="submit" disabled={submitting}>
-                  {submitting ? 'Saving...' : initialData ? 'Update Record' : 'Save & Register Customer'}
+                <LedgerButton
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  disabled={submitting}
+                >
+                  <span>{submitting ? 'Saving Account...' : initialData ? 'Update Record' : 'Create Account'}</span>
                 </LedgerButton>
               </div>
             </form>
           )}
 
-          {/* TAB 2: ACTIVITY TIMELINE */}
+          {/* TAB 2: ACTIVITIES TIMELINE */}
           {activeTab === 'activities' && initialData && (
             <div className="space-y-4">
               {/* Add Activity Form */}
@@ -546,20 +548,20 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                     content: activityContent.trim(),
                   });
                 }}
-                className="border-2 border-neutral-900 dark:border-white p-3 bg-[#fafafa] dark:bg-[#111111] space-y-2.5"
+                className="border border-border rounded-lg p-3.5 bg-bg space-y-3"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold font-mono uppercase">Record New Activity</span>
+                  <span className="text-xs font-semibold text-text uppercase tracking-wider">Record New Activity</span>
                   <div className="flex items-center gap-1">
                     {(['note', 'call', 'whatsapp', 'meeting'] as const).map((t) => (
                       <button
                         key={t}
                         type="button"
                         onClick={() => setActivityType(t)}
-                        className={`px-2 py-0.5 text-[10px] font-bold border transition-colors cursor-pointer ${
+                        className={`px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer ${
                           activityType === t
-                            ? 'bg-neutral-900 text-white dark:bg-white dark:text-black border-neutral-900 dark:border-white'
-                            : 'border-neutral-400 dark:border-neutral-600 hover:bg-neutral-200 dark:hover:bg-neutral-800'
+                            ? 'bg-card text-accent font-semibold shadow-subtle border border-accent/30'
+                            : 'text-muted hover:text-text'
                         }`}
                       >
                         {t.toUpperCase()}
@@ -571,45 +573,46 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                 <textarea
                   value={activityContent}
                   onChange={(e) => setActivityContent(e.target.value)}
-                  placeholder="Enter call notes, action taken, or meeting takeaway..."
+                  placeholder="Enter interaction notes, meeting takeaways, or next steps..."
                   rows={2}
-                  className="w-full border border-neutral-900 dark:border-white bg-white dark:bg-neutral-900 p-2 text-xs text-neutral-950 dark:text-white outline-none rounded-none"
+                  className="w-full border border-border bg-card p-2.5 text-xs text-text placeholder:text-muted rounded-lg outline-none focus:border-accent shadow-subtle"
                 />
 
                 <div className="flex justify-end">
                   <LedgerButton
                     type="submit"
                     size="sm"
+                    variant="primary"
                     disabled={!activityContent.trim() || addActivityMutation.isPending}
                   >
-                    <LedgerIcon name="plus" size={13} />
+                    <Plus className="w-3.5 h-3.5" />
                     <span>Log Activity</span>
                   </LedgerButton>
                 </div>
               </form>
 
               {/* Timeline List */}
-              <div className="max-h-72 overflow-y-auto space-y-2 font-mono text-xs pl-1">
+              <div className="max-h-72 overflow-y-auto space-y-2 text-xs pr-1">
                 {activities.length === 0 ? (
-                  <div className="text-center py-6 text-neutral-500 font-mono">
-                    No activities recorded yet for this customer.
+                  <div className="text-center py-6 text-muted">
+                    No activities recorded yet for this client account.
                   </div>
                 ) : (
                   activities.map((act) => (
                     <div
                       key={act.id}
-                      className="border border-neutral-900 dark:border-white p-2.5 bg-white dark:bg-neutral-900 shadow-solid-sm space-y-1"
+                      className="border border-border p-3 rounded-lg bg-card shadow-subtle space-y-1.5"
                     >
-                      <div className="flex items-center justify-between text-[11px] text-neutral-500 border-b border-dashed border-neutral-300 dark:border-neutral-700 pb-1">
+                      <div className="flex items-center justify-between text-xs text-muted border-b border-border pb-1.5">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-neutral-900 dark:text-white uppercase px-1 border border-current">
+                          <span className="font-semibold text-text uppercase px-2 py-0.5 rounded-full bg-accent-soft text-accent text-[10px]">
                             {act.type}
                           </span>
-                          <span>By: {act.user?.name || 'Staff'}</span>
+                          <span>By {act.user?.name || 'Staff'}</span>
                         </div>
-                        <span>{formatDate(act.createdAt)}</span>
+                        <span className="tabular-nums">{formatDate(act.createdAt)}</span>
                       </div>
-                      <p className="text-xs text-neutral-900 dark:text-neutral-100 whitespace-pre-wrap pt-0.5">
+                      <p className="text-xs text-text whitespace-pre-wrap leading-relaxed">
                         {act.content}
                       </p>
                     </div>
@@ -632,9 +635,9 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                     dueAt: taskDueAt,
                   });
                 }}
-                className="border-2 border-neutral-900 dark:border-white p-3 bg-[#fafafa] dark:bg-[#111111] space-y-2.5"
+                className="border border-border rounded-lg p-3.5 bg-bg space-y-3"
               >
-                <div className="text-xs font-bold font-mono uppercase">Assign New Action Item / Task</div>
+                <div className="text-xs font-semibold text-text uppercase tracking-wider">Assign Action Item / Task</div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div className="sm:col-span-2">
                     <input
@@ -642,7 +645,7 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                       placeholder="Task description (e.g. send quotation, verify milestone)"
                       value={taskTitle}
                       onChange={(e) => setTaskTitle(e.target.value)}
-                      className="w-full border border-neutral-900 dark:border-white bg-white dark:bg-neutral-900 px-3 py-1.5 text-xs text-neutral-950 dark:text-white outline-none rounded-none"
+                      className="w-full border border-border bg-card px-3 py-2 text-xs text-text placeholder:text-muted rounded-lg outline-none focus:border-accent shadow-subtle"
                     />
                   </div>
                   <div>
@@ -650,7 +653,7 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                       type="date"
                       value={taskDueAt}
                       onChange={(e) => setTaskDueAt(e.target.value)}
-                      className="w-full border border-neutral-900 dark:border-white bg-white dark:bg-neutral-900 px-3 py-1.5 text-xs font-mono text-neutral-950 dark:text-white outline-none rounded-none"
+                      className="w-full border border-border bg-card px-3 py-2 text-xs font-mono text-text rounded-lg outline-none focus:border-accent shadow-subtle"
                     />
                   </div>
                 </div>
@@ -658,29 +661,30 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                   <LedgerButton
                     type="submit"
                     size="sm"
+                    variant="primary"
                     disabled={!taskTitle.trim() || !taskDueAt || addTaskMutation.isPending}
                   >
-                    <LedgerIcon name="plus" size={13} />
+                    <Plus className="w-3.5 h-3.5" />
                     <span>Assign Task</span>
                   </LedgerButton>
                 </div>
               </form>
 
               {/* Tasks List */}
-              <div className="max-h-72 overflow-y-auto space-y-2 font-mono text-xs pl-1">
+              <div className="max-h-72 overflow-y-auto space-y-2 text-xs pr-1">
                 {tasks.length === 0 ? (
-                  <div className="text-center py-6 text-neutral-500 font-mono">
-                    No pending tasks for this client record.
+                  <div className="text-center py-6 text-muted">
+                    No pending tasks for this client account.
                   </div>
                 ) : (
                   tasks.map((task) => (
                     <div
                       key={task.id}
-                      className={`border border-neutral-900 dark:border-white p-2.5 flex items-center justify-between bg-white dark:bg-neutral-900 ${
-                        task.done ? 'opacity-50 line-through' : ''
+                      className={`border border-border p-3 rounded-lg flex items-center justify-between bg-card shadow-subtle transition-colors ${
+                        task.done ? 'opacity-60 line-through' : ''
                       }`}
                     >
-                      <label className="flex items-center gap-2 cursor-pointer flex-1 select-none">
+                      <label className="flex items-center gap-2.5 cursor-pointer flex-1 select-none">
                         <input
                           type="checkbox"
                           checked={Boolean(task.done)}
@@ -690,15 +694,15 @@ export const CustomerModal: React.FC<CustomerModalProps> = ({
                               done: !task.done,
                             })
                           }
-                          className="h-4 w-4"
+                          className="h-4 w-4 rounded border-border text-accent focus:ring-accent"
                         />
-                        <span className="font-bold text-sm text-neutral-950 dark:text-white">
+                        <span className="font-medium text-xs text-text">
                           {task.title}
                         </span>
                       </label>
-                      <div className="text-[11px] font-mono text-neutral-500 text-right">
-                        <span>Due: {formatDate(task.dueAt)}</span>
-                        {task.done && <span className="block text-[10px] font-bold text-emerald-600">[COMPLETED]</span>}
+                      <div className="text-xs text-muted text-right">
+                        <span className="tabular-nums">Due: {formatDate(task.dueAt)}</span>
+                        {task.done && <span className="block text-[10px] text-accent font-semibold">[Completed]</span>}
                       </div>
                     </div>
                   ))

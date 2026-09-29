@@ -4,10 +4,18 @@ import { api } from '../lib/api.js';
 import { useSocket } from '../contexts/SocketContext.js';
 import { useAuth } from '../contexts/AuthContext.js';
 import type { ChatMessage, Channel } from '../types/index.js';
-import { LedgerIcon } from '../components/icons/LedgerIcons.js';
 import { LedgerButton, LedgerInput, LedgerModal } from '../components/common/LedgerComponents.js';
-import { RubberStamp } from '../components/common/RubberStamp.js';
 import { format } from 'date-fns';
+import {
+  Hash,
+  Send,
+  Paperclip,
+  Plus,
+  X,
+  FileText,
+  Download,
+  CornerUpLeft,
+} from 'lucide-react';
 
 export const ChatPage: React.FC = () => {
   const { user } = useAuth();
@@ -119,19 +127,20 @@ export const ChatPage: React.FC = () => {
     mutationFn: async (payload: {
       text: string;
       channelId?: string | null;
-      parentId?: string | null;
-      attachmentUrl?: string | null;
-      attachmentType?: string | null;
-      attachmentSize?: number | null;
+      parentId?: string;
+      attachmentUrl?: string;
+      attachmentType?: string;
+      attachmentSize?: number;
     }) => {
-      setErrorMessage(null);
       const res = await api.post('/chat/messages', payload);
       return res.data.data;
     },
-    onSuccess: (newMsg) => {
+    onSuccess: (newMsg: ChatMessage) => {
       setInputText('');
-      setReplyingTo(null);
       setAttachmentData(null);
+      setReplyingTo(null);
+      setErrorMessage(null);
+
       queryClient.setQueryData(['chat', 'messages', selectedChannelId], (old: any) => {
         if (!old) return [newMsg];
         if (Array.isArray(old)) {
@@ -231,144 +240,132 @@ export const ChatPage: React.FC = () => {
   const activeChannel = channels.find((c) => c.id === selectedChannelId);
 
   return (
-    <div className="flex flex-col md:flex-row h-[calc(100vh-10.5rem)] border-2 border-neutral-900 dark:border-neutral-100 bg-[#ffffff] dark:bg-[#141414] shadow-solid select-text" dir="ltr">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-10rem)] border border-border bg-card rounded-xl shadow-subtle overflow-hidden select-text" dir="ltr">
       {/* 1. CHANNELS SIDEBAR */}
-      <aside className="w-full md:w-64 border-b-2 md:border-b-0 md:border-r-2 border-neutral-900 dark:border-neutral-100 bg-[#fafafa] dark:bg-[#111111] flex flex-col shrink-0">
+      <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-border bg-card flex flex-col shrink-0">
         {/* Sidebar Header */}
-        <div className="p-3 border-b-2 border-neutral-900 dark:border-neutral-100 flex items-center justify-between">
+        <div className="p-3.5 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-neutral-900 dark:bg-white" />
-            <h2 className="font-bold text-xs font-mono uppercase tracking-wider text-neutral-900 dark:text-white">
-              CHANNELS
+            <Hash className="w-4 h-4 text-accent" />
+            <h2 className="font-semibold text-xs uppercase tracking-wider text-text">
+              Channels
             </h2>
           </div>
           <button
             type="button"
             onClick={() => setIsNewChannelModalOpen(true)}
             title="Create New Channel"
-            className="p-1 border border-neutral-900 dark:border-white hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+            className="p-1 rounded-md text-muted hover:text-text hover:bg-bg transition-colors cursor-pointer"
           >
-            <LedgerIcon name="plus" size={13} />
+            <Plus className="w-4 h-4" />
           </button>
         </div>
 
         {/* Channels List */}
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {/* General Workspace Channel */}
+          {/* Default General Channel */}
           <button
             type="button"
             onClick={() => setSelectedChannelId(null)}
-            className={`w-full text-left p-2.5 text-xs font-bold transition-all border flex items-center justify-between cursor-pointer ${
+            className={`w-full text-left p-2.5 text-xs transition-colors rounded-lg flex items-center justify-between cursor-pointer ${
               selectedChannelId === null
-                ? 'bg-neutral-900 text-white dark:bg-white dark:text-black border-neutral-900 dark:border-white shadow-solid-sm'
-                : 'bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 border-neutral-300 dark:border-neutral-700 hover:border-neutral-900'
+                ? 'bg-accent-soft text-accent font-semibold border-s-2 border-accent'
+                : 'text-muted hover:bg-bg hover:text-text font-normal'
             }`}
           >
             <div className="flex items-center gap-2 truncate">
-              <span className="font-mono text-sm">#</span>
+              <span className="font-mono text-xs">#</span>
               <span className="truncate">General Workspace</span>
             </div>
-            <span className="text-[10px] font-mono px-1 border border-current">ALL</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded bg-border text-muted">
+              ALL
+            </span>
           </button>
 
-          {/* User Channels */}
-          {channels.map((chan) => {
-            const isSelected = selectedChannelId === chan.id;
+          {/* Dynamic channels */}
+          {channels.map((ch) => {
+            const isCurrent = selectedChannelId === ch.id;
             return (
               <button
-                key={chan.id}
+                key={ch.id}
                 type="button"
-                onClick={() => setSelectedChannelId(chan.id)}
-                className={`w-full text-left p-2.5 text-xs font-bold transition-all border flex items-center justify-between cursor-pointer ${
-                  isSelected
-                    ? 'bg-neutral-900 text-white dark:bg-white dark:text-black border-neutral-900 dark:border-white shadow-solid-sm'
-                    : 'bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 border-neutral-300 dark:border-neutral-700 hover:border-neutral-900'
+                onClick={() => setSelectedChannelId(ch.id)}
+                className={`w-full text-left p-2.5 text-xs transition-colors rounded-lg flex items-center justify-between cursor-pointer ${
+                  isCurrent
+                    ? 'bg-accent-soft text-accent font-semibold border-s-2 border-accent'
+                    : 'text-muted hover:bg-bg hover:text-text font-normal'
                 }`}
               >
                 <div className="flex items-center gap-2 truncate">
-                  <span className="font-mono text-sm">#</span>
-                  <span className="truncate">{chan.name}</span>
+                  <span className="font-mono text-xs">#</span>
+                  <span className="truncate">{ch.name}</span>
                 </div>
-                <span className="text-[9px] font-mono px-1 border border-current uppercase">
-                  {chan.type}
-                </span>
+                {ch.type !== 'public' && (
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-border text-muted uppercase">
+                    {ch.type}
+                  </span>
+                )}
               </button>
             );
           })}
         </div>
 
-        {/* Real-time Connection Footer */}
-        <div className="p-2 border-t-2 border-neutral-900 dark:border-neutral-100 text-[10px] font-mono flex items-center justify-between bg-white dark:bg-neutral-900">
+        {/* Connection status at bottom */}
+        <div className="p-2.5 border-t border-border text-xs flex items-center justify-between text-muted bg-card">
           <div className="flex items-center gap-1.5">
             <span
-              className={`w-2 h-2 rounded-full border border-neutral-900 dark:border-white ${
-                isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-transparent'
+              className={`w-2 h-2 rounded-full ${
+                isConnected ? 'bg-accent' : 'bg-muted'
               }`}
             />
-            <span className="font-bold">{isConnected ? 'Live WebSocket Active' : 'Connecting...'}</span>
+            <span className="font-medium text-text">
+              {isConnected ? 'Connected' : 'Connecting...'}
+            </span>
           </div>
-          <span className="text-neutral-500">WS-256</span>
+          <span className="text-[10px] font-mono">TLS-256</span>
         </div>
       </aside>
 
-      {/* 2. CHAT FEED & MESSAGES */}
-      <section className="flex-1 flex flex-col min-w-0 bg-[#ffffff] dark:bg-[#141414]">
-        {/* Chat Room Top Bar */}
-        <div className="border-b-2 border-neutral-900 dark:border-neutral-100 px-4 py-2.5 flex items-center justify-between bg-[#fbfbfb] dark:bg-[#161616]">
+      {/* 2. CHAT STREAM & INPUT */}
+      <section className="flex-1 flex flex-col min-w-0 bg-card">
+        {/* Active Channel Header */}
+        <div className="border-b border-border px-4 py-3 flex items-center justify-between bg-card">
           <div className="flex items-center gap-3">
-            <span className="font-mono font-bold text-lg">#</span>
+            <Hash className="w-5 h-5 text-accent" />
             <div>
-              <div className="font-bold text-sm text-neutral-950 dark:text-white flex items-center gap-2">
+              <div className="font-semibold text-sm text-text flex items-center gap-2">
                 <span>{activeChannel ? activeChannel.name : 'General Workspace'}</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 border border-neutral-900 dark:border-white uppercase">
-                  {activeChannel ? activeChannel.type : 'All Members'}
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-accent-soft text-accent uppercase font-medium">
+                  {activeChannel?.type || 'All Members'}
                 </span>
               </div>
-              <p className="text-[11px] font-mono text-neutral-500 dark:text-neutral-400">
+              <p className="text-xs text-muted">
                 Tiger authenticated internal workplace stream
               </p>
             </div>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 font-mono text-xs">
-            <span className="px-2 py-0.5 border border-neutral-900 dark:border-neutral-100">
+          <div className="hidden sm:flex items-center gap-2 text-xs text-muted">
+            <span className="tabular-nums">
               {messages.length} messages
             </span>
           </div>
         </div>
 
-        {/* Error Banner */}
-        {errorMessage && (
-          <div className="bg-neutral-950 text-white dark:bg-white dark:text-black border-b-2 border-neutral-900 dark:border-white px-4 py-2 text-xs font-mono font-bold flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <LedgerIcon name="alert-triangle" size={14} />
-              <span>{errorMessage}</span>
-            </div>
-            <button
-              onClick={() => setErrorMessage(null)}
-              className="text-white dark:text-black px-1 font-bold hover:underline cursor-pointer"
-            >
-              [Dismiss]
-            </button>
-          </div>
-        )}
-
-        {/* Messages Feed */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 ruled-paper">
+        {/* Messages Stream */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
           {isLoading ? (
-            <div className="flex h-full items-center justify-center text-xs font-mono text-neutral-500">
+            <div className="flex h-full items-center justify-center text-xs text-muted">
               Loading chat records...
             </div>
           ) : messages.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center text-center p-6 space-y-2">
-              <div className="p-3 border-2 border-neutral-900 dark:border-white inline-block">
-                <LedgerIcon name="chat" size={24} />
-              </div>
-              <div className="font-bold text-sm text-neutral-900 dark:text-white">
-                No messages recorded in this channel yet
-              </div>
-              <p className="text-xs font-mono text-neutral-500 max-w-sm">
-                Send the first message to the team. All communications are preserved and encrypted.
+            <div className="flex flex-col h-full items-center justify-center text-center p-6 space-y-2 text-muted">
+              <Hash className="w-8 h-8 text-muted stroke-[1.5]" />
+              <p className="text-sm font-semibold text-text">
+                Start of conversation
+              </p>
+              <p className="text-xs max-w-sm">
+                This channel is open for work updates, documents, and real-time collaboration.
               </p>
             </div>
           ) : (
@@ -381,55 +378,64 @@ export const ChatPage: React.FC = () => {
                   className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} group`}
                 >
                   <div
-                    className={`max-w-[90%] md:max-w-[75%] border-2 border-neutral-900 dark:border-neutral-100 p-3 bg-white dark:bg-neutral-900 shadow-solid-sm ${
-                      isMe ? 'ml-1' : 'mr-1'
+                    className={`max-w-[85%] md:max-w-[70%] rounded-xl p-3.5 shadow-subtle ${
+                      isMe
+                        ? 'bg-accent text-white rounded-tr-sm ml-auto'
+                        : 'bg-bg border border-border text-text rounded-tl-sm mr-auto'
                     }`}
                   >
                     {/* Header */}
-                    <div className="flex items-center justify-between gap-3 border-b border-dashed border-neutral-300 dark:border-neutral-700 pb-1.5 mb-2 text-xs">
+                    <div className={`flex items-center justify-between gap-4 pb-1.5 mb-2 text-xs border-b ${
+                      isMe ? 'border-white/20 text-white/80' : 'border-border text-muted'
+                    }`}>
                       <div className="flex items-center gap-2">
                         {msg.sender?.photoUrl ? (
                           <img
                             src={msg.sender.photoUrl}
                             alt={msg.sender.name}
-                            className="w-5 h-5 border border-neutral-900 dark:border-white object-cover grayscale"
+                            className="w-5 h-5 rounded-full object-cover"
                           />
                         ) : (
-                          <span className="w-5 h-5 border border-neutral-900 dark:border-white flex items-center justify-center font-mono text-[10px] font-bold">
+                          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                            isMe ? 'bg-white/20 text-white' : 'bg-accent-soft text-accent'
+                          }`}>
                             {msg.sender?.name?.[0] || 'U'}
                           </span>
                         )}
-                        <span className="font-bold text-neutral-950 dark:text-white">
+                        <span className={`font-semibold ${isMe ? 'text-white' : 'text-text'}`}>
                           {isMe ? 'You' : msg.sender?.name || 'Member'}
                         </span>
-                        {msg.sender?.role === 'admin' ? (
-                          <span className="text-[9px] font-mono px-1 border border-neutral-900 dark:border-white bg-neutral-900 text-white dark:bg-white dark:text-black">
+                        {msg.sender?.role === 'admin' && (
+                          <span className={`text-[9px] px-1 py-0.2 rounded font-semibold ${
+                            isMe ? 'bg-white/25 text-white' : 'bg-card border border-border text-muted'
+                          }`}>
                             ADMIN
-                          </span>
-                        ) : (
-                          <span className="text-[9px] font-mono px-1 border border-neutral-400 text-neutral-600 dark:text-neutral-400">
-                            STAFF
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 font-mono text-[10px] text-neutral-500">
-                        <span>{formatMessageTime(msg.createdAt)}</span>
+                      <div className="flex items-center gap-2 text-[10px]">
+                        <span className="tabular-nums">{formatMessageTime(msg.createdAt)}</span>
                         <button
                           type="button"
                           onClick={() => setReplyingTo(msg)}
                           title="Reply in thread"
-                          className="opacity-0 group-hover:opacity-100 hover:text-neutral-950 dark:hover:text-white font-bold underline transition-opacity cursor-pointer"
+                          className="opacity-0 group-hover:opacity-100 hover:underline transition-opacity cursor-pointer flex items-center gap-0.5"
                         >
-                          [Reply]
+                          <CornerUpLeft className="w-3 h-3" />
+                          <span>Reply</span>
                         </button>
                       </div>
                     </div>
 
                     {/* Quoted Message */}
                     {msg.parent && (
-                      <div className="border-l-2 border-neutral-900 dark:border-white pl-2.5 py-1 mb-2 bg-neutral-100 dark:bg-neutral-800 text-xs font-mono text-neutral-600 dark:text-neutral-300">
-                        <span className="font-bold block text-[10px] text-neutral-900 dark:text-white">
+                      <div className={`border-l-2 pl-2.5 py-1 mb-2 text-xs rounded-r ${
+                        isMe
+                          ? 'border-white/50 bg-white/10 text-white/90'
+                          : 'border-accent bg-card text-muted'
+                      }`}>
+                        <span className="font-semibold block text-[10px]">
                           Replying to {msg.parent.sender?.name || 'Member'}:
                         </span>
                         <p className="line-clamp-1 truncate">{msg.parent.text}</p>
@@ -438,25 +444,29 @@ export const ChatPage: React.FC = () => {
 
                     {/* Text */}
                     {msg.text && (
-                      <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed text-neutral-900 dark:text-neutral-100">
+                      <p className={`text-xs sm:text-sm whitespace-pre-wrap leading-relaxed ${
+                        isMe ? 'text-white' : 'text-text'
+                      }`}>
                         {msg.text}
                       </p>
                     )}
 
                     {/* Attachment */}
                     {msg.attachmentUrl && (
-                      <div className="mt-2.5 pt-2 border-t border-dashed border-neutral-300 dark:border-neutral-700">
+                      <div className={`mt-2.5 pt-2 border-t ${
+                        isMe ? 'border-white/20' : 'border-border'
+                      }`}>
                         {msg.attachmentType?.startsWith('image/') ? (
                           <a
                             href={msg.attachmentUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block border border-neutral-900 dark:border-white hover:opacity-90"
+                            className="block rounded-lg overflow-hidden border border-border/40 hover:opacity-95"
                           >
                             <img
                               src={msg.attachmentUrl}
                               alt="Attachment"
-                              className="max-h-60 max-w-full object-contain grayscale"
+                              className="max-h-60 max-w-full object-contain"
                             />
                           </a>
                         ) : (
@@ -465,18 +475,22 @@ export const ChatPage: React.FC = () => {
                             download="attachment"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 p-2 border border-neutral-900 dark:border-white hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs font-mono"
+                            className={`flex items-center gap-2 p-2 rounded-lg border text-xs transition-colors ${
+                              isMe
+                                ? 'bg-white/10 border-white/20 text-white hover:bg-white/20'
+                                : 'bg-card border-border text-text hover:bg-bg'
+                            }`}
                           >
-                            <LedgerIcon name="paperclip" size={16} />
+                            <FileText className="w-4 h-4 shrink-0" />
                             <div className="flex-1 truncate">
-                              <span className="font-bold underline block truncate">Attached Document</span>
+                              <span className="font-medium underline block truncate">Attached Document</span>
                               {msg.attachmentSize && (
-                                <span className="text-[10px] text-neutral-500">
+                                <span className="text-[10px] opacity-75 tabular-nums">
                                   {(msg.attachmentSize / 1024).toFixed(1)} KB
                                 </span>
                               )}
                             </div>
-                            <LedgerIcon name="download" size={14} />
+                            <Download className="w-3.5 h-3.5" />
                           </a>
                         )}
                       </div>
@@ -489,54 +503,59 @@ export const ChatPage: React.FC = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Replying banner */}
+        {/* Reply indicator banner */}
         {replyingTo && (
-          <div className="border-t-2 border-neutral-900 dark:border-neutral-100 bg-[#f0f0f0] dark:bg-[#1a1a1a] px-4 py-2 flex items-center justify-between text-xs font-mono">
+          <div className="border-t border-border bg-bg px-4 py-2 flex items-center justify-between text-xs">
             <div className="flex items-center gap-2 truncate">
-              <span className="font-bold">Replying to:</span>
-              <span className="font-bold text-neutral-900 dark:text-white">
-                {replyingTo.sender?.name}
-              </span>
-              <span className="text-neutral-500 truncate max-w-xs">
-                "{replyingTo.text?.slice(0, 45)}..."
-              </span>
+              <CornerUpLeft className="w-3.5 h-3.5 text-accent shrink-0" />
+              <span className="text-muted">Replying to <strong className="text-text">{replyingTo.sender?.name}</strong>:</span>
+              <span className="text-muted truncate max-w-xs">{replyingTo.text}</span>
             </div>
             <button
               type="button"
               onClick={() => setReplyingTo(null)}
-              className="font-bold hover:underline cursor-pointer"
+              className="p-1 rounded text-muted hover:text-text"
             >
-              [Cancel Reply]
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
 
-        {/* Selected Attachment Preview Bar */}
+        {/* Attachment preview banner */}
         {attachmentData && (
-          <div className="border-t-2 border-neutral-900 dark:border-neutral-100 bg-[#f7f7f7] dark:bg-[#181818] px-4 py-2 flex items-center justify-between text-xs font-mono">
-            <div className="flex items-center gap-2 truncate">
-              <LedgerIcon name="paperclip" size={15} />
-              <span className="font-bold truncate">{attachmentData.name}</span>
-              <span className="text-neutral-500">
+          <div className="border-t border-border bg-bg px-4 py-2 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <Paperclip className="w-3.5 h-3.5 text-accent" />
+              <span className="font-medium text-text">{attachmentData.name}</span>
+              <span className="text-muted tabular-nums">
                 ({(attachmentData.size / 1024).toFixed(1)} KB)
               </span>
             </div>
             <button
               type="button"
               onClick={() => setAttachmentData(null)}
-              className="text-neutral-900 dark:text-white font-bold hover:underline cursor-pointer"
+              className="p-1 rounded text-muted hover:text-danger"
             >
-              [Remove Attachment]
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
 
-        {/* Chat Input Dock */}
+        {/* Error notification */}
+        {errorMessage && (
+          <div className="border-t border-danger/40 bg-danger-soft px-4 py-1.5 text-xs text-danger flex items-center justify-between">
+            <span>{errorMessage}</span>
+            <button onClick={() => setErrorMessage(null)} className="p-0.5">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
+        {/* Input Form Area */}
         <form
           onSubmit={handleSend}
-          className="border-t-2 border-neutral-900 dark:border-neutral-100 p-3 bg-white dark:bg-neutral-950 flex items-end gap-2.5"
+          className="border-t border-border p-3.5 bg-card flex items-end gap-2.5"
         >
-          {/* Hidden File Input */}
           <input
             type="file"
             ref={fileInputRef}
@@ -545,17 +564,15 @@ export const ChatPage: React.FC = () => {
             className="hidden"
           />
 
-          {/* Attachment Paperclip Button */}
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            title="Attach file or image (up to 10MB)"
-            className="p-2 border-2 border-neutral-900 dark:border-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors btn-mechanical cursor-pointer"
+            title="Attach file (up to 10MB)"
+            className="p-2.5 rounded-lg border border-border text-muted hover:text-text hover:bg-bg transition-colors cursor-pointer shrink-0"
           >
-            <LedgerIcon name="paperclip" size={17} />
+            <Paperclip className="w-4 h-4" />
           </button>
 
-          {/* Text Area */}
           <div className="relative flex-1">
             <textarea
               value={inputText}
@@ -564,88 +581,80 @@ export const ChatPage: React.FC = () => {
               placeholder="Write a message... (Press Enter to send, Shift+Enter for new line)"
               rows={2}
               maxLength={2000}
-              className="w-full resize-none border-2 border-neutral-900 dark:border-white bg-[#fafafa] dark:bg-[#111111] p-2 text-xs sm:text-sm text-neutral-950 dark:text-white outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-white rounded-none"
+              className="w-full resize-none border border-border bg-bg p-2.5 text-xs sm:text-sm text-text placeholder:text-muted rounded-lg outline-none focus:border-accent shadow-subtle transition-colors"
             />
-            <div className="absolute right-2 bottom-1.5 text-[9px] font-mono text-neutral-400">
+            <div className="absolute right-2 bottom-2 text-[10px] text-muted tabular-nums">
               {inputText.length}/2000
             </div>
           </div>
 
-          {/* Send Button */}
-          <LedgerButton
+          <button
             type="submit"
-            disabled={(!inputText.trim() && !attachmentData) || sendMutation.isPending}
-            className="h-[46px] px-4 cursor-pointer"
+            disabled={!inputText.trim() && !attachmentData}
+            className="inline-flex items-center justify-center gap-1.5 font-medium rounded-lg px-4 py-2 text-xs sm:text-sm bg-accent text-white hover:bg-accent-hover shadow-subtle transition-colors disabled:opacity-40 disabled:cursor-not-allowed h-[42px] shrink-0 cursor-pointer"
           >
-            <LedgerIcon name="arrow-right" size={15} />
+            <Send className="w-4 h-4" />
             <span className="hidden sm:inline">Send Message</span>
-          </LedgerButton>
+          </button>
         </form>
       </section>
 
-      {/* 3. CREATE CHANNEL MODAL */}
+      {/* New Channel Modal */}
       <LedgerModal
         isOpen={isNewChannelModalOpen}
         onClose={() => setIsNewChannelModalOpen(false)}
-        title="Create New Team Channel"
+        title="Create Internal Channel"
       >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!newChannelName.trim()) return;
-            createChannelMutation.mutate({
-              name: newChannelName.trim(),
-              type: newChannelType,
-            });
-          }}
-          className="space-y-4"
-        >
-          <LedgerInput
-            label="Channel Name"
-            placeholder="e.g. Sales Team, Automation Projects"
-            value={newChannelName}
-            onChange={(e) => setNewChannelName(e.target.value)}
-            required
-          />
-
-          <div className="space-y-1">
-            <label className="block text-xs font-bold text-neutral-800 dark:text-neutral-200">
-              Channel Privacy &amp; Type
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-text mb-1">
+              Channel Name
             </label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['public', 'department', 'private'] as const).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setNewChannelType(t)}
-                  className={`p-2 text-xs font-bold border-2 transition-all cursor-pointer ${
-                    newChannelType === t
-                      ? 'bg-neutral-900 text-white dark:bg-white dark:text-black border-neutral-900 dark:border-white shadow-solid-sm'
-                      : 'bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 border-neutral-400 dark:border-neutral-700'
-                  }`}
-                >
-                  {t.toUpperCase()}
-                </button>
-              ))}
-            </div>
+            <LedgerInput
+              placeholder="e.g. finance-operations"
+              value={newChannelName}
+              onChange={(e) => setNewChannelName(e.target.value)}
+            />
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t-2 border-neutral-900 dark:border-white">
+          <div>
+            <label className="block text-xs font-semibold text-text mb-1">
+              Access Type
+            </label>
+            <select
+              value={newChannelType}
+              onChange={(e) => setNewChannelType(e.target.value as any)}
+              className="w-full bg-card border border-border rounded-lg px-3 py-2 text-xs sm:text-sm text-text outline-none focus:border-accent shadow-subtle"
+            >
+              <option value="public">Public (All Organization)</option>
+              <option value="department">Department Restricted</option>
+              <option value="private">Private (Admin &amp; Managers)</option>
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-border">
             <LedgerButton
-              type="button"
               variant="secondary"
+              size="sm"
               onClick={() => setIsNewChannelModalOpen(false)}
             >
               Cancel
             </LedgerButton>
             <LedgerButton
-              type="submit"
-              disabled={createChannelMutation.isPending || !newChannelName.trim()}
+              variant="primary"
+              size="sm"
+              disabled={!newChannelName.trim() || createChannelMutation.isPending}
+              onClick={() =>
+                createChannelMutation.mutate({
+                  name: newChannelName.trim(),
+                  type: newChannelType,
+                })
+              }
             >
               {createChannelMutation.isPending ? 'Creating...' : 'Create Channel'}
             </LedgerButton>
           </div>
-        </form>
+        </div>
       </LedgerModal>
     </div>
   );

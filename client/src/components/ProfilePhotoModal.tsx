@@ -84,38 +84,40 @@ export const ProfilePhotoModal: React.FC<ProfilePhotoModalProps> = ({ isOpen, on
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" dir="ltr">
-      <div className="w-full max-w-sm bg-white dark:bg-black border-2 border-black dark:border-white shadow-2xl p-6 text-black dark:text-white">
-        <div className="flex items-center justify-between border-b-2 border-black dark:border-white pb-3 mb-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" dir="ltr">
+      <div className="w-full max-w-sm bg-card border border-border rounded-xl shadow-lg p-6 text-text">
+        <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
           <div className="flex items-center gap-2">
-            <Camera className="w-5 h-5" />
-            <h3 className="font-black text-lg">Update Profile Photo</h3>
+            <span className="p-1.5 rounded-lg border border-border bg-bg text-muted">
+              <Camera className="w-4 h-4" />
+            </span>
+            <h3 className="font-semibold text-base text-text">Update Profile Photo</h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors border border-transparent hover:border-black dark:hover:border-white cursor-pointer"
+            className="p-1 rounded-lg border border-border hover:bg-bg text-muted hover:text-text cursor-pointer transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 p-2 border-2 border-black dark:border-white bg-neutral-100 dark:bg-neutral-900 text-xs font-bold flex items-center gap-2">
+          <div className="mb-4 p-3 rounded-lg border border-danger/30 bg-danger-soft text-danger text-xs font-medium flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         <div className="flex flex-col items-center justify-center my-6">
-          <div className="w-32 h-32 rounded-full border-4 border-black dark:border-white overflow-hidden bg-neutral-100 dark:bg-neutral-900 flex items-center justify-center mb-4 relative shadow-inner">
+          <div className="w-28 h-28 rounded-full border border-border overflow-hidden bg-bg flex items-center justify-center mb-4 relative shadow-sm">
             {photoPreview ? (
               <img
                 src={photoPreview}
                 alt="Profile preview"
-                className="w-full h-full object-cover grayscale"
+                className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-3xl font-black text-neutral-400">
+              <span className="text-2xl font-semibold text-muted">
                 {user?.name?.[0]?.toUpperCase() || '?'}
               </span>
             )}
@@ -132,18 +134,18 @@ export const ProfilePhotoModal: React.FC<ProfilePhotoModalProps> = ({ isOpen, on
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-4 py-2 border-2 border-black dark:border-white bg-white dark:bg-black text-xs font-black uppercase hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-border bg-bg hover:bg-card text-xs font-medium text-text transition-colors cursor-pointer"
           >
-            <Upload className="w-4 h-4" />
+            <Upload className="w-3.5 h-3.5 text-muted" />
             <span>Choose Image</span>
           </button>
         </div>
 
-        <div className="flex gap-2 border-t-2 border-black dark:border-white pt-4">
+        <div className="flex gap-2 border-t border-border pt-4">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2 border-2 border-black dark:border-white text-xs font-black uppercase hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors cursor-pointer"
+            className="flex-1 py-2 rounded-lg border border-border text-xs font-medium text-muted hover:text-text hover:bg-bg transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -151,7 +153,7 @@ export const ProfilePhotoModal: React.FC<ProfilePhotoModalProps> = ({ isOpen, on
             type="button"
             onClick={handleSave}
             disabled={loading || !photoPreview}
-            className="flex-1 py-2 bg-black dark:bg-white text-white dark:text-black border-2 border-black dark:border-white text-xs font-black uppercase hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer"
+            className="flex-1 py-2 rounded-lg bg-accent text-white text-xs font-medium hover:bg-accent-hover transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5 cursor-pointer"
           >
             {success ? (
               <>

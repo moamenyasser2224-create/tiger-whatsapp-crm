@@ -1,6 +1,7 @@
 import React from 'react';
-import { RubberStamp } from './RubberStamp.js';
-import { LedgerIcon } from '../icons/LedgerIcons.js';
+import { StatusBadge } from './StatusBadge.js';
+import { Printer } from 'lucide-react';
+import { LedgerButton } from './LedgerComponents.js';
 
 interface PayslipReceiptProps {
   serialNumber: string;
@@ -35,114 +36,101 @@ export const PayslipReceipt: React.FC<PayslipReceiptProps> = ({
   onPrint,
 }) => {
   return (
-    <div className="w-full max-w-md mx-auto border-2 border-neutral-900 dark:border-white bg-[#ffffff] dark:bg-[#121212] p-6 shadow-solid font-mono select-none relative perforated-edge-b" dir="ltr">
-      {/* Top Receipt Cut Line */}
-      <div className="border-b-2 border-dashed border-neutral-400 dark:border-neutral-600 pb-3 mb-4 flex items-center justify-between text-xs">
-        <span className="font-bold">OFFICIAL PAYSLIP VOUCHER</span>
-        <span className="tabular-nums">SERIAL: #{serialNumber}</span>
+    <div className="w-full max-w-lg mx-auto bg-card border border-border rounded-xl shadow-subtle p-6 sm:p-8 select-none" dir="ltr">
+      {/* Top Header */}
+      <div className="border-b border-border pb-4 mb-6 flex items-center justify-between text-xs">
+        <div>
+          <span className="font-semibold text-accent uppercase tracking-wider text-xs block">
+            Tiger Official Payslip
+          </span>
+          <span className="text-[11px] text-muted">Financial &amp; Payroll Services</span>
+        </div>
+        <div className="text-right">
+          <span className="text-muted font-mono tabular-nums text-xs">REF #{serialNumber}</span>
+          <div className="mt-1">
+            <StatusBadge
+              label={isClosed ? 'Payroll Closed' : 'In Review'}
+              tone={isClosed ? 'accent' : 'muted'}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Header Info */}
-      <div className="text-center space-y-1 mb-6">
-        <h3 className="font-bold text-xl text-neutral-950 dark:text-white">
-          Tiger Certified Payroll Receipt
+      {/* Title & Billing Period */}
+      <div className="mb-6 space-y-1">
+        <h3 className="font-semibold text-lg text-text">
+          Statement of Earnings &amp; Deductions
         </h3>
-        <p className="text-xs text-neutral-500">
-          Billing Period: <span className="font-bold tabular-nums">{period}</span>
+        <p className="text-xs text-muted">
+          Accounting Cycle: <strong className="text-text font-medium tabular-nums">{period}</strong>
         </p>
       </div>
 
       {/* Employee Details Box */}
-      <div className="border border-neutral-900 dark:border-white p-3 mb-5 text-xs space-y-1">
+      <div className="bg-bg border border-border rounded-lg p-4 mb-6 text-xs space-y-2">
         <div className="flex justify-between">
-          <span className="text-neutral-500">Employee:</span>
-          <span className="font-bold text-neutral-900 dark:text-white">{employeeName}</span>
+          <span className="text-muted">Employee:</span>
+          <span className="font-semibold text-text">{employeeName}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-neutral-500">Email:</span>
-          <span>{employeeEmail}</span>
+          <span className="text-muted">Email:</span>
+          <span className="text-text font-mono">{employeeEmail}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-neutral-500">Daily Wage Base:</span>
-          <span className="tabular-nums font-bold">{dayWage.toFixed(2)} {currency}</span>
+          <span className="text-muted">Daily Wage Base:</span>
+          <span className="tabular-nums font-medium text-text">{dayWage.toFixed(2)} {currency}</span>
         </div>
       </div>
 
       {/* Ledger Line Items Table */}
-      <div className="space-y-2.5 text-xs mb-6">
-        <div className="flex justify-between border-b border-neutral-200 dark:border-neutral-800 pb-1.5 font-bold">
+      <div className="space-y-3 text-xs mb-6">
+        <div className="flex justify-between border-b border-border pb-2 font-semibold text-muted text-[11px] uppercase tracking-wider">
           <span>Accounting Item</span>
           <span>Amount</span>
         </div>
 
-        <div className="flex justify-between">
-          <span>Gross Base Salary</span>
-          <span className="tabular-nums">{baseSalary.toFixed(2)} {currency}</span>
+        <div className="flex justify-between py-1 border-b border-border/50">
+          <span className="text-text">Gross Base Salary</span>
+          <span className="tabular-nums font-medium text-text">{baseSalary.toFixed(2)} {currency}</span>
         </div>
 
-        <div className="flex justify-between text-neutral-800 dark:text-neutral-200">
+        <div className="flex justify-between py-1 border-b border-border/50 text-danger">
           <span>Total Deductions &amp; Lateness (-)</span>
-          <span className="tabular-nums font-bold">-{deductions.toFixed(2)} {currency}</span>
+          <span className="tabular-nums font-semibold">-{deductions.toFixed(2)} {currency}</span>
         </div>
 
         {disciplinaryCapLimit !== undefined && disciplinaryCapLimit > 0 && (
-          <div className="text-[10px] text-neutral-500 flex justify-between pl-2">
+          <div className="text-[11px] text-muted flex justify-between pl-3">
             <span>Statutory Disciplinary Cap</span>
-            <span>Max {disciplinaryCapLimit.toFixed(0)} {currency}</span>
+            <span className="tabular-nums">Max {disciplinaryCapLimit.toFixed(0)} {currency}</span>
           </div>
         )}
 
-        <div className="flex justify-between">
+        <div className="flex justify-between py-1 border-b border-border/50 text-accent">
           <span>Bonuses &amp; Incentives (+)</span>
-          <span className="tabular-nums font-bold">+{bonuses.toFixed(2)} {currency}</span>
+          <span className="tabular-nums font-semibold">+{bonuses.toFixed(2)} {currency}</span>
         </div>
 
-        {/* Double Underline for Net Pay */}
-        <div className="border-t-2 border-neutral-900 dark:border-white border-double-bottom pt-3 pb-1 flex justify-between text-sm sm:text-base font-black">
+        {/* Net Pay Total Box */}
+        <div className="bg-accent-soft border border-accent/20 rounded-lg p-3.5 flex justify-between items-center text-sm font-semibold text-accent mt-4">
           <span>Net Payable Wage</span>
-          <span className="tabular-nums">{netPay.toFixed(2)} {currency}</span>
+          <span className="tabular-nums text-base font-bold">{netPay.toFixed(2)} {currency}</span>
         </div>
       </div>
 
-      {/* QR Code & Stamp Area */}
-      <div className="flex items-center justify-between border-t border-dashed border-neutral-300 dark:border-neutral-700 pt-4 mt-6">
-        {/* Verification QR Code Mockup / Visual */}
-        <div className="border border-neutral-900 dark:border-white p-2 text-center bg-white dark:bg-black">
-          <div className="w-16 h-16 border-2 border-neutral-900 dark:border-white flex flex-col justify-around p-1 text-[8px] font-mono">
-            <div className="flex justify-between">
-              <span className="w-3 h-3 bg-neutral-900 dark:bg-white" />
-              <span className="w-3 h-3 bg-neutral-900 dark:bg-white" />
-            </div>
-            <div className="text-center font-bold">QR-HMAC</div>
-            <div className="flex justify-between">
-              <span className="w-3 h-3 bg-neutral-900 dark:bg-white" />
-              <span className="w-2 h-2 bg-neutral-900 dark:bg-white" />
-            </div>
-          </div>
-          <span className="text-[9px] block mt-1">VERIFIED</span>
-        </div>
-
-        {/* Rubber Stamp Status */}
-        <div className="text-center">
-          {isClosed ? (
-            <RubberStamp label="FINAL CLOSED" recordId={serialNumber} subtext="APPROVED FOR PAYOUT" />
-          ) : (
-            <RubberStamp label="IN REVIEW" recordId={serialNumber} subtext="OPEN AUDIT CYCLE" />
-          )}
-        </div>
-      </div>
-
-      {/* Print Button */}
+      {/* Print Action */}
       {onPrint && (
-        <div className="mt-5 pt-3 border-t border-neutral-200 dark:border-neutral-800 print:hidden text-center">
-          <button
+        <div className="pt-4 border-t border-border print:hidden text-center">
+          <LedgerButton
             type="button"
+            variant="secondary"
+            size="sm"
             onClick={onPrint}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold border-2 border-neutral-900 dark:border-white hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
+            className="w-full sm:w-auto"
           >
-            <LedgerIcon name="printer" size={14} />
+            <Printer className="w-4 h-4" />
             <span>Print Official Payslip</span>
-          </button>
+          </LedgerButton>
         </div>
       )}
     </div>

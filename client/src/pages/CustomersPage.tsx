@@ -21,8 +21,19 @@ import {
   LedgerTable,
   LedgerModal,
 } from '../components/common/LedgerComponents.js';
-import { RubberStamp } from '../components/common/RubberStamp.js';
-import { LedgerIcon } from '../components/icons/LedgerIcons.js';
+import { StatusBadge } from '../components/common/StatusBadge.js';
+import {
+  Plus,
+  Upload,
+  Download,
+  Table as TableIcon,
+  LayoutGrid,
+  Kanban,
+  Search,
+  MessageCircle,
+  Edit2,
+  Trash2,
+} from 'lucide-react';
 
 export const CustomersPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -105,16 +116,7 @@ export const CustomersPage: React.FC = () => {
     },
   });
 
-  // Fast Status Change Mutation for Kanban & Quick Actions
-  const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, newStatus }: { id: string; newStatus: string }) => {
-      await api.put(`/customers/${id}`, { status: newStatus });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
-    },
-  });
-
+  // Save Customer (Create / Update)
   const handleCustomerSave = async (formData: any, force = false) => {
     if (editingCustomer) {
       await api.put(`/customers/${editingCustomer.id}`, formData);
@@ -122,8 +124,11 @@ export const CustomersPage: React.FC = () => {
       await api.post('/customers', { ...formData, force });
     }
     queryClient.invalidateQueries({ queryKey: ['customers'] });
+    setIsCustomerModalOpen(false);
+    setEditingCustomer(null);
   };
 
+  // Export CSV
   const handleExportCsv = async () => {
     try {
       const response = await api.get('/customers/export', { responseType: 'blob' });
@@ -139,6 +144,7 @@ export const CustomersPage: React.FC = () => {
     }
   };
 
+  // Import CSV
   const handleImportCsv = async () => {
     if (!importCsvText.trim()) return;
     setImporting(true);
@@ -146,51 +152,48 @@ export const CustomersPage: React.FC = () => {
       const { data } = await api.post('/customers/import', { csvText: importCsvText });
       setImportResult(data.data);
       queryClient.invalidateQueries({ queryKey: ['customers'] });
-    } catch (e: any) {
-      alert(e.response?.data?.error || 'Failed to import CSV file');
+    } catch (err) {
+      console.error('Import error:', err);
     } finally {
       setImporting(false);
     }
   };
 
-  const getTemplateForCustomer = (c: Customer) => {
-    const tpl = templates.find((t) => t.status === c.status);
-    return tpl?.body;
+  // Template lookup helper
+  const getTemplateForCustomer = (customer: Customer) => {
+    const tpl = templates.find((t) => t.status === customer.status);
+    return tpl ? tpl.body : undefined;
   };
 
-  // Status list to render Kanban columns
-  const availableStatuses = statusOptions.length > 0
-    ? statusOptions.map((opt) => opt.label)
-    : (CUSTOMER_STATUSES as readonly string[]);
+  const rawCustomers: Customer[] = (customerData?.items || (customerData as any)?.customers || []) as Customer[];
+  const displayedItems: Customer[] = search
+    ? rawCustomers.filter(
+        (c: Customer) =>
+          matchesArabicSearch(c.name, search) ||
+          (c.company && matchesArabicSearch(c.company, search)) ||
+          c.phone.includes(search)
+      )
+    : rawCustomers;
 
-  // Filtered customers locally if search query is active
-  const displayedItems = (customerData?.items || []).filter((item) => {
-    if (!search) return true;
-    return (
-      matchesArabicSearch(item.name, search) ||
-      matchesArabicSearch(item.company || '', search) ||
-      matchesArabicSearch(item.phone, search) ||
-      matchesArabicSearch(item.city || '', search) ||
-      matchesArabicSearch(item.notes || '', search)
-    );
-  });
+  const availableStatuses = statusOptions.length > 0
+    ? statusOptions.map((o) => o.label)
+    : CUSTOMER_STATUSES;
 
   return (
     <MotionPage className="space-y-6">
       {/* 1. Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-neutral-900 dark:border-neutral-100 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-neutral-500">
-            <span>Tiger Operations</span>
+          <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted font-medium">
+            <span>Tiger CRM</span>
             <span>/</span>
-            <span>Customers Ledger</span>
+            <span>Accounts &amp; Pipeline</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-neutral-950 dark:text-white mt-1 flex items-center gap-2.5">
-            <LedgerIcon name="ledger-book" size={26} />
-            <span>Customers &amp; Pipeline</span>
+          <h1 className="text-xl sm:text-2xl font-semibold text-text mt-1">
+            Customers &amp; Pipeline
           </h1>
-          <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5">
-            Manage customer accounts, verify communication consents, and track deal stages across certified ledger entries.
+          <p className="text-xs text-muted mt-0.5">
+            Manage customer accounts, track lead stages, and coordinate follow-up schedules.
           </p>
         </div>
 
@@ -199,35 +202,35 @@ export const CustomersPage: React.FC = () => {
           <LedgerButton
             variant="primary"
             size="sm"
-            icon="plus"
             onClick={() => {
               setEditingCustomer(null);
               setIsCustomerModalOpen(true);
             }}
           >
-            Add Customer
+            <Plus className="h-4 w-4" />
+            <span>Add Customer</span>
           </LedgerButton>
 
           <LedgerButton
             variant="secondary"
             size="sm"
-            icon="upload"
             onClick={() => {
               setImportCsvText('');
               setImportResult(null);
               setIsImportModalOpen(true);
             }}
           >
-            Import CSV
+            <Upload className="h-4 w-4 text-muted" />
+            <span>Import CSV</span>
           </LedgerButton>
 
           <LedgerButton
             variant="secondary"
             size="sm"
-            icon="download"
             onClick={handleExportCsv}
           >
-            Export CSV
+            <Download className="h-4 w-4 text-muted" />
+            <span>Export CSV</span>
           </LedgerButton>
         </div>
       </div>
@@ -241,61 +244,61 @@ export const CustomersPage: React.FC = () => {
       />
 
       {/* 3. Filter Bar & 3-Way View Switcher */}
-      <div className="border-2 border-neutral-900 dark:border-white bg-[#faf9f5] dark:bg-[#151515] p-3 shadow-solid-sm space-y-3">
+      <div className="border border-border bg-card rounded-xl p-4 shadow-subtle space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           {/* 3-Way View Switcher */}
-          <div className="inline-flex border-2 border-neutral-900 dark:border-white bg-white dark:bg-black p-0.5">
+          <div className="inline-flex rounded-lg border border-border bg-bg p-0.5">
             <button
               type="button"
               onClick={() => setViewMode('ledger')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md transition-colors cursor-pointer ${
                 viewMode === 'ledger'
-                  ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-950'
-                  : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900'
+                  ? 'bg-card text-text font-semibold shadow-subtle'
+                  : 'text-muted hover:text-text font-normal'
               }`}
             >
-              <LedgerIcon name="table" size={14} />
-              <span>Ledger Table</span>
+              <TableIcon className="w-3.5 h-3.5" />
+              <span>Table</span>
             </button>
 
             <button
               type="button"
               onClick={() => setViewMode('cards')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md transition-colors cursor-pointer ${
                 viewMode === 'cards'
-                  ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-950'
-                  : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900'
+                  ? 'bg-card text-text font-semibold shadow-subtle'
+                  : 'text-muted hover:text-text font-normal'
               }`}
             >
-              <LedgerIcon name="cards" size={14} />
-              <span>Index Cards</span>
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>Cards</span>
             </button>
 
             <button
               type="button"
               onClick={() => setViewMode('kanban')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md transition-colors cursor-pointer ${
                 viewMode === 'kanban'
-                  ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-950'
-                  : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-900'
+                  ? 'bg-card text-text font-semibold shadow-subtle'
+                  : 'text-muted hover:text-text font-normal'
               }`}
             >
-              <LedgerIcon name="kanban" size={14} />
-              <span>Stages Board</span>
+              <Kanban className="w-3.5 h-3.5" />
+              <span>Kanban</span>
             </button>
           </div>
 
           {/* Quick Record Counter */}
-          <div className="text-xs font-mono text-neutral-600 dark:text-neutral-400 flex items-center gap-2">
+          <div className="text-xs text-muted flex items-center gap-2">
             <span>Records shown:</span>
-            <span className="font-bold tabular-nums border border-neutral-400 dark:border-neutral-600 px-1.5 py-0.5 bg-white dark:bg-black">
+            <span className="font-semibold text-text tabular-nums px-2 py-0.5 rounded-md bg-bg border border-border">
               {displayedItems.length}
             </span>
           </div>
         </div>
 
         {/* Filter Inputs Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 pt-2 border-t border-dashed border-neutral-300 dark:border-neutral-700">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 pt-2 border-t border-border">
           {/* Search */}
           <div className="relative">
             <LedgerInput
@@ -317,7 +320,7 @@ export const CustomersPage: React.FC = () => {
                 setStatus(e.target.value);
                 setPage(1);
               }}
-              className="w-full bg-white dark:bg-black border-1.5 border-neutral-900 dark:border-white px-2.5 py-2 text-xs outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-white"
+              className="w-full bg-card border border-border rounded-lg px-2.5 py-2 text-xs text-text outline-none focus:border-accent shadow-subtle"
             >
               <option value="">All Pipeline Stages</option>
               {availableStatuses.map((st) => (
@@ -336,7 +339,7 @@ export const CustomersPage: React.FC = () => {
                 setSource(e.target.value);
                 setPage(1);
               }}
-              className="w-full bg-white dark:bg-black border-1.5 border-neutral-900 dark:border-white px-2.5 py-2 text-xs outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-white"
+              className="w-full bg-card border border-border rounded-lg px-2.5 py-2 text-xs text-text outline-none focus:border-accent shadow-subtle"
             >
               <option value="">All Lead Sources</option>
               {sourceOptions.length > 0
@@ -363,7 +366,7 @@ export const CustomersPage: React.FC = () => {
                 setSortOrder(so);
                 setPage(1);
               }}
-              className="w-full bg-white dark:bg-black border-1.5 border-neutral-900 dark:border-white px-2.5 py-2 text-xs outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-white"
+              className="w-full bg-card border border-border rounded-lg px-2.5 py-2 text-xs text-text outline-none focus:border-accent shadow-subtle"
             >
               <option value="createdAt-desc">Newest Added First</option>
               <option value="createdAt-asc">Oldest Added First</option>
@@ -375,34 +378,34 @@ export const CustomersPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. VIEW 1: Ledger Table View */}
+      {/* 4. VIEW 1: Table View */}
       {viewMode === 'ledger' && (
         <LedgerTable>
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="bg-neutral-100 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200">
-                <th className="px-4 py-3 font-bold">Client &amp; Organization</th>
-                <th className="px-4 py-3 font-bold font-mono">Phone Number</th>
-                <th className="px-4 py-3 font-bold">Source</th>
-                <th className="px-4 py-3 font-bold">Consent Verified</th>
-                <th className="px-4 py-3 font-bold text-center">Stage Stamp</th>
-                <th className="px-4 py-3 font-bold">Next Follow-up</th>
-                <th className="px-4 py-3 font-bold text-center">Actions</th>
+              <tr className="bg-bg text-muted font-medium text-xs border-b border-border">
+                <th className="px-4 py-3 font-semibold">Client &amp; Organization</th>
+                <th className="px-4 py-3 font-semibold font-mono">Phone Number</th>
+                <th className="px-4 py-3 font-semibold">Source</th>
+                <th className="px-4 py-3 font-semibold">Consent</th>
+                <th className="px-4 py-3 font-semibold text-center">Stage</th>
+                <th className="px-4 py-3 font-semibold">Next Follow-up</th>
+                <th className="px-4 py-3 font-semibold text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
+            <tbody className="divide-y divide-border">
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
                     <td colSpan={7} className="px-4 py-4">
-                      <div className="h-4 bg-neutral-200 dark:bg-neutral-800 w-full" />
+                      <div className="h-4 bg-border/50 rounded w-full" />
                     </td>
                   </tr>
                 ))
               ) : displayedItems.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-neutral-500 font-mono">
-                    No customer records match your filter criteria in the ledger.
+                  <td colSpan={7} className="px-4 py-12 text-center text-muted">
+                    No customer records match your filter criteria.
                   </td>
                 </tr>
               ) : (
@@ -414,84 +417,78 @@ export const CustomersPage: React.FC = () => {
                   return (
                     <tr
                       key={customer.id}
-                      className="hover:bg-neutral-100/50 dark:hover:bg-neutral-900/50 transition-colors"
+                      className="hover:bg-bg/40 transition-colors"
                     >
                       {/* Name & Company */}
                       <td className="px-4 py-3">
-                        <div className="font-bold text-neutral-950 dark:text-white">
+                        <div className="font-semibold text-text">
                           {customer.name}
                         </div>
                         {customer.company && (
-                          <div className="text-[11px] text-neutral-600 dark:text-neutral-400 font-mono mt-0.5">
+                          <div className="text-[11px] text-muted mt-0.5">
                             {customer.company}
                           </div>
                         )}
                         {customer.city && (
-                          <div className="text-[10px] text-neutral-500 font-mono">
+                          <div className="text-[10px] text-muted">
                             {customer.city}
                           </div>
                         )}
                       </td>
 
                       {/* Phone */}
-                      <td className="px-4 py-3 font-mono tabular-nums text-neutral-800 dark:text-neutral-200" dir="ltr">
+                      <td className="px-4 py-3 font-mono tabular-nums text-text" dir="ltr">
                         {customer.phone}
                       </td>
 
                       {/* Source */}
-                      <td className="px-4 py-3 font-mono text-[11px]">
-                        <span className="border border-neutral-400 dark:border-neutral-600 px-1.5 py-0.5">
+                      <td className="px-4 py-3 text-xs text-muted">
+                        <span className="px-2 py-0.5 rounded-md bg-bg border border-border">
                           {getSourceLabel(customer.source)}
                         </span>
                       </td>
 
-                      {/* Explicit Consent & Date */}
+                      {/* Consent Verified */}
                       <td className="px-4 py-3">
                         {customer.consent ? (
-                          <div className="text-[11px] font-mono text-neutral-700 dark:text-neutral-300">
-                            <span className="inline-block border border-neutral-900 dark:border-white px-1 font-bold text-emerald-600 dark:text-emerald-400">
-                              VERIFIED ✓
+                          <div className="text-xs">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-accent-soft text-accent text-xs font-medium">
+                              Verified
                             </span>
-                            <div className="text-[10px] text-neutral-500 mt-0.5 tabular-nums">
+                            <div className="text-[10px] text-muted mt-0.5 tabular-nums">
                               {formatDate(customer.consentDate)}
                             </div>
                           </div>
                         ) : (
-                          <span className="text-[11px] font-mono border border-dashed border-neutral-400 px-1 text-neutral-500">
+                          <span className="text-xs text-muted">
                             Unconfirmed
                           </span>
                         )}
                       </td>
 
-                      {/* Status Stamp */}
+                      {/* Status Badge */}
                       <td className="px-4 py-3 text-center">
-                        <RubberStamp
+                        <StatusBadge
                           label={getStatusLabel(customer.status)}
-                          recordId={customer.id}
+                          statusKey={customer.status}
                         />
                       </td>
 
                       {/* Next Followup */}
-                      <td className="px-4 py-3 font-mono text-xs">
+                      <td className="px-4 py-3 text-xs">
                         {customer.next ? (
                           <div>
-                            <span
-                              className={`tabular-nums ${
-                                overdue
-                                  ? 'font-bold underline decoration-2 text-black dark:text-white'
-                                  : 'text-neutral-700 dark:text-neutral-300'
-                              }`}
-                            >
+                            <span className={`tabular-nums ${overdue ? 'text-danger font-medium' : 'text-text'}`}>
                               {formatDate(customer.next)}
                             </span>
                             {overdue && (
-                              <span className="block text-[10px] font-bold text-neutral-900 dark:text-white">
-                                [ OVERDUE ]
+                              <span className="block text-[10px] text-danger font-medium">
+                                Overdue
                               </span>
                             )}
                           </div>
                         ) : (
-                          <span className="text-neutral-400">—</span>
+                          <span className="text-muted">—</span>
                         )}
                       </td>
 
@@ -503,9 +500,9 @@ export const CustomersPage: React.FC = () => {
                             target="_blank"
                             rel="noopener noreferrer"
                             title="Direct WhatsApp Messaging"
-                            className="p-1.5 border border-neutral-900 dark:border-white hover:bg-neutral-900 hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
+                            className="p-1.5 rounded-lg border border-border text-muted hover:text-text hover:bg-bg transition-colors"
                           >
-                            <LedgerIcon name="chat" size={14} />
+                            <MessageCircle className="w-3.5 h-3.5" />
                           </a>
 
                           <button
@@ -515,18 +512,18 @@ export const CustomersPage: React.FC = () => {
                               setIsCustomerModalOpen(true);
                             }}
                             title="Edit Record"
-                            className="p-1.5 border border-neutral-400 dark:border-neutral-600 hover:border-neutral-900 dark:hover:border-white transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg border border-border text-muted hover:text-text hover:bg-bg transition-colors cursor-pointer"
                           >
-                            <LedgerIcon name="edit" size={14} />
+                            <Edit2 className="w-3.5 h-3.5" />
                           </button>
 
                           <button
                             type="button"
                             onClick={() => setDeletingCustomer(customer)}
                             title="Delete Record"
-                            className="p-1.5 border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg border border-border text-muted hover:text-danger hover:bg-danger-soft transition-colors cursor-pointer"
                           >
-                            <LedgerIcon name="trash" size={14} />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
@@ -539,13 +536,13 @@ export const CustomersPage: React.FC = () => {
 
           {/* Pagination */}
           {customerData && customerData.totalPages > 1 && (
-            <div className="flex items-center justify-between border-t-2 border-neutral-900 dark:border-neutral-100 p-3 bg-neutral-50 dark:bg-neutral-900 font-mono text-xs">
+            <div className="flex items-center justify-between border-t border-border p-3 bg-card text-xs text-muted">
               <div>
-                Total <span className="font-bold tabular-nums">{customerData.total}</span> records • Page{' '}
-                <span className="font-bold tabular-nums">{customerData.page}</span> of{' '}
-                <span className="font-bold tabular-nums">{customerData.totalPages}</span>
+                Total <span className="font-semibold text-text tabular-nums">{customerData.total}</span> records &bull; Page{' '}
+                <span className="font-semibold text-text tabular-nums">{customerData.page}</span> of{' '}
+                <span className="font-semibold text-text tabular-nums">{customerData.totalPages}</span>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <LedgerButton
                   size="sm"
                   variant="secondary"
@@ -554,7 +551,7 @@ export const CustomersPage: React.FC = () => {
                 >
                   Previous
                 </LedgerButton>
-                <span className="px-2 font-bold tabular-nums">{page}</span>
+                <span className="px-2 font-medium text-text tabular-nums">{page}</span>
                 <LedgerButton
                   size="sm"
                   variant="secondary"
@@ -569,12 +566,12 @@ export const CustomersPage: React.FC = () => {
         </LedgerTable>
       )}
 
-      {/* 5. VIEW 2: Index Cards View */}
+      {/* 5. VIEW 2: Cards View */}
       {viewMode === 'cards' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {displayedItems.length === 0 ? (
-            <div className="col-span-full border-2 border-dashed border-neutral-400 p-8 text-center text-neutral-500 font-mono text-xs">
-              No index cards match current parameters.
+            <div className="col-span-full border border-dashed border-border rounded-xl p-8 text-center text-muted text-xs">
+              No customer accounts match current parameters.
             </div>
           ) : (
             displayedItems.map((customer) => {
@@ -585,79 +582,67 @@ export const CustomersPage: React.FC = () => {
               return (
                 <div
                   key={customer.id}
-                  className="border-2 border-neutral-900 dark:border-white bg-[#ffffff] dark:bg-[#121212] shadow-solid-sm flex flex-col justify-between relative"
+                  className="border border-border bg-card rounded-xl shadow-subtle p-5 flex flex-col justify-between hover:border-accent transition-colors"
                 >
-                  {/* Top Index Card Raised Tab */}
-                  <div className="flex items-center justify-between border-b-2 border-neutral-900 dark:border-white bg-neutral-100 dark:bg-neutral-900 px-3 py-1.5 text-xs font-mono">
-                    <span className="font-bold">RECORD #{customer.id.slice(-6).toUpperCase()}</span>
-                    <span className="text-[10px] text-neutral-500">{getSourceLabel(customer.source)}</span>
-                  </div>
-
-                  {/* Card Content */}
-                  <div className="p-4 space-y-3 text-xs">
+                  <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <h3 className="font-bold text-base text-neutral-950 dark:text-white">
+                        <h3 className="font-semibold text-sm text-text">
                           {customer.name}
                         </h3>
                         {customer.company && (
-                          <p className="text-neutral-600 dark:text-neutral-400 font-mono text-xs mt-0.5">
+                          <p className="text-muted text-xs mt-0.5">
                             {customer.company}
                           </p>
                         )}
                         {customer.city && (
-                          <p className="text-neutral-500 font-mono text-[11px]">{customer.city}</p>
+                          <p className="text-muted text-[11px]">{customer.city}</p>
                         )}
                       </div>
 
-                      {/* Stamp on Card */}
-                      <RubberStamp
+                      <StatusBadge
                         label={getStatusLabel(customer.status)}
-                        recordId={customer.id}
+                        statusKey={customer.status}
                       />
                     </div>
 
-                    <div className="border-t border-dashed border-neutral-300 dark:border-neutral-700 pt-2 space-y-1 font-mono text-xs">
+                    <div className="border-t border-border pt-3 space-y-1.5 text-xs">
                       <div className="flex justify-between">
-                        <span className="text-neutral-500">Phone:</span>
-                        <span dir="ltr" className="tabular-nums font-bold">
+                        <span className="text-muted">Phone:</span>
+                        <span dir="ltr" className="tabular-nums font-mono text-text">
                           {customer.phone}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-neutral-500">Consent:</span>
-                        <span className="font-bold">
+                        <span className="text-muted">Consent:</span>
+                        <span className="text-text font-medium">
                           {customer.consent ? `Verified (${formatDate(customer.consentDate)})` : 'Unconfirmed'}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-neutral-500">Next Action:</span>
-                        <span
-                          className={`tabular-nums ${
-                            overdue ? 'font-bold underline decoration-2' : ''
-                          }`}
-                        >
-                          {formatDate(customer.next)} {overdue ? '[OVERDUE]' : ''}
+                        <span className="text-muted">Next Action:</span>
+                        <span className={`tabular-nums ${overdue ? 'text-danger font-medium' : 'text-text'}`}>
+                          {formatDate(customer.next)} {overdue ? '(Overdue)' : ''}
                         </span>
                       </div>
                     </div>
 
                     {customer.notes && (
-                      <div className="border border-neutral-300 dark:border-neutral-800 p-2 text-[11px] text-neutral-700 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-950 font-mono line-clamp-2">
+                      <div className="border border-border p-2.5 rounded-lg text-xs text-muted bg-bg line-clamp-2">
                         {customer.notes}
                       </div>
                     )}
                   </div>
 
                   {/* Actions Footer */}
-                  <div className="border-t-2 border-neutral-900 dark:border-white p-2.5 bg-neutral-50 dark:bg-neutral-900 flex items-center justify-between gap-2">
+                  <div className="border-t border-border pt-3 mt-4 flex items-center justify-between gap-2">
                     <a
                       href={waUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-neutral-900 dark:border-white font-bold text-xs hover:bg-neutral-900 hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-xs font-medium text-text hover:bg-bg transition-colors"
                     >
-                      <LedgerIcon name="chat" size={14} />
+                      <MessageCircle className="w-3.5 h-3.5 text-muted" />
                       <span>WhatsApp</span>
                     </a>
 
@@ -668,18 +653,18 @@ export const CustomersPage: React.FC = () => {
                           setEditingCustomer(customer);
                           setIsCustomerModalOpen(true);
                         }}
-                        className="p-1.5 border border-neutral-400 dark:border-neutral-600 hover:border-neutral-900 cursor-pointer"
+                        className="p-1.5 rounded-lg border border-border text-muted hover:text-text hover:bg-bg cursor-pointer transition-colors"
                         title="Edit"
                       >
-                        <LedgerIcon name="edit" size={14} />
+                        <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         type="button"
                         onClick={() => setDeletingCustomer(customer)}
-                        className="p-1.5 border border-neutral-400 dark:border-neutral-600 hover:bg-neutral-200 dark:hover:bg-neutral-800 cursor-pointer"
+                        className="p-1.5 rounded-lg border border-border text-muted hover:text-danger hover:bg-danger-soft cursor-pointer transition-colors"
                         title="Delete"
                       >
-                        <LedgerIcon name="trash" size={14} />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
@@ -699,104 +684,86 @@ export const CustomersPage: React.FC = () => {
             return (
               <div
                 key={st}
-                className="w-72 sm:w-80 flex-shrink-0 border-2 border-neutral-900 dark:border-white bg-[#faf9f5] dark:bg-[#141414] shadow-solid-sm flex flex-col max-h-[75vh]"
+                className="w-80 shrink-0 bg-bg/50 border border-border rounded-xl p-3.5 flex flex-col"
               >
-                {/* Stage Header */}
-                <div className="border-b-2 border-neutral-900 dark:border-white p-3 bg-neutral-100 dark:bg-neutral-900 flex items-center justify-between">
+                {/* Column Header */}
+                <div className="flex items-center justify-between pb-3 mb-3 border-b border-border">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-neutral-950 dark:text-white">
-                      {getStatusLabel(st)}
-                    </span>
-                    <span className="font-mono text-xs border border-neutral-900 dark:border-white px-1.5 py-0.5 bg-white dark:bg-black font-bold tabular-nums">
-                      {stageCustomers.length}
-                    </span>
+                    <StatusBadge label={getStatusLabel(st)} statusKey={st} />
                   </div>
+                  <span className="text-xs font-semibold text-muted tabular-nums">
+                    {stageCustomers.length}
+                  </span>
                 </div>
 
-                {/* Cards Column */}
-                <div className="p-3 space-y-3 overflow-y-auto flex-1">
+                {/* Cards List */}
+                <div className="flex-1 space-y-2.5 overflow-y-auto max-h-[600px] pr-1">
                   {stageCustomers.length === 0 ? (
-                    <div className="border border-dashed border-neutral-300 dark:border-neutral-700 p-6 text-center text-neutral-400 font-mono text-[11px]">
-                      No records in this stage.
+                    <div className="p-4 text-center text-xs text-muted">
+                      No accounts in this stage
                     </div>
                   ) : (
-                    stageCustomers.map((customer) => {
-                      const overdue = isOverdue(customer.next);
-                      const tplBody = getTemplateForCustomer(customer);
-                      const waUrl = generateWhatsAppUrl(customer.phone, tplBody, customer.name);
+                    stageCustomers.map((c) => {
+                      const overdue = isOverdue(c.next);
+                      const tplBody = getTemplateForCustomer(c);
+                      const waUrl = generateWhatsAppUrl(c.phone, tplBody, c.name);
 
                       return (
                         <div
-                          key={customer.id}
-                          className="border-1.5 border-neutral-900 dark:border-white bg-white dark:bg-[#1e1e1e] p-3 shadow-xs space-y-2 select-none"
+                          key={c.id}
+                          className="bg-card border border-border rounded-lg p-3 shadow-subtle hover:border-accent transition-colors space-y-2"
                         >
                           <div className="flex items-start justify-between gap-1">
-                            <div>
-                              <h4 className="font-bold text-xs text-neutral-950 dark:text-white">
-                                {customer.name}
-                              </h4>
-                              {customer.company && (
-                                <p className="text-[11px] text-neutral-500 font-mono">
-                                  {customer.company}
-                                </p>
-                              )}
-                            </div>
-                            <span className="text-[10px] font-mono text-neutral-400 border border-neutral-300 dark:border-neutral-700 px-1">
-                              {getSourceLabel(customer.source)}
+                            <h4 className="font-semibold text-xs text-text truncate">
+                              {c.name}
+                            </h4>
+                            <span className="text-[10px] text-muted shrink-0">
+                              {getSourceLabel(c.source)}
                             </span>
                           </div>
 
-                          <div className="text-[11px] font-mono tabular-nums text-neutral-700 dark:text-neutral-300 flex justify-between">
-                            <span dir="ltr">{customer.phone}</span>
-                            {customer.next && (
-                              <span className={overdue ? 'font-bold underline decoration-2' : ''}>
-                                {formatDate(customer.next)}
-                              </span>
-                            )}
+                          {c.company && (
+                            <p className="text-[11px] text-muted truncate">
+                              {c.company}
+                            </p>
+                          )}
+
+                          <div className="flex items-center justify-between text-[11px] pt-1 border-t border-border text-muted">
+                            <span className="font-mono tabular-nums">{c.phone}</span>
+                            <span className={overdue ? 'text-danger font-medium' : ''}>
+                              {c.next ? formatDate(c.next) : 'No Follow-up'}
+                            </span>
                           </div>
 
-                          {/* Quick Stage Mover Selector */}
-                          <div className="pt-2 border-t border-dashed border-neutral-200 dark:border-neutral-800 flex items-center justify-between gap-2">
-                            <select
-                              value={customer.status}
-                              onChange={(e) =>
-                                updateStatusMutation.mutate({
-                                  id: customer.id,
-                                  newStatus: e.target.value,
-                                })
-                              }
-                              className="text-[10px] font-mono border border-neutral-400 dark:border-neutral-600 bg-neutral-50 dark:bg-neutral-900 px-1 py-0.5 outline-none cursor-pointer"
-                              title="Transition customer to another stage"
+                          <div className="flex items-center justify-end gap-1 pt-1">
+                            <a
+                              href={waUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1 rounded text-muted hover:text-text hover:bg-bg"
+                              title="Chat on WhatsApp"
                             >
-                              {availableStatuses.map((opt) => (
-                                <option key={opt} value={opt}>
-                                  → {getStatusLabel(opt)}
-                                </option>
-                              ))}
-                            </select>
-
-                            <div className="flex items-center gap-1">
-                              <a
-                                href={waUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-1 border border-neutral-900 dark:border-white hover:bg-neutral-900 hover:text-white dark:hover:bg-white dark:hover:text-black cursor-pointer"
-                                title="WhatsApp"
-                              >
-                                <LedgerIcon name="chat" size={12} />
-                              </a>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setEditingCustomer(customer);
-                                  setIsCustomerModalOpen(true);
-                                }}
-                                className="p-1 border border-neutral-400 hover:border-neutral-900 cursor-pointer"
-                                title="Edit"
-                              >
-                                <LedgerIcon name="edit" size={12} />
-                              </button>
-                            </div>
+                              <MessageCircle className="w-3.5 h-3.5" />
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingCustomer(c);
+                                setIsCustomerModalOpen(true);
+                              }}
+                              className="p-1 rounded text-muted hover:text-text hover:bg-bg"
+                              title="Edit"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDeletingCustomer(c)}
+                              className="p-1 rounded text-muted hover:text-danger hover:bg-danger-soft"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
                       );
@@ -830,8 +797,8 @@ export const CustomersPage: React.FC = () => {
           }
         }}
         title="Confirm Record Deletion"
-        message={`Are you sure you want to permanently delete "${deletingCustomer?.name}" from the customers ledger?`}
-        confirmText="Yes, Delete Record"
+        message={`Are you sure you want to permanently delete "${deletingCustomer?.name}"?`}
+        confirmText="Delete Record"
         danger={true}
       />
 
@@ -843,16 +810,16 @@ export const CustomersPage: React.FC = () => {
       >
         <div className="space-y-4">
           {importResult ? (
-            <div className="border-2 border-neutral-900 dark:border-white p-4 text-center font-mono space-y-1">
-              <p className="font-bold text-sm">Batch import completed</p>
-              <p className="text-xs text-neutral-600 dark:text-neutral-400">
-                Imported: <span className="font-bold tabular-nums">{importResult.importedCount}</span> records •
-                Skipped: <span className="font-bold tabular-nums">{importResult.skippedCount}</span> duplicates
+            <div className="border border-border bg-bg rounded-lg p-4 text-center space-y-1">
+              <p className="font-semibold text-sm text-text">Batch import completed</p>
+              <p className="text-xs text-muted">
+                Imported: <span className="font-semibold text-accent tabular-nums">{importResult.importedCount}</span> records &bull;
+                Skipped: <span className="font-semibold text-danger tabular-nums">{importResult.skippedCount}</span> duplicates
               </p>
             </div>
           ) : (
             <>
-              <p className="text-xs text-neutral-600 dark:text-neutral-400">
+              <p className="text-xs text-muted">
                 Paste CSV content directly here (ensure columns for name and phone in international format):
               </p>
               <textarea
@@ -861,12 +828,12 @@ export const CustomersPage: React.FC = () => {
                 onChange={(e) => setImportCsvText(e.target.value)}
                 placeholder="name,phone,company,source,status&#10;Alexander Vance,966501234567,Tiger Tech,WhatsApp,New"
                 dir="ltr"
-                className="w-full border-1.5 border-neutral-900 dark:border-white p-3 font-mono text-xs bg-white dark:bg-black text-neutral-950 dark:text-white outline-none"
+                className="w-full border border-border bg-card rounded-lg p-3 font-mono text-xs text-text outline-none focus:border-accent shadow-subtle"
               />
             </>
           )}
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
             <LedgerButton
               variant="secondary"
               size="sm"
