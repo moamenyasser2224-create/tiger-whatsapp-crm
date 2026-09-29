@@ -29,6 +29,20 @@ const envSchema = z.object({
   COOKIE_SAME_SITE: z.enum(['lax', 'strict', 'none']).default('lax'),
   SENTRY_DSN: z.string().optional().default(''),
   ENABLE_RLS: z.string().default('false').transform((val) => val === 'true'),
+
+  // SMTP Email Server Settings
+  SMTP_HOST: z.string().optional().default(process.env.SMTP_HOST || ''),
+  SMTP_PORT: z.string().default(process.env.SMTP_PORT || '587').transform((val) => parseInt(val, 10)),
+  SMTP_USER: z.string().optional().default(process.env.SMTP_USER || ''),
+  SMTP_PASS: z.string().optional().default(process.env.SMTP_PASS || ''),
+  SMTP_FROM: z.string().default(process.env.SMTP_FROM || 'Tiger Workspace <noreply@tigerworkspace.com>'),
+  SMTP_SECURE: z.string().default(process.env.SMTP_SECURE || 'false').transform((val) => val === 'true'),
+
+  // Meta WhatsApp Cloud API Settings
+  WHATSAPP_PHONE_NUMBER_ID: z.string().optional().default(process.env.WHATSAPP_PHONE_NUMBER_ID || ''),
+  WHATSAPP_ACCESS_TOKEN: z.string().optional().default(process.env.WHATSAPP_ACCESS_TOKEN || ''),
+  WHATSAPP_VERIFY_TOKEN: z.string().default(process.env.WHATSAPP_VERIFY_TOKEN || 'tiger_webhook_verify_token_2026'),
+  WHATSAPP_WABA_ID: z.string().optional().default(process.env.WHATSAPP_WABA_ID || ''),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
@@ -57,4 +71,14 @@ export const env = parsedEnv.success ? parsedEnv.data : {
   COOKIE_SAME_SITE: 'lax' as const,
   SENTRY_DSN: '',
   ENABLE_RLS: false,
+  SMTP_HOST: '',
+  SMTP_PORT: 587,
+  SMTP_USER: '',
+  SMTP_PASS: '',
+  SMTP_FROM: 'Tiger Workspace <noreply@tigerworkspace.com>',
+  SMTP_SECURE: false,
+  WHATSAPP_PHONE_NUMBER_ID: '',
+  WHATSAPP_ACCESS_TOKEN: '',
+  WHATSAPP_VERIFY_TOKEN: 'tiger_webhook_verify_token_2026',
+  WHATSAPP_WABA_ID: '',
 };

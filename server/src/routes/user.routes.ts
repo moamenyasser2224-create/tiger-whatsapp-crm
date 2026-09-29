@@ -21,6 +21,14 @@ router.post('/employee', requireAdmin, (req, res, next) =>
   userController.createEmployee(req, res, next)
 );
 
+router.get('/:id/onboarding', requireAdmin, (req, res, next) =>
+  userController.getOnboardingStatus(req, res, next)
+);
+
+router.post('/:id/offboard', requireAdmin, (req, res, next) =>
+  userController.offboardEmployee(req, res, next)
+);
+
 // GDPR Data Export & Account Deletion
 router.get('/export-data', (req, res, next) =>
   userController.exportData(req, res, next)

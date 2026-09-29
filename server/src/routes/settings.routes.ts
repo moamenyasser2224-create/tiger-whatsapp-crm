@@ -12,5 +12,6 @@ router.get('/', (req, res, next) => settingsController.get(req, res, next));
 
 // Admin-only mutation
 router.put('/', requireAdmin, (req, res, next) => settingsController.update(req, res, next));
+router.post('/test-email', requireAdmin, (req, res, next) => settingsController.testEmail(req, res, next));
 
 export default router;

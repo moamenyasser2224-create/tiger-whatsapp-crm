@@ -6,6 +6,7 @@ import { CUSTOMER_SOURCES, CUSTOMER_STATUSES } from '../types/index.js';
 import { CustomerModal } from '../components/CustomerModal.js';
 import { ConfirmModal } from '../components/ConfirmModal.js';
 import { DueTodayBanner } from '../components/DueTodayBanner.js';
+import { WhatsAppDispatchModal } from '../components/WhatsAppDispatchModal.js';
 import {
   formatDate,
   isOverdue,
@@ -72,6 +73,7 @@ export const CustomersPage: React.FC = () => {
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(null);
+  const [dispatchCustomer, setDispatchCustomer] = useState<{ id: string; name: string; phone: string; message: string } | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importCsvText, setImportCsvText] = useState('');
   const [importResult, setImportResult] = useState<{ importedCount: number; skippedCount: number } | null>(null);
@@ -495,15 +497,21 @@ export const CustomersPage: React.FC = () => {
                       {/* Actions */}
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1.5">
-                          <a
-                            href={waUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="Direct WhatsApp Messaging"
-                            className="p-1.5 rounded-lg border border-border text-muted hover:text-text hover:bg-bg transition-colors"
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDispatchCustomer({
+                                id: customer.id,
+                                name: customer.name,
+                                phone: customer.phone,
+                                message: (tplBody || 'Hello {name}!').replace(/\{name\}/g, customer.name),
+                              });
+                            }}
+                            title="Send WhatsApp Message"
+                            className="p-1.5 rounded-lg border border-border text-muted hover:text-text hover:bg-bg transition-colors cursor-pointer"
                           >
                             <MessageCircle className="w-3.5 h-3.5" />
-                          </a>
+                          </button>
 
                           <button
                             type="button"
@@ -636,15 +644,21 @@ export const CustomersPage: React.FC = () => {
 
                   {/* Actions Footer */}
                   <div className="border-t border-border pt-3 mt-4 flex items-center justify-between gap-2">
-                    <a
-                      href={waUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-xs font-medium text-text hover:bg-bg transition-colors"
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDispatchCustomer({
+                          id: customer.id,
+                          name: customer.name,
+                          phone: customer.phone,
+                          message: (tplBody || 'Hello {name}!').replace(/\{name\}/g, customer.name),
+                        });
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-xs font-medium text-text hover:bg-bg transition-colors cursor-pointer"
                     >
                       <MessageCircle className="w-3.5 h-3.5 text-muted" />
                       <span>WhatsApp</span>
-                    </a>
+                    </button>
 
                     <div className="flex items-center gap-1">
                       <button
@@ -736,15 +750,21 @@ export const CustomersPage: React.FC = () => {
                           </div>
 
                           <div className="flex items-center justify-end gap-1 pt-1">
-                            <a
-                              href={waUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-1 rounded text-muted hover:text-text hover:bg-bg"
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDispatchCustomer({
+                                  id: c.id,
+                                  name: c.name,
+                                  phone: c.phone,
+                                  message: (tplBody || 'Hello {name}!').replace(/\{name\}/g, c.name),
+                                });
+                              }}
+                              className="p-1 rounded text-muted hover:text-text hover:bg-bg cursor-pointer"
                               title="Chat on WhatsApp"
                             >
                               <MessageCircle className="w-3.5 h-3.5" />
-                            </a>
+                            </button>
                             <button
                               type="button"
                               onClick={() => {
@@ -854,6 +874,17 @@ export const CustomersPage: React.FC = () => {
           </div>
         </div>
       </LedgerModal>
+
+      {/* WhatsApp Cloud API & Web Dispatch Modal */}
+      <WhatsAppDispatchModal
+        isOpen={!!dispatchCustomer}
+        onClose={() => setDispatchCustomer(null)}
+        customer={dispatchCustomer}
+        defaultMessage={dispatchCustomer?.message}
+        onSent={() => {
+          queryClient.invalidateQueries({ queryKey: ['customers'] });
+        }}
+      />
     </MotionPage>
   );
 };

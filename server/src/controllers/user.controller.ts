@@ -100,4 +100,41 @@ export class UserController {
       next(error);
     }
   }
+
+  async getOnboardingStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const status = await userService.getOnboardingStatus(id);
+      res.status(200).json(status);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async offboardEmployee(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { successorUserId, reason, note } = req.body;
+
+      if (!successorUserId) {
+        res.status(400).json({
+          success: false,
+          error: 'A successor employee is required to reassign active customer leads.',
+        });
+        return;
+      }
+
+      const result = await userService.offboardEmployee(req.user!.id, id, {
+        successorUserId,
+        reason,
+        note,
+        ipAddress: req.clientIp || req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

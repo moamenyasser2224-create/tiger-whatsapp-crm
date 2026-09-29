@@ -23,6 +23,7 @@ import {
 import { env } from '../config/env.js';
 import { prisma } from '../config/prisma.js';
 import { checkPwnedPassword } from '../utils/pwnedPassword.js';
+import { emailService } from './email.service.js';
 
 const userRepository = new UserRepository();
 const tokenRepository = new TokenRepository();
@@ -195,6 +196,13 @@ export class AuthService {
         });
 
         console.warn(`🚨 [SECURITY ALERT] New device / IP login detected for privileged account: ${user.email} (${user.role}) from IP: ${data.ipAddress || 'unknown'}`);
+
+        emailService.sendPrivilegedLoginAlert(user.email, {
+          ip: data.ipAddress || 'unknown',
+          userAgent: data.userAgent,
+          time: new Date().toISOString(),
+          name: user.name,
+        }).catch((err) => console.error('Failed to dispatch security alert email:', err.message));
       }
     }
 
@@ -315,6 +323,10 @@ export class AuthService {
       action: 'FORGOT_PASSWORD_REQUEST',
       entity: 'AUTH',
     });
+
+    // Dispatch real password reset email (with fallback to dev console logger)
+    emailService.sendPasswordReset(user.email, resetLink, user.name)
+      .catch((err) => console.error('Failed to dispatch password reset email:', err.message));
 
     return {
       success: true,
