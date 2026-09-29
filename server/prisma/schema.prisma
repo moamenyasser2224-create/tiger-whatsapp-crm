@@ -116,6 +116,7 @@ model Settings {
   dayWageCalculation           String   @default("fixed_30") // "fixed_30" (salary/30) or "working_days" (salary/actual_working_days)
   disciplinaryMonthlyCapPercent Decimal  @default(20.0)
   disputeWindowDays            Int      @default(3)
+  geminiApiKey                 String?
   updatedAt                    DateTime @updatedAt
 
   @@map("settings")

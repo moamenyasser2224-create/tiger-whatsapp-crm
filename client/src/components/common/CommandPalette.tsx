@@ -47,6 +47,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   // Base Quick Actions
   const staticActions: PaletteAction[] = [
     {
+      id: 'action-tiger-ai',
+      category: 'AI Assistant',
+      title: 'Ask Tiger AI Copilot (Gemini 3.8 Flash)',
+      subtitle: 'Draft WhatsApp messages, resolve customer objections, or ask policy questions',
+      icon: 'cpu',
+      action: () => {
+        onClose();
+        window.dispatchEvent(new CustomEvent('open-tiger-ai'));
+      },
+    },
+    {
       id: 'action-attendance',
       category: 'Quick Actions',
       title: 'Time Clock & Punch Card',

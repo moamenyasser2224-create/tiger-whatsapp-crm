@@ -43,6 +43,9 @@ const envSchema = z.object({
   WHATSAPP_ACCESS_TOKEN: z.string().optional().default(process.env.WHATSAPP_ACCESS_TOKEN || ''),
   WHATSAPP_VERIFY_TOKEN: z.string().default(process.env.WHATSAPP_VERIFY_TOKEN || 'tiger_webhook_verify_token_2026'),
   WHATSAPP_WABA_ID: z.string().optional().default(process.env.WHATSAPP_WABA_ID || ''),
+
+  // Google Gemini AI Assistant Settings
+  GEMINI_API_KEY: z.string().optional().default(process.env.GEMINI_API_KEY || ''),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
@@ -81,4 +84,5 @@ export const env = parsedEnv.success ? parsedEnv.data : {
   WHATSAPP_ACCESS_TOKEN: '',
   WHATSAPP_VERIFY_TOKEN: 'tiger_webhook_verify_token_2026',
   WHATSAPP_WABA_ID: '',
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
 };

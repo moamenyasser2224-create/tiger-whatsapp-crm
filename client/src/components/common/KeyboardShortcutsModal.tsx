@@ -18,6 +18,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
     { key: 'Alt + 3', desc: 'Navigate to Payroll & Deductions' },
     { key: 'Alt + 4', desc: 'Navigate to Team Chat' },
     { key: 'Alt + 5', desc: 'Navigate to Tiger Showcase / Home' },
+    { key: 'Alt + A', desc: 'Toggle Tiger AI Copilot (Gemini 3.8 Flash)' },
     { key: 'Alt + T', desc: 'Toggle interface theme (Dark / Light)' },
     { key: 'Esc', desc: 'Close any active modal or dialog' },
   ];

@@ -34,6 +34,11 @@ import {
   MessageSquareCode,
   Send,
   ExternalLink,
+  Sparkles,
+  Bot,
+  Key,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { MotionPage } from '../components/motion/MotionPage.js';
 
@@ -68,6 +73,14 @@ export const SettingsPage: React.FC = () => {
   const [smtpTestEmail, setSmtpTestEmail] = useState('');
   const [isTestingSmtp, setIsTestingSmtp] = useState(false);
   const [smtpFeedback, setSmtpFeedback] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Google Gemini AI Assistant Integration State
+  const [geminiApiKeyInput, setGeminiApiKeyInput] = useState('');
+  const [showGeminiKey, setShowGeminiKey] = useState(false);
+  const [isSavingGeminiKey, setIsSavingGeminiKey] = useState(false);
+  const [geminiKeyFeedback, setGeminiKeyFeedback] = useState<{ success: boolean; message: string } | null>(null);
+  const [isTestingGemini, setIsTestingGemini] = useState(false);
+  const [geminiTestFeedback, setGeminiTestFeedback] = useState<{ success: boolean; message: string } | null>(null);
 
   // 2FA Setup State
   const [is2FASetupOpen, setIs2FASetupOpen] = useState(false);
@@ -326,6 +339,57 @@ export const SettingsPage: React.FC = () => {
       });
     } finally {
       setIsTestingSmtp(false);
+    }
+  };
+
+  // Gemini AI Assistant Query & Handlers (Admin)
+  const { data: aiStatus, refetch: refetchAiStatus } = useQuery<{ configured: boolean; model: string }>({
+    queryKey: ['ai-status'],
+    queryFn: async () => {
+      const res = await api.get('/ai/status');
+      return res.data.data;
+    },
+    enabled: isAdmin,
+  });
+
+  const handleSaveGeminiKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!geminiApiKeyInput.trim()) return;
+    setIsSavingGeminiKey(true);
+    setGeminiKeyFeedback(null);
+    try {
+      const res = await api.put('/ai/key', { apiKey: geminiApiKeyInput.trim() });
+      setGeminiKeyFeedback({ success: true, message: res.data.message });
+      refetchAiStatus();
+      setGeminiApiKeyInput('');
+    } catch (err: any) {
+      setGeminiKeyFeedback({
+        success: false,
+        message: err.response?.data?.error || 'Failed to update Gemini API key',
+      });
+    } finally {
+      setIsSavingGeminiKey(false);
+    }
+  };
+
+  const handleTestGemini = async () => {
+    setIsTestingGemini(true);
+    setGeminiTestFeedback(null);
+    try {
+      const res = await api.post('/ai/chat', {
+        messages: [{ role: 'user', content: 'Say "Tiger AI & Google Gemini 3.8 Flash are online and operational!"' }],
+      });
+      setGeminiTestFeedback({
+        success: true,
+        message: res.data.data.content,
+      });
+    } catch (err: any) {
+      setGeminiTestFeedback({
+        success: false,
+        message: err.response?.data?.error || err.message,
+      });
+    } finally {
+      setIsTestingGemini(false);
     }
   };
 
@@ -635,6 +699,125 @@ export const SettingsPage: React.FC = () => {
               <span>{isTestingSmtp ? 'Sending Test...' : 'Test SMTP Connection'}</span>
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Admin Section: Google Gemini AI Assistant Integration */}
+      {isAdmin && (
+        <div className="rounded-xl border border-border bg-card p-6 shadow-subtle space-y-4 text-text">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-text flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-accent" />
+              <span>Google Gemini AI Assistant Integration</span>
+            </h2>
+            <StatusBadge
+              label={aiStatus?.configured ? 'Active (Gemini 3.8 Flash)' : 'Simulation / Key Unset'}
+              variant={aiStatus?.configured ? 'positive' : 'muted'}
+            />
+          </div>
+
+          <p className="text-xs text-muted leading-relaxed">
+            Powers the global in-app <strong>Tiger AI Copilot</strong> available to all employees across every screen. Staff can draft high-converting WhatsApp messages, handle customer objections, and understand internal HR policies.
+            Powered by <strong>Google Gemini 3.8 Flash</strong>.
+          </p>
+
+          {geminiKeyFeedback && (
+            <div
+              className={`p-3 rounded-lg border text-xs flex items-center gap-2 ${
+                geminiKeyFeedback.success
+                  ? 'border-accent/30 bg-accent-soft text-accent'
+                  : 'border-danger/30 bg-danger-soft text-danger'
+              }`}
+            >
+              {geminiKeyFeedback.success ? (
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+              )}
+              <span>{geminiKeyFeedback.message}</span>
+            </div>
+          )}
+
+          {geminiTestFeedback && (
+            <div
+              className={`p-3 rounded-lg border text-xs flex items-start gap-2 ${
+                geminiTestFeedback.success
+                  ? 'border-accent/30 bg-accent-soft text-accent'
+                  : 'border-danger/30 bg-danger-soft text-danger'
+              }`}
+            >
+              {geminiTestFeedback.success ? (
+                <Bot className="w-4 h-4 shrink-0 mt-0.5" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              )}
+              <div className="flex-1 whitespace-pre-wrap">{geminiTestFeedback.message}</div>
+            </div>
+          )}
+
+          <form onSubmit={handleSaveGeminiKey} className="space-y-3 pt-2">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Key className="absolute left-3 top-2.5 h-4 w-4 text-muted" />
+                <input
+                  type={showGeminiKey ? 'text' : 'password'}
+                  value={geminiApiKeyInput}
+                  onChange={(e) => setGeminiApiKeyInput(e.target.value)}
+                  placeholder={
+                    aiStatus?.configured
+                      ? '•••••••••••••••••••••••••••••••• (API Key Active - enter new key to replace)'
+                      : 'Enter Google Gemini API Key (AIzaSy...)'
+                  }
+                  className="w-full rounded-lg border border-border bg-bg pl-9 pr-10 py-2 text-xs font-mono text-text focus:border-accent focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowGeminiKey(!showGeminiKey)}
+                  className="absolute right-3 top-2.5 text-muted hover:text-text cursor-pointer"
+                  title={showGeminiKey ? 'Hide key' : 'Show key'}
+                >
+                  {showGeminiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="submit"
+                  disabled={isSavingGeminiKey || !geminiApiKeyInput.trim()}
+                  className="flex items-center gap-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover px-4 py-2 text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  <span>{isSavingGeminiKey ? 'Saving...' : 'Save API Key'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleTestGemini}
+                  disabled={isTestingGemini}
+                  className="flex items-center gap-1.5 rounded-lg border border-border bg-card hover:bg-bg px-3.5 py-2 text-xs font-medium text-text transition-colors disabled:opacity-50 cursor-pointer shrink-0 shadow-subtle"
+                >
+                  <Bot className="h-3.5 w-3.5 text-accent" />
+                  <span>{isTestingGemini ? 'Testing AI...' : 'Test AI Model'}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-muted pt-1">
+              <span>
+                Need an API key? Generate one at{' '}
+                <a
+                  href="https://aistudio.google.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent hover:underline inline-flex items-center gap-0.5"
+                >
+                  <span>Google AI Studio</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </span>
+              <span className="font-mono text-[10px]">Model: gemini-3.8-flash</span>
+            </div>
+          </form>
         </div>
       )}
 

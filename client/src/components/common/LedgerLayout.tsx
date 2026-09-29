@@ -22,10 +22,12 @@ import {
   Menu,
   X,
   ExternalLink,
+  Sparkles,
 } from 'lucide-react';
 import { CommandPalette } from './CommandPalette.js';
 import { KeyboardShortcutsModal } from './KeyboardShortcutsModal.js';
 import { NotificationsCenter } from './NotificationsCenter.js';
+import { TigerAiWidget } from '../TigerAiWidget.js';
 
 interface NavItem {
   id: string;
@@ -203,6 +205,20 @@ export const LedgerLayout: React.FC = () => {
               <span className="hidden md:inline font-normal">Search</span>
               <kbd className="hidden md:inline bg-bg border border-border px-1.5 py-0.2 rounded text-[10px] text-muted font-mono">
                 ⌘K
+              </kbd>
+            </button>
+
+            {/* Tiger AI Copilot Trigger (Alt+A) */}
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('open-tiger-ai'))}
+              title="Tiger AI Assistant (Alt+A)"
+              className="flex items-center gap-1.5 bg-accent-soft border border-accent/20 hover:border-accent text-accent px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer shadow-subtle font-medium"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-accent animate-pulse" />
+              <span className="hidden sm:inline">Tiger AI</span>
+              <kbd className="hidden lg:inline bg-card border border-accent/20 px-1 py-0.2 rounded text-[9px] text-accent font-mono">
+                Alt+A
               </kbd>
             </button>
 
@@ -385,6 +401,7 @@ export const LedgerLayout: React.FC = () => {
         isOpen={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
       />
+      <TigerAiWidget />
     </div>
   );
 };

@@ -12,6 +12,7 @@ import notificationRoutes from './notification.routes.js';
 import crmRoutes from './crm.routes.js';
 import departmentRoutes from './department.routes.js';
 import whatsappRoutes from './whatsapp.routes.js';
+import aiRoutes from './ai.routes.js';
 
 const router = Router();
 
@@ -28,6 +29,7 @@ router.use('/notifications', notificationRoutes);
 router.use('/crm', crmRoutes);
 router.use('/departments', departmentRoutes);
 router.use('/whatsapp', whatsappRoutes);
+router.use('/ai', aiRoutes);
 
 export default router;
 
