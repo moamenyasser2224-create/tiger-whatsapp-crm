@@ -38,17 +38,17 @@ export class FaceService {
   ) {
     if (!data.biometricConsent) {
       throw new CustomError(
-        'الموافقة البيومترية القانونية الصريحة إلزامية قبل تسجيل بصمة الوجه',
+        'Explicit biometric consent is required before enrolling facial biometrics',
         400
       );
     }
 
     if (!Array.isArray(data.embedding) || data.embedding.length < 16) {
-      throw new CustomError('بيانات متجه الوجه غير صالحة أو غير مكتملة', 400);
+      throw new CustomError('Face embedding vector data is invalid or incomplete', 400);
     }
 
     const user = await userRepository.findById(userId);
-    if (!user) throw new CustomError('المستخدم غير موجود', 404);
+    if (!user) throw new CustomError('User not found', 404);
 
     // Encrypt the mathematical vector with AES-256-GCM. Raw image is NEVER stored.
     const encryptedEmbedding = encryptFaceEmbedding(data.embedding);
@@ -72,7 +72,7 @@ export class FaceService {
 
     return {
       success: true,
-      message: 'تم تسجيل بصمة الوجه بنجاح وحفظها مشفرة وفق أعلى معايير الأمان',
+      message: 'Face biometrics enrolled and securely encrypted successfully',
       enrolledAt: now,
     };
   }
@@ -90,7 +90,7 @@ export class FaceService {
     userAgent?: string;
   }) {
     if (!Array.isArray(data.embedding) || data.embedding.length < 16) {
-      throw new CustomError('بيانات متجه الوجه غير صالحة', 400);
+      throw new CustomError('Face embedding vector data is invalid', 400);
     }
 
     let user = null;
@@ -101,12 +101,12 @@ export class FaceService {
     }
 
     if (!user) {
-      throw new CustomError('المستخدم غير موجود', 404);
+      throw new CustomError('User not found', 404);
     }
 
     if (!user.faceEmbedding || !user.biometricConsent) {
       throw new CustomError(
-        'لم يتم تسجيل بصمة الوجه لهذا الحساب مسبقاً أو تم إلغاء الموافقة البيومترية',
+        'Face biometrics not enrolled for this account or biometric consent was revoked',
         400
       );
     }
@@ -115,7 +115,7 @@ export class FaceService {
     if (data.challengeId) {
       const isChallengeValid = verifyLivenessChallenge(data.challengeId);
       if (!isChallengeValid) {
-        throw new CustomError('تحدي كشف الحيوية منتهي الصلاحية أو غير صالح', 400);
+        throw new CustomError('Liveness challenge expired or invalid', 400);
       }
     }
 
@@ -134,7 +134,7 @@ export class FaceService {
       });
 
       throw new CustomError(
-        'فشل التحقق من تطابق بصمة الوجه، درجة التطابق غير كافية',
+        'Facial biometric verification failed: match score insufficient',
         401
       );
     }
@@ -162,7 +162,7 @@ export class FaceService {
         } else if (!todayAttendance.checkOut) {
           attendanceResult = await attendanceService.checkOut(user.id, data.ipAddress, data.userAgent);
         } else {
-          attendanceResult = { message: 'تم تسجيل الحضور والانصراف مسبقاً لهذا اليوم' };
+          attendanceResult = { message: 'Check-in and check-out have already been recorded today' };
         }
       } catch (err: any) {
         attendanceResult = { error: err.message };
@@ -189,7 +189,7 @@ export class FaceService {
    */
   async deleteFaceData(userId: string, ipAddress?: string, userAgent?: string) {
     const user = await userRepository.findById(userId);
-    if (!user) throw new CustomError('المستخدم غير موجود', 404);
+    if (!user) throw new CustomError('User not found', 404);
 
     await userRepository.update(userId, {
       faceEmbedding: null,
@@ -209,7 +209,7 @@ export class FaceService {
 
     return {
       success: true,
-      message: 'تم حذف بيانات بصمة الوجه وإلغاء الموافقة البيومترية نهائياً من قاعدة البيانات',
+      message: 'Face biometrics permanently deleted and biometric consent revoked',
     };
   }
 }

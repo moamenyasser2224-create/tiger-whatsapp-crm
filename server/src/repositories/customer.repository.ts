@@ -97,7 +97,7 @@ export class CustomerRepository {
 
   /**
    * Returns customers whose next follow-up is <= today (or overdue),
-   * and status is NOT in ['تم البيع', 'غير مهتم'],
+   * and status is NOT in ['Closed Won', 'Lost'],
    * ordered ascending by next follow-up date.
    */
   async findDueToday(userId: string, endOfToday: Date): Promise<Customer[]> {
@@ -110,7 +110,7 @@ export class CustomerRepository {
           not: null,
         },
         status: {
-          notIn: ['تم البيع', 'غير مهتم'],
+          notIn: ['Closed Won', 'Lost'],
         },
       },
       orderBy: {
@@ -170,11 +170,11 @@ export class CustomerRepository {
     });
 
     const result: Record<string, number> = {
-      'جديد': 0,
-      'تم التواصل': 0,
-      'مهتم': 0,
-      'تم البيع': 0,
-      'غير مهتم': 0,
+      'New': 0,
+      'Contacted': 0,
+      'Interested': 0,
+      'Closed Won': 0,
+      'Lost': 0,
     };
 
     counts.forEach((item) => {

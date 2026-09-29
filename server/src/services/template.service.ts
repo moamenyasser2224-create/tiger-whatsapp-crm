@@ -23,7 +23,7 @@ export class TemplateService {
     let template = await templateRepository.findByStatus(userId, status);
 
     if (!template) {
-      const defaultBody = DEFAULT_MESSAGE_TEMPLATES[status as CustomerStatus] || 'مرحباً {name}!';
+      const defaultBody = DEFAULT_MESSAGE_TEMPLATES[status as CustomerStatus] || 'Hello {name}!';
       template = await templateRepository.upsert(userId, status, defaultBody);
     }
 
@@ -37,7 +37,7 @@ export class TemplateService {
     meta?: { ipAddress?: string; userAgent?: string }
   ) {
     if (!body.includes('{name}')) {
-      throw new CustomError('يجب أن يحتوي نص الرسالة على المتغير {name} ليتم استبداله باسم العميل تلقائياً', 400);
+      throw new CustomError('The message body must include the {name} placeholder', 400);
     }
 
     const updated = await templateRepository.upsert(userId, status, body.trim());
@@ -62,7 +62,7 @@ export class TemplateService {
   ) {
     const defaultBody = DEFAULT_MESSAGE_TEMPLATES[status];
     if (!defaultBody) {
-      throw new CustomError('الحالة المحددة غير صالحة', 400);
+      throw new CustomError('Invalid status specified', 400);
     }
 
     const reset = await templateRepository.upsert(userId, status, defaultBody);
@@ -85,6 +85,6 @@ export class TemplateService {
    */
   async formatMessage(userId: string, status: string, customerName: string): Promise<string> {
     const template = await this.getTemplateByStatus(userId, status);
-    return template.body.replace(/\{name\}/g, customerName || 'عزيزي العميل');
+    return template.body.replace(/\{name\}/g, customerName || 'Customer');
   }
 }

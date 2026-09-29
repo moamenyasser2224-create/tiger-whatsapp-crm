@@ -47,11 +47,11 @@ export const FlipClock: React.FC<FlipClockProps> = ({ className = '' }) => {
   return (
     <LazyMotion features={domAnimation}>
       <div className={`flex items-center gap-2 sm:gap-3 ${className}`} dir="ltr">
-        <FlipDigit value={hours} label="ساعة" />
+        <FlipDigit value={hours} label="Hours" />
         <span className="text-xl font-black text-neutral-400 dark:text-neutral-600 mb-4 animate-pulse">:</span>
-        <FlipDigit value={minutes} label="دقيقة" />
+        <FlipDigit value={minutes} label="Mins" />
         <span className="text-xl font-black text-neutral-400 dark:text-neutral-600 mb-4 animate-pulse">:</span>
-        <FlipDigit value={seconds} label="ثانية" />
+        <FlipDigit value={seconds} label="Secs" />
       </div>
     </LazyMotion>
   );

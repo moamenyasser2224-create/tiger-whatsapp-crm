@@ -26,8 +26,8 @@ describe('CustomersPage Component', () => {
       </QueryClientProvider>
     );
 
-    expect(screen.getByText('إدارة العملاء')).toBeInTheDocument();
-    expect(screen.getByText('إضافة عميل')).toBeInTheDocument();
-    expect(screen.getByText('تصدير CSV')).toBeInTheDocument();
+    expect(screen.getByText(/Customers & Pipeline/i)).toBeInTheDocument();
+    expect(screen.getByText('Add Customer')).toBeInTheDocument();
+    expect(screen.getByText('Export CSV')).toBeInTheDocument();
   });
 });

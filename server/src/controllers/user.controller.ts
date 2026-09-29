@@ -10,7 +10,7 @@ export class UserController {
       if (!name || !email) {
         res.status(400).json({
           success: false,
-          error: 'الاسم والبريد الإلكتروني مطلوبان لإنشاء حساب الموظف',
+          error: 'Name and email are required to create employee account',
         });
         return;
       }
@@ -46,7 +46,7 @@ export class UserController {
       if (!photoUrl) {
         res.status(400).json({
           success: false,
-          error: 'رابط أو بيانات الصورة مطلوبة',
+          error: 'Photo URL or image data is required',
         });
         return;
       }
@@ -83,7 +83,7 @@ export class UserController {
       if (!password) {
         res.status(400).json({
           success: false,
-          error: 'يرجى إدخال كلمة المرور لتأكيد حذف الحساب نهائياً',
+          error: 'Please enter your password to confirm permanent account deletion',
         });
         return;
       }
@@ -94,7 +94,7 @@ export class UserController {
 
       res.status(200).json({
         success: true,
-        message: 'تم حذف حسابك وجميع بياناتك نهائياً من النظام',
+        message: 'Your account and all associated data have been permanently deleted',
       });
     } catch (error) {
       next(error);

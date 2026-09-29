@@ -17,7 +17,7 @@ export class AttendanceController {
 
       res.status(200).json({
         success: true,
-        message: 'تم تسجيل حضورك بنجاح',
+        message: 'Clocked in successfully',
         data: record,
       });
     } catch (err) {
@@ -36,7 +36,7 @@ export class AttendanceController {
 
       res.status(200).json({
         success: true,
-        message: 'تم تسجيل انصرافك بنجاح',
+        message: 'Clocked out successfully',
         data: record,
       });
     } catch (err) {
@@ -94,7 +94,7 @@ export class AttendanceController {
       const correction = await attendanceService.requestCorrection(userId, req.body);
       res.status(201).json({
         success: true,
-        message: 'تم تقديم طلب تصحيح الحضور بنجاح للمراجعة',
+        message: 'Attendance correction request submitted for review',
         data: correction,
       });
     } catch (err) {
@@ -110,7 +110,7 @@ export class AttendanceController {
       const updated = await attendanceService.reviewCorrection(adminId, id, decision);
       res.status(200).json({
         success: true,
-        message: decision === 'approved' ? 'تمت الموافقة على التصحيح وتحديث السجل' : 'تم رفض طلب التصحيح',
+        message: decision === 'approved' ? 'Correction request approved and ledger record updated' : 'Correction request rejected',
         data: updated,
       });
     } catch (err) {
@@ -138,7 +138,7 @@ export class AttendanceController {
       const leave = await attendanceService.createLeaveRequest(userId, req.body);
       res.status(201).json({
         success: true,
-        message: 'تم تقديم طلب الإجازة بنجاح للمراجعة',
+        message: 'Leave request submitted for review',
         data: leave,
       });
     } catch (err) {
@@ -154,7 +154,7 @@ export class AttendanceController {
       const updated = await attendanceService.reviewLeaveRequest(adminId, id, decision, adminComment);
       res.status(200).json({
         success: true,
-        message: decision === 'approved' ? 'تمت الموافقة على طلب الإجازة' : 'تم رفض طلب الإجازة',
+        message: decision === 'approved' ? 'Leave request approved' : 'Leave request rejected',
         data: updated,
       });
     } catch (err) {
@@ -231,7 +231,7 @@ export class AttendanceController {
     try {
       const { id } = req.params;
       await prisma.holiday.delete({ where: { id } });
-      res.status(200).json({ success: true, message: 'تم حذف العطلة الرسمية بنجاح' });
+      res.status(200).json({ success: true, message: 'Holiday deleted successfully' });
     } catch (err) {
       next(err);
     }

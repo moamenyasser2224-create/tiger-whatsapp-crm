@@ -16,7 +16,7 @@ export class ChatService {
     attachmentSize?: number | null;
   }) {
     if (!params.text && !params.attachmentUrl) {
-      throw new Error('محتوى الرسالة أو المرفق مطلوب');
+      throw new Error('Message text or attachment is required');
     }
 
     // Sanitize text against XSS attacks
@@ -41,7 +41,7 @@ export class ChatService {
       notificationService.createNotification({
         userId: message.parent.sender.id,
         type: 'chat',
-        title: 'رد جديد على رسالتك',
+        title: 'New reply to your message',
         body: `${message.sender.name}: ${sanitizedText.slice(0, 60)}...`,
         payload: { messageId: message.id, channelId: params.channelId },
       }).catch(console.error);

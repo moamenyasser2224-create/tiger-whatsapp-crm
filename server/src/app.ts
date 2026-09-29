@@ -111,7 +111,7 @@ export function createApp(): Express {
   app.use((req, res) => {
     res.status(404).json({
       success: false,
-      error: 'المسار المطلوب غير موجود',
+      error: 'The requested resource or endpoint was not found',
     });
   });
 

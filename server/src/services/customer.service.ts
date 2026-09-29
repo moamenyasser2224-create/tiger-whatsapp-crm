@@ -46,8 +46,8 @@ function formatCustomer(customer: any): FormattedCustomer {
     company: customer.company,
     phone: decryptPhone(customer.phone),
     city: customer.city,
-    source: customer.sourceOption?.label || customer.source || 'واتساب',
-    status: customer.statusOption?.label || customer.status || 'جديد',
+    source: customer.sourceOption?.label || customer.source || 'WhatsApp',
+    status: customer.statusOption?.label || customer.status || 'New',
     sourceId: customer.sourceId || null,
     statusId: customer.statusId || null,
     sourceOption: customer.sourceOption || null,
@@ -89,7 +89,7 @@ export class CustomerService {
     const existing = await customerRepository.findByPhoneHash(userId, phoneHash);
     if (existing && !data.force) {
       const formattedExisting = formatCustomer(existing);
-      throw new CustomError('رقم الجوال مسجل مسبقاً لعميل آخر في حسابك', 409, {
+      throw new CustomError('Phone number is already registered for another customer', 409, {
         duplicate: true,
         existingCustomer: formattedExisting,
       });
@@ -99,7 +99,7 @@ export class CustomerService {
 
     // Resolve source & sourceId
     let sourceId = data.sourceId || null;
-    let source = data.source || 'واتساب';
+    let source = data.source || 'WhatsApp';
     if (sourceId) {
       const opt = await prisma.listOption.findUnique({ where: { id: sourceId } });
       if (opt) source = opt.label;
@@ -110,7 +110,7 @@ export class CustomerService {
 
     // Resolve status & statusId
     let statusId = data.statusId || null;
-    let status = data.status || 'جديد';
+    let status = data.status || 'New';
     if (statusId) {
       const opt = await prisma.listOption.findUnique({ where: { id: statusId } });
       if (opt) status = opt.label;
@@ -164,7 +164,7 @@ export class CustomerService {
   async getCustomerById(id: string, userId: string): Promise<FormattedCustomer> {
     const customer = await customerRepository.findById(id, userId);
     if (!customer) {
-      throw new CustomError('العميل غير موجود', 404);
+      throw new CustomError('Customer not found', 404);
     }
     return formatCustomer(customer);
   }
@@ -199,7 +199,7 @@ export class CustomerService {
   ): Promise<FormattedCustomer> {
     const existing = await customerRepository.findById(id, userId);
     if (!existing) {
-      throw new CustomError('العميل غير موجود', 404);
+      throw new CustomError('Customer not found', 404);
     }
 
     const updatePayload: Record<string, unknown> = {};
@@ -244,16 +244,16 @@ export class CustomerService {
 
     const updated = await customerRepository.update(id, userId, updatePayload);
 
-    // Automated CRM: record status change activity and commission on 'تم البيع'
+    // Automated CRM: record status change activity and commission on 'Closed Won'
     if (updatePayload.status && updatePayload.status !== existing.status) {
       crmService.createActivity({
         customerId: id,
         userId,
         type: 'status_change',
-        content: `تم تغيير حالة القيد من "${existing.status}" إلى "${updatePayload.status}"`,
+        content: `Customer status updated from "${existing.status}" to "${updatePayload.status}"`,
       }).catch(() => {});
 
-      if (updatePayload.status === 'تم البيع') {
+      if (updatePayload.status === 'Closed Won') {
         const dealVal = Number((data as any).dealValue || (existing as any).dealValue || 1000);
         crmService.handleDealWon(id, userId, dealVal).catch((err) => console.error('Commission error:', err));
       }
@@ -275,7 +275,7 @@ export class CustomerService {
   async deleteCustomer(id: string, userId: string, meta?: { ipAddress?: string; userAgent?: string }): Promise<void> {
     const existing = await customerRepository.findById(id, userId);
     if (!existing) {
-      throw new CustomError('العميل غير موجود', 404);
+      throw new CustomError('Customer not found', 404);
     }
 
     await customerRepository.softDelete(id, userId);
@@ -338,8 +338,8 @@ export class CustomerService {
         phone: encryptedPhone,
         phoneHash,
         city: row.city || null,
-        source: row.source || 'واتساب',
-        status: row.status || 'جديد',
+        source: row.source || 'WhatsApp',
+        status: row.status || 'New',
         last: row.last ? new Date(row.last) : null,
         next: row.next ? new Date(row.next) : null,
         notes: row.notes || null,
@@ -367,7 +367,7 @@ export class CustomerService {
     const sourceDistribution = await customerRepository.getSourceDistribution(userId);
 
     const totalCustomers = Object.values(statusDistribution).reduce((acc, curr) => acc + curr, 0);
-    const soldCount = statusDistribution['تم البيع'] || 0;
+    const soldCount = statusDistribution['Closed Won'] || 0;
     const conversionRate = totalCustomers > 0 ? Number(((soldCount / totalCustomers) * 100).toFixed(1)) : 0;
 
     const now = new Date();

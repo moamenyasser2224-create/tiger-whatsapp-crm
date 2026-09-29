@@ -10,11 +10,11 @@ export class OptionService {
 
   async create(data: { type: string; label: string; order?: number }) {
     if (!['source', 'status'].includes(data.type)) {
-      throw new CustomError('نوع القائمة غير صالح (يجب أن يكون source أو status)', 400);
+      throw new CustomError('Invalid option type (must be source or status)', 400);
     }
     const trimmed = (data.label || '').trim();
     if (!trimmed) {
-      throw new CustomError('اسم الخيار مطلوب', 400);
+      throw new CustomError('Option label is required', 400);
     }
 
     return optionRepository.create({
@@ -27,7 +27,7 @@ export class OptionService {
   async update(id: string, data: { label?: string; order?: number }) {
     const existing = await optionRepository.findById(id);
     if (!existing) {
-      throw new CustomError('الخيار المطلوب غير موجود', 404);
+      throw new CustomError('Option not found', 404);
     }
 
     return optionRepository.update(id, {
@@ -39,7 +39,7 @@ export class OptionService {
   async delete(id: string) {
     const existing = await optionRepository.findById(id);
     if (!existing) {
-      throw new CustomError('الخيار المطلوب غير موجود', 404);
+      throw new CustomError('Option not found', 404);
     }
 
     return optionRepository.delete(id);

@@ -19,7 +19,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 router.patch('/:id/read', async (req: Request, res: Response, next: NextFunction) => {
   try {
     await notificationService.markAsRead(req.params.id, req.user!.id);
-    res.json({ success: true, message: 'تم تحديث الإشعار كمقروء' });
+    res.json({ success: true, message: 'Notification marked as read' });
   } catch (err) {
     next(err);
   }
@@ -29,7 +29,7 @@ router.patch('/:id/read', async (req: Request, res: Response, next: NextFunction
 router.post('/read-all', async (req: Request, res: Response, next: NextFunction) => {
   try {
     await notificationService.markAllAsRead(req.user!.id);
-    res.json({ success: true, message: 'تم تحديث كافة الإشعارات كمقروءة' });
+    res.json({ success: true, message: 'All notifications marked as read' });
   } catch (err) {
     next(err);
   }

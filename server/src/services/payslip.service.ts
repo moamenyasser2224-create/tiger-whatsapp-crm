@@ -41,7 +41,7 @@ export class PayslipService {
         .digest('hex');
 
       if (expectedSignature !== decoded.s) {
-        return { valid: false, error: 'توقيع الإيصال غير صالح أو تم التلاعب به' };
+        return { valid: false, error: 'Payslip signature is invalid or has been tampered with' };
       }
 
       const user = await prisma.user.findUnique({
@@ -50,7 +50,7 @@ export class PayslipService {
       });
 
       if (!user) {
-        return { valid: false, error: 'الموظف غير موجود في السجلات' };
+        return { valid: false, error: 'Employee not found in records' };
       }
 
       const period = await prisma.payrollPeriod.findUnique({
@@ -66,7 +66,7 @@ export class PayslipService {
         verifiedAt: new Date().toISOString(),
       };
     } catch {
-      return { valid: false, error: 'رمز التحقق غير صالح أو تالف' };
+      return { valid: false, error: 'Verification token is invalid or corrupted' };
     }
   }
 
@@ -79,7 +79,7 @@ export class PayslipService {
       select: { id: true, name: true, email: true },
     });
 
-    if (!user) throw new Error('الموظف غير موجود');
+    if (!user) throw new Error('Employee not found');
 
     const summary = await deductionService.listEmployeeDeductions(userId, periodMonth);
     const dayWageData = await deductionService.getEmployeeDayWage(userId);

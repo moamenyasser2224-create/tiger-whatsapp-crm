@@ -50,7 +50,7 @@ export class OptionController {
       await optionService.delete(id);
       res.status(200).json({
         success: true,
-        message: 'تم حذف الخيار بنجاح',
+        message: 'Option deleted successfully',
       });
     } catch (err) {
       next(err);

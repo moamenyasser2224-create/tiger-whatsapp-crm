@@ -16,7 +16,7 @@ export const authRateLimiter = rateLimit({
   keyGenerator: getClientIp,
   message: {
     success: false,
-    error: 'تم تجاوز الحد الأقصى لمحاولات تسجيل الدخول، يرجى المحاولة بعد دقيقة واحدة.',
+    error: 'Maximum sign-in attempts exceeded. Please try again in 1 minute.',
   },
 });
 
@@ -31,7 +31,7 @@ export const apiRateLimiter = rateLimit({
   keyGenerator: getClientIp,
   message: {
     success: false,
-    error: 'تم تجاوز الحد المسموح من الطلبات، يرجى المحاولة لاحقاً.',
+    error: 'Too many requests. Please try again later.',
   },
 });
 
@@ -47,7 +47,7 @@ export const chatRateLimiter = rateLimit({
   keyGenerator: (req: any) => req.user?.id || req.user?.userId || getClientIp(req),
   message: {
     success: false,
-    error: 'تم تجاوز الحد المسموح لإرسال الرسائل (10 رسائل في الدقيقة). يرجى الانتظار قليلاً.',
+    error: 'Message rate limit exceeded (maximum 10 messages per minute). Please wait a moment.',
   },
 });
 
@@ -62,7 +62,7 @@ export const passwordResetRateLimiter = rateLimit({
   keyGenerator: getClientIp,
   message: {
     success: false,
-    error: 'تم تجاوز عدد محاولات استعادة كلمة المرور المسموح بها. يرجى الانتظار لمدة 15 دقيقة.',
+    error: 'Password recovery limit reached. Please wait 15 minutes before requesting another reset.',
   },
 });
 
@@ -77,7 +77,7 @@ export const exportRateLimiter = rateLimit({
   keyGenerator: (req: any) => req.user?.id || getClientIp(req),
   message: {
     success: false,
-    error: 'تم تجاوز الحد المسموح لتصدير البيانات، يرجى المحاولة لاحقاً.',
+    error: 'Data export rate limit reached. Please try again later.',
   },
 });
 
@@ -92,6 +92,6 @@ export const faceRateLimiter = rateLimit({
   keyGenerator: getClientIp,
   message: {
     success: false,
-    error: 'تم تجاوز الحد الأقصى لمحاولات التحقق ببصمة الوجه، يرجى المحاولة بعد دقيقة واحدة.',
+    error: 'Facial verification rate limit exceeded. Please wait 1 minute before retrying.',
   },
 });

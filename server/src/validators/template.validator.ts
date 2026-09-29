@@ -1,18 +1,15 @@
 import { z } from 'zod';
-import { CUSTOMER_STATUSES } from '../config/constants.js';
 
 export const updateTemplateSchema = z.object({
   body: z
-    .string({ required_error: 'نص القالب مطلوب' })
-    .min(5, 'نص القالب يجب أن لا يقل عن 5 أحرف')
-    .max(2000, 'نص القالب يجب أن لا يتجاوز 2000 حرف')
+    .string({ required_error: 'Template content is required' })
+    .min(5, 'Template must be at least 5 characters long')
+    .max(2000, 'Template cannot exceed 2000 characters')
     .refine((val) => val.includes('{name}'), {
-      message: 'يجب أن يحتوي نص القالب على المتغير {name} لاستبداله باسم العميل',
+      message: 'Template must contain the {name} placeholder to interpolate customer names',
     }),
 });
 
 export const templateStatusParamSchema = z.object({
-  status: z.enum(CUSTOMER_STATUSES, {
-    errorMap: () => ({ message: 'الحالة المحددة للقالب غير صالحة' }),
-  }),
+  status: z.string({ required_error: 'Template stage parameter is required' }).min(1),
 });

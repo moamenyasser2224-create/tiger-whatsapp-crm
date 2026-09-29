@@ -39,7 +39,7 @@ export class TemplateController {
 
       res.status(200).json({
         success: true,
-        message: 'تم تحديث قالب الرسالة بنجاح',
+        message: 'Message template updated successfully',
         data: updated,
       });
     } catch (error) {
@@ -57,7 +57,7 @@ export class TemplateController {
 
       res.status(200).json({
         success: true,
-        message: 'تمت استعادة النص الافتراضي للقالب بنجاح',
+        message: 'Template reset to default successfully',
         data: reset,
       });
     } catch (error) {
@@ -70,7 +70,7 @@ export class TemplateController {
       const { status, name } = req.query;
       const formatted = await templateService.formatMessage(
         req.user!.id,
-        String(status || 'جديد'),
+        String(status || 'New'),
         String(name || '')
       );
 

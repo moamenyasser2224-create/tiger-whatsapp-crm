@@ -28,7 +28,7 @@ export function errorHandler(
   next: NextFunction
 ): void {
   if (err instanceof ZodError) {
-    const message = err.errors.map((e) => e.message).join('، ');
+    const message = err.errors.map((e) => e.message).join(', ');
     res.status(400).json({
       success: false,
       error: message,
@@ -38,11 +38,11 @@ export function errorHandler(
   }
 
   const statusCode = err.statusCode || 500;
-  let message = err.message || 'حدث خطأ داخلي في الخادم';
+  let message = err.message || 'An internal server error occurred';
 
   // Cloud security hardening: Mask raw system/database errors from external callers in production
   if (env.NODE_ENV === 'production' && statusCode >= 500 && !(err instanceof CustomError)) {
-    message = 'حدث خطأ داخلي في الخادم. تم تسجيل الخطأ في نظام المراقبة السحابي.';
+    message = 'An internal server error occurred. This incident has been recorded in our monitoring system.';
   }
 
   if (env.SENTRY_DSN && env.NODE_ENV === 'production' && statusCode >= 500) {

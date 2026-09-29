@@ -18,7 +18,7 @@ export function validateRequest(schema: AnyZodObject, location: RequestLocation 
 
         res.status(400).json({
           success: false,
-          error: issues[0]?.message || 'بيانات غير صالحة',
+          error: issues[0]?.message || 'Invalid input parameters',
           details: issues,
         });
         return;

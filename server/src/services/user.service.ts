@@ -25,7 +25,7 @@ export class UserService {
     const normalizedEmail = data.email.toLowerCase().trim();
     const existing = await userRepository.findByEmail(normalizedEmail);
     if (existing) {
-      throw new CustomError('البريد الإلكتروني مسجل مسبقاً في النظام', 400);
+      throw new CustomError('Email is already registered in the system', 400);
     }
 
     // Generate random secure temporary password
@@ -57,7 +57,7 @@ export class UserService {
 
     return {
       success: true,
-      message: 'تم إنشاء حساب الموظف بنجاح وتعيين كلمة مرور مؤقتة',
+      message: 'Employee account created successfully with a temporary password',
       user: {
         id: user.id,
         name: user.name,
@@ -98,7 +98,7 @@ export class UserService {
     userAgent?: string
   ) {
     const user = await userRepository.findById(userId);
-    if (!user) throw new CustomError('المستخدم غير موجود', 404);
+    if (!user) throw new CustomError('User not found', 404);
 
     await userRepository.update(userId, { photoUrl });
 
@@ -112,14 +112,14 @@ export class UserService {
 
     return {
       success: true,
-      message: 'تم تحديث الصورة الشخصية بنجاح',
+      message: 'Profile photo updated successfully',
       photoUrl,
     };
   }
 
   async exportAllUserData(userId: string) {
     const user = await userRepository.findById(userId);
-    if (!user) throw new CustomError('المستخدم غير موجود', 404);
+    if (!user) throw new CustomError('User not found', 404);
 
     const rawCustomers = await customerRepository.getAllForExport(userId);
     const customers = rawCustomers.map((c) => ({
@@ -153,11 +153,11 @@ export class UserService {
 
   async deleteAccount(userId: string, passwordConfirm: string) {
     const user = await userRepository.findById(userId);
-    if (!user) throw new CustomError('المستخدم غير موجود', 404);
+    if (!user) throw new CustomError('User not found', 404);
 
     const isMatch = await bcrypt.compare(passwordConfirm, user.password);
     if (!isMatch) {
-      throw new CustomError('كلمة المرور غير صحيحة، تم إلغاء عملية حذف الحساب', 400);
+      throw new CustomError('Incorrect password, account deletion cancelled', 400);
     }
 
     await userRepository.permanentDelete(userId);

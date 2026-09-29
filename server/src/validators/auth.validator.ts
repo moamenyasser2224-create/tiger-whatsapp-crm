@@ -2,57 +2,57 @@ import { z } from 'zod';
 
 export const registerSchema = z.object({
   name: z
-    .string({ required_error: 'الاسم مطلوب' })
-    .min(2, 'الاسم يجب أن لا يقل عن حرفين')
-    .max(100, 'الاسم يجب أن لا يتجاوز 100 حرف'),
+    .string({ required_error: 'Name is required' })
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name must not exceed 100 characters'),
   email: z
-    .string({ required_error: 'البريد الإلكتروني مطلوب' })
-    .email('صيغة البريد الإلكتروني غير صحيحة')
+    .string({ required_error: 'Email address is required' })
+    .email('Invalid email address format')
     .toLowerCase()
     .trim(),
   password: z
-    .string({ required_error: 'كلمة المرور مطلوبة' })
-    .min(8, 'كلمة المرور يجب أن لا تقل عن 8 أحرف')
-    .regex(/[A-Z]/, 'كلمة المرور يجب أن تحتوي على حرف كبير واحد على الأقل')
-    .regex(/[a-z]/, 'كلمة المرور يجب أن تحتوي على حرف صغير واحد على الأقل')
-    .regex(/[0-9]/, 'كلمة المرور يجب أن تحتوي على رقم واحد على الأقل'),
+    .string({ required_error: 'Password is required' })
+    .min(8, 'Password must be at least 8 characters long')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one digit'),
 });
 
 export const loginSchema = z.object({
   email: z
-    .string({ required_error: 'البريد الإلكتروني مطلوب' })
-    .email('صيغة البريد الإلكتروني غير صحيحة')
+    .string({ required_error: 'Email address is required' })
+    .email('Invalid email address format')
     .toLowerCase()
     .trim(),
-  password: z.string({ required_error: 'كلمة المرور مطلوبة' }),
+  password: z.string({ required_error: 'Password is required' }),
   twoFactorCode: z.string().optional(),
 });
 
 export const forgotPasswordSchema = z.object({
   email: z
-    .string({ required_error: 'البريد الإلكتروني مطلوب' })
-    .email('صيغة البريد الإلكتروني غير صحيحة')
+    .string({ required_error: 'Email address is required' })
+    .email('Invalid email address format')
     .toLowerCase()
     .trim(),
 });
 
 export const resetPasswordSchema = z.object({
-  token: z.string({ required_error: 'رمز إعادة التعيين مطلوب' }),
+  token: z.string({ required_error: 'Reset token is required' }),
   password: z
-    .string({ required_error: 'كلمة المرور الجديدة مطلوبة' })
-    .min(8, 'كلمة المرور يجب أن لا تقل عن 8 أحرف')
-    .regex(/[A-Z]/, 'كلمة المرور يجب أن تحتوي على حرف كبير واحد على الأقل')
-    .regex(/[a-z]/, 'كلمة المرور يجب أن تحتوي على حرف صغير واحد على الأقل')
-    .regex(/[0-9]/, 'كلمة المرور يجب أن تحتوي على رقم واحد على الأقل'),
+    .string({ required_error: 'New password is required' })
+    .min(8, 'Password must be at least 8 characters long')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one digit'),
 });
 
 export const verifyTwoFactorSchema = z.object({
   code: z
-    .string({ required_error: 'رمز التحقق مطلوب' })
-    .length(6, 'رمز التحقق يجب أن يتكون من 6 أرقام')
-    .regex(/^[0-9]{6}$/, 'رمز التحقق يجب أن يحتوي على أرقام فقط'),
+    .string({ required_error: 'Verification code is required' })
+    .length(6, 'Verification code must be exactly 6 digits')
+    .regex(/^[0-9]{6}$/, 'Verification code must contain digits only'),
 });
 
 export const disableTwoFactorSchema = z.object({
-  password: z.string({ required_error: 'كلمة المرور مطلوبة لتعطيل التحقق الثنائي' }),
+  password: z.string({ required_error: 'Password is required to disable two-factor authentication' }),
 });

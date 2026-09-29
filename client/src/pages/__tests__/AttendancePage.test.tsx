@@ -51,9 +51,9 @@ describe('AttendancePage Component', () => {
       </QueryClientProvider>
     );
 
-    expect(screen.getByText(/نظام الحضور والانصراف/)).toBeInTheDocument();
-    expect(screen.getByText('تسجيل حضور الآن')).toBeInTheDocument();
-    expect(screen.getByText('تسجيل انصراف الآن')).toBeInTheDocument();
-    expect(screen.getByText('حالة تواجد أعضاء الفريق اليوم (مباشر)')).toBeInTheDocument();
+    expect(screen.getByText('Workforce Shifts & Time Tracking')).toBeInTheDocument();
+    expect(screen.getByText('Clock In')).toBeInTheDocument();
+    expect(screen.getByText('Clock Out')).toBeInTheDocument();
+    expect(screen.getByText(/Team Presence Log Today/)).toBeInTheDocument();
   });
 });

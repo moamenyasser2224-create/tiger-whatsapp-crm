@@ -166,7 +166,7 @@ interface PunchedCardProps {
   date: string;
   shiftHours?: string;
   punches: Array<{
-    type: 'Clock In' | 'Clock Out' | 'حضور' | 'انصراف' | string;
+    type: 'Clock In' | 'Clock Out' | string;
     time: string;
     isPunched: boolean;
     statusBadge?: string;
@@ -185,8 +185,8 @@ export const PunchedCard: React.FC<PunchedCardProps> = ({
   isPunching = false,
 }) => {
   const formatPunchType = (t: string) => {
-    if (t === 'حضور' || t === 'Clock In') return 'Clock In';
-    if (t === 'انصراف' || t === 'Clock Out') return 'Clock Out';
+    if (t === 'Clock In' || t === '\u062D\u0636\u0648\u0631') return 'Clock In';
+    if (t === 'Clock Out' || t === '\u0627\u0646\u0635\u0631\u0627\u0641') return 'Clock Out';
     return t;
   };
 

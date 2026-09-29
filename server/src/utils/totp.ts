@@ -16,7 +16,7 @@ export function generateTotpSecret(): string {
 /**
  * Generates an otpauth URL for Google Authenticator / 1Password / Authy
  */
-export function generateTotpUri(userEmail: string, secret: string, appName = 'تايجر CRM | Tiger'): string {
+export function generateTotpUri(userEmail: string, secret: string, appName = 'Tiger'): string {
   return authenticator.keyuri(userEmail, appName, secret);
 }
 

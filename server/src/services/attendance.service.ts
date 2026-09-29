@@ -76,7 +76,7 @@ export class AttendanceService {
 
     const existing = await attendanceRepository.findByUserAndDate(userId, dateStr);
     if (existing && existing.checkIn) {
-      throw new CustomError('تم تسجيل حضورك اليوم بالفعل', 400);
+      throw new CustomError('Your check-in has already been recorded today', 400);
     }
 
     const shift = await this.getEmployeeShift(userId, dayOfWeek);
@@ -162,10 +162,10 @@ export class AttendanceService {
 
     const existing = await attendanceRepository.findByUserAndDate(userId, dateStr);
     if (!existing || !existing.checkIn) {
-      throw new CustomError('لم يتم تسجيل حضورك لليوم بعد', 400);
+      throw new CustomError('Check-in has not been recorded yet today', 400);
     }
     if (existing.checkOut) {
-      throw new CustomError('تم تسجيل انصرافك اليوم بالفعل', 400);
+      throw new CustomError('Your check-out has already been recorded today', 400);
     }
 
     const shift = await this.getEmployeeShift(userId, dayOfWeek);
@@ -248,7 +248,7 @@ export class AttendanceService {
    */
   async requestCorrection(userId: string, payload: { attendanceId?: string; date: string; requestedCheckIn?: string; requestedCheckOut?: string; reason: string }) {
     if (!payload.reason || payload.reason.trim().length < 5) {
-      throw new CustomError('يرجى تقديم سبب واضح ومفصل لطلب التصحيح', 400);
+      throw new CustomError('Please provide a clear reason for the correction request', 400);
     }
 
     return prisma.attendanceCorrection.create({
@@ -271,7 +271,7 @@ export class AttendanceService {
     const correction = await prisma.attendanceCorrection.findUnique({
       where: { id: correctionId },
     });
-    if (!correction) throw new CustomError('طلب التصحيح غير موجود', 404);
+    if (!correction) throw new CustomError('Correction request not found', 404);
 
     const updated = await prisma.attendanceCorrection.update({
       where: { id: correctionId },
@@ -311,10 +311,10 @@ export class AttendanceService {
    */
   async createLeaveRequest(userId: string, payload: { type: string; fromDate: string; toDate: string; reason: string }) {
     if (!payload.reason || payload.reason.trim().length < 5) {
-      throw new CustomError('يرجى كتابة سبب طلب الإجازة بوضوح', 400);
+      throw new CustomError('Please provide a clear reason for the leave request', 400);
     }
     if (payload.fromDate > payload.toDate) {
-      throw new CustomError('تاريخ بداية الإجازة يجب أن يكون قبل تاريخ النهاية', 400);
+      throw new CustomError('Start date must be before or equal to end date', 400);
     }
 
     return prisma.leaveRequest.create({
@@ -334,7 +334,7 @@ export class AttendanceService {
    */
   async reviewLeaveRequest(adminId: string, leaveId: string, decision: 'approved' | 'rejected', adminComment?: string) {
     const leave = await prisma.leaveRequest.findUnique({ where: { id: leaveId } });
-    if (!leave) throw new CustomError('طلب الإجازة غير موجود', 404);
+    if (!leave) throw new CustomError('Leave request not found', 404);
 
     return prisma.leaveRequest.update({
       where: { id: leaveId },

@@ -22,7 +22,7 @@ export class SettingsController {
       const settings = await settingsService.updateSettings(orgName);
       res.status(200).json({
         success: true,
-        message: 'تم تحديث إعدادات المنظومة بنجاح',
+        message: 'Organization settings updated successfully',
         data: settings,
       });
     } catch (err) {

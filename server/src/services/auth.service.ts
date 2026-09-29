@@ -39,7 +39,7 @@ export class AuthService {
   async register(data: { name: string; email: string; password: string; ipAddress?: string; userAgent?: string }) {
     const existing = await userRepository.findByEmail(data.email);
     if (existing) {
-      throw new CustomError('البريد الإلكتروني مسجل مسبقاً في النظام', 400);
+      throw new CustomError('Email is already registered in the system', 400);
     }
 
     const hashedPassword = await bcrypt.hash(data.password, BCRYPT_COST);
@@ -92,7 +92,7 @@ export class AuthService {
     if (record?.lockedUntil && new Date() < record.lockedUntil) {
       const remainingMins = Math.ceil((record.lockedUntil.getTime() - Date.now()) / (60 * 1000));
       throw new CustomError(
-        `تم تجميد الحساب مؤقتاً لمدة ${remainingMins} دقيقة لحماية الأمان بعد محاولات فاشلة متكررة (حماية سحابية)`,
+        `Account temporarily locked for ${remainingMins} minute(s) due to repeated failed login attempts (Cloud Protection)`,
         429
       );
     }
@@ -100,13 +100,13 @@ export class AuthService {
     const user = await userRepository.findByEmail(normalizedEmail);
     if (!user) {
       this.recordFailedLogin(attemptKey, normalizedEmail, data.ipAddress, data.userAgent);
-      throw new CustomError('البريد الإلكتروني أو كلمة المرور غير صحيحة', 401);
+      throw new CustomError('Invalid email or password', 401);
     }
 
     const isMatch = await bcrypt.compare(data.password, user.password);
     if (!isMatch) {
       this.recordFailedLogin(attemptKey, normalizedEmail, data.ipAddress, data.userAgent, user.id);
-      throw new CustomError('البريد الإلكتروني أو كلمة المرور غير صحيحة', 401);
+      throw new CustomError('Invalid email or password', 401);
     }
 
     // Reset failed login counter on success
@@ -122,12 +122,12 @@ export class AuthService {
       }
 
       if (!user.twoFactorSecret) {
-        throw new CustomError('فشل في إعدادات التحقق الثنائي', 500);
+        throw new CustomError('Two-factor authentication configuration error', 500);
       }
 
       const isValidTotp = verifyTotpToken(data.twoFactorCode, user.twoFactorSecret);
       if (!isValidTotp) {
-        throw new CustomError('رمز التحقق الثنائي غير صحيح أو انتهت صلاحيته', 401);
+        throw new CustomError('Two-factor verification code is invalid or expired', 401);
       }
     }
 
@@ -194,19 +194,19 @@ export class AuthService {
 
   async refreshToken(rawRefreshToken: string) {
     if (!rawRefreshToken) {
-      throw new CustomError('رمز التحديث غير موجود', 401);
+      throw new CustomError('Refresh token is missing', 401);
     }
 
     const tokenHash = hashToken(rawRefreshToken);
     const tokenRecord = await tokenRepository.findRefreshToken(tokenHash);
 
     if (!tokenRecord || tokenRecord.revoked || new Date() > tokenRecord.expiresAt) {
-      throw new CustomError('انتهت صلاحية جلسة العمل، يرجى تسجيل الدخول مجددًا', 401);
+      throw new CustomError('Session expired, please log in again', 401);
     }
 
     const user = await userRepository.findById(tokenRecord.userId);
     if (!user) {
-      throw new CustomError('المستخدم غير موجود', 401);
+      throw new CustomError('User not found', 401);
     }
 
     // Rotate refresh token
@@ -249,7 +249,7 @@ export class AuthService {
     const user = await userRepository.findByEmail(email);
     // Silent return to prevent user enumeration
     if (!user) {
-      return { success: true, message: 'إذا كان البريد مسجلاً، فقد تم إرسال رابط استعادة كلمة المرور' };
+      return { success: true, message: 'If the email is registered, a password reset link has been sent' };
     }
 
     const { token: rawToken, hash: tokenHash } = generatePasswordResetToken();
@@ -268,7 +268,7 @@ export class AuthService {
 
     return {
       success: true,
-      message: 'إذا كان البريد مسجلاً، فقد تم إرسال رابط استعادة كلمة المرور',
+      message: 'If the email is registered, a password reset link has been sent',
       resetLink: env.NODE_ENV !== 'production' ? resetLink : undefined, // Exposed in dev/test for convenience
     };
   }
@@ -278,7 +278,7 @@ export class AuthService {
     const resetRecord = await tokenRepository.findPasswordResetToken(tokenHash);
 
     if (!resetRecord || resetRecord.used || new Date() > resetRecord.expiresAt) {
-      throw new CustomError('رابط إعادة التعيين غير صالح أو انتهت صلاحيته (صالح لـ 15 دقيقة فقط)', 400);
+      throw new CustomError('Password reset link is invalid or expired (valid for 15 minutes only)', 400);
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_COST);
@@ -297,12 +297,12 @@ export class AuthService {
       entity: 'AUTH',
     });
 
-    return { success: true, message: 'تم تغيير كلمة المرور بنجاح. يرجى تسجيل الدخول.' };
+    return { success: true, message: 'Password changed successfully. Please log in.' };
   }
 
   async generate2FASetup(userId: string) {
     const user = await userRepository.findById(userId);
-    if (!user) throw new CustomError('المستخدم غير موجود', 404);
+    if (!user) throw new CustomError('User not found', 404);
 
     const secret = generateTotpSecret();
     const otpAuthUrl = generateTotpUri(user.email, secret);
@@ -317,7 +317,7 @@ export class AuthService {
   async enable2FA(userId: string, code: string, secret: string) {
     const isValid = verifyTotpToken(code, secret);
     if (!isValid) {
-      throw new CustomError('رمز التحقق غير صحيح، يرجى إعادة المحاولة', 400);
+      throw new CustomError('Verification code is incorrect, please try again', 400);
     }
 
     await userRepository.update(userId, {
@@ -331,16 +331,16 @@ export class AuthService {
       entity: 'USER',
     });
 
-    return { success: true, message: 'تم تفعيل التحقق الثنائي بنجاح' };
+    return { success: true, message: 'Two-factor authentication enabled successfully' };
   }
 
   async disable2FA(userId: string, password: string) {
     const user = await userRepository.findById(userId);
-    if (!user) throw new CustomError('المستخدم غير موجود', 404);
+    if (!user) throw new CustomError('User not found', 404);
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      throw new CustomError('كلمة المرور غير صحيحة', 400);
+      throw new CustomError('Invalid password', 400);
     }
 
     await userRepository.update(userId, {
@@ -354,24 +354,24 @@ export class AuthService {
       entity: 'USER',
     });
 
-    return { success: true, message: 'تم إلغاء تفعيل التحقق الثنائي' };
+    return { success: true, message: 'Two-factor authentication disabled' };
   }
 
   async changePassword(userId: string, data: { currentPassword?: string; newPassword: string; ipAddress?: string; userAgent?: string }) {
     const user = await userRepository.findById(userId);
-    if (!user) throw new CustomError('المستخدم غير موجود', 404);
+    if (!user) throw new CustomError('User not found', 404);
 
     if (data.currentPassword) {
       const isMatch = await bcrypt.compare(data.currentPassword, user.password);
       if (!isMatch) {
-        throw new CustomError('كلمة المرور الحالية غير صحيحة', 400);
+        throw new CustomError('Current password is incorrect', 400);
       }
     } else if (!user.mustChangePassword) {
-      throw new CustomError('كلمة المرور الحالية مطلوبة', 400);
+      throw new CustomError('Current password is required', 400);
     }
 
     if (!data.newPassword || data.newPassword.length < 8) {
-      throw new CustomError('يجب أن تتكون كلمة المرور الجديدة من 8 خانات على الأقل', 400);
+      throw new CustomError('New password must be at least 8 characters long', 400);
     }
 
     const hashedPassword = await bcrypt.hash(data.newPassword, BCRYPT_COST);
@@ -390,7 +390,7 @@ export class AuthService {
 
     return {
       success: true,
-      message: 'تم تغيير كلمة المرور بنجاح وتم تفعيل الحساب بالكامل',
+      message: 'Password changed successfully and account is fully activated',
     };
   }
 }

@@ -11,7 +11,7 @@ vi.mock('../../lib/api.js', () => ({
   api: {
     get: vi.fn((url: string) => {
       if (url.includes('/deductions/salary')) {
-        return Promise.resolve({ data: { success: true, data: { monthlySalary: 5000, currency: 'ر.س', dayWage: 166.67 } } });
+        return Promise.resolve({ data: { success: true, data: { monthlySalary: 5000, currency: 'SAR', dayWage: 166.67 } } });
       }
       if (url.includes('/deductions/my')) {
         return Promise.resolve({ data: { success: true, data: [] } });
@@ -54,10 +54,10 @@ describe('DeductionsPage Component', () => {
       </QueryClientProvider>
     );
 
-    expect(screen.getByText('نظام الخصومات ومسير الرواتب')).toBeInTheDocument();
-    expect(screen.getByText('الراتب الأساسي')).toBeInTheDocument();
-    expect(screen.getByText('إجمالي الخصومات المعتمدة')).toBeInTheDocument();
-    expect(screen.getByText('المكافآت والتسويات')).toBeInTheDocument();
-    expect(screen.getByText('صافي الراتب المتوقع')).toBeInTheDocument();
+    expect(screen.getByText('Payroll, Deductions & Slips')).toBeInTheDocument();
+    expect(screen.getByText('Gross Base Salary')).toBeInTheDocument();
+    expect(screen.getByText('Total Deductions & Lateness (-)')).toBeInTheDocument();
+    expect(screen.getByText('Bonuses & Incentives (+)')).toBeInTheDocument();
+    expect(screen.getByText('Net Payable Wage')).toBeInTheDocument();
   });
 });

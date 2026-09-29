@@ -32,7 +32,7 @@ export const HatchedChart: React.FC<HatchedChartProps> = ({
           {title}
         </h4>
         <span className="text-[10px] font-mono text-neutral-500 uppercase">
-          مخطط رسم بياني مهشر
+          Monochrome Hatched Chart
         </span>
       </div>
 

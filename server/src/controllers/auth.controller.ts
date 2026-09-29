@@ -37,7 +37,7 @@ export class AuthController {
 
       res.status(201).json({
         success: true,
-        message: 'تم إنشاء الحساب بنجاح',
+        message: 'Account created successfully',
         data: {
           user: result.user,
           accessToken: result.accessToken,
@@ -61,7 +61,7 @@ export class AuthController {
           success: true,
           requires2FA: true,
           userId: result.userId,
-          message: 'يرجى إدخال رمز التحقق الثنائي (TOTP)',
+          message: 'Please enter 2FA verification code (TOTP)',
         });
         return;
       }
@@ -72,7 +72,7 @@ export class AuthController {
 
       res.status(200).json({
         success: true,
-        message: 'تم تسجيل الدخول بنجاح',
+        message: 'Logged in successfully',
         data: {
           user: result.user,
           accessToken: result.accessToken,
@@ -111,7 +111,7 @@ export class AuthController {
 
       res.status(200).json({
         success: true,
-        message: 'تم تسجيل الخروج بنجاح',
+        message: 'Logged out successfully',
       });
     } catch (error) {
       next(error);

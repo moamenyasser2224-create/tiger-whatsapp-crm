@@ -88,9 +88,9 @@ export class PayrollService {
       where: { month: monthStr },
     });
 
-    if (!period) throw new CustomError('فترة الرواتب المطلوبة غير موجودة', 404);
+    if (!period) throw new CustomError('Payroll period not found', 404);
     if (period.status === 'closed') {
-      throw new CustomError('هذا الشهر المالي مُغلق بالفعل ولا يمكن إعادة إغلاقه', 400);
+      throw new CustomError('This payroll period is already closed', 400);
     }
 
     // 1. Lock all approved deductions to closed_in_payroll

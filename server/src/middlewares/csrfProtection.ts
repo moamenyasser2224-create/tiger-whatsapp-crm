@@ -52,7 +52,7 @@ export function verifyCsrf(req: Request, res: Response, next: NextFunction): voi
   if (!cookieToken || !headerToken || cookieToken !== headerToken) {
     res.status(403).json({
       success: false,
-      error: 'فشل التحقق من أمان الجلسة (CSRF Token غير متطابق أو مفقود)',
+      error: 'Security verification failed (Invalid or missing CSRF token)',
     });
     return;
   }

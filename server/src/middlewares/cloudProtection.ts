@@ -166,7 +166,7 @@ export function cloudWafShield(req: Request, res: Response, next: NextFunction):
     logThreatBlocked('MALICIOUS_SCANNER_BLOCKED', clientIp, userAgent, rawUrl);
     res.status(403).json({
       success: false,
-      error: 'تم حظر الطلب من خلال جدار الحماية السحابي (Security Scanner Blocked)',
+      error: 'Request blocked by Cloud WAF (Malicious Scanner Detected)',
       code: 'CLOUD_WAF_SCANNER_BLOCKED',
     });
     return;
@@ -177,7 +177,7 @@ export function cloudWafShield(req: Request, res: Response, next: NextFunction):
     logThreatBlocked('SUSPICIOUS_PROBE_BLOCKED', clientIp, userAgent, rawUrl);
     res.status(403).json({
       success: false,
-      error: 'تم حظر الطلب من خلال جدار الحماية السحابي (Probing Blocked)',
+      error: 'Request blocked by Cloud WAF (Exploit Probing Detected)',
       code: 'CLOUD_WAF_PROBE_BLOCKED',
     });
     return;
@@ -188,7 +188,7 @@ export function cloudWafShield(req: Request, res: Response, next: NextFunction):
     logThreatBlocked('PATH_TRAVERSAL_BLOCKED', clientIp, userAgent, rawUrl);
     res.status(403).json({
       success: false,
-      error: 'تم حظر محاولة اختراق المسار (Path Traversal Attempt Blocked)',
+      error: 'Request blocked by Cloud WAF (Path Traversal Attempt Detected)',
       code: 'CLOUD_WAF_TRAVERSAL_BLOCKED',
     });
     return;
@@ -199,7 +199,7 @@ export function cloudWafShield(req: Request, res: Response, next: NextFunction):
     logThreatBlocked('SQLI_ATTEMPT_BLOCKED', clientIp, userAgent, rawUrl);
     res.status(403).json({
       success: false,
-      error: 'تم حظر محاولة حقن غير مصرح بها (SQL Injection Blocked)',
+      error: 'Request blocked by Cloud WAF (SQL Injection Pattern Detected)',
       code: 'CLOUD_WAF_SQLI_BLOCKED',
     });
     return;
@@ -216,7 +216,7 @@ export function prototypePollutionGuard(req: Request, res: Response, next: NextF
     if (containsPrototypePollution(req.body)) {
       res.status(400).json({
         success: false,
-        error: 'تم رصد مدخلات مشبوهة ومحظورة (Prototype Pollution Guard)',
+        error: 'Suspicious payload rejected (Prototype Pollution Guard)',
         code: 'PROTOTYPE_POLLUTION_DETECTED',
       });
       return;

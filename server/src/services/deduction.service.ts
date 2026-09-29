@@ -129,13 +129,13 @@ export class DeductionService {
     const calculationDetails = JSON.stringify({
       ruleName: matchingRule.name,
       lateMinutes,
-      bracket: `${matchingRule.minMinutes || 0} - ${matchingRule.maxMinutes || '∞'} دقيقة`,
+      bracket: `${matchingRule.minMinutes || 0} - ${matchingRule.maxMinutes || '∞'} minutes`,
       formula: `${matchingRule.deductionType} = ${ruleVal}`,
       dayWage: Math.round(dayWage * 100) / 100,
       currency,
       rawAmount: Math.round(rawAmount * 100) / 100,
       cappedAmount: Math.round(finalAmount * 100) / 100,
-      explanation: `تأخير ${lateMinutes} دقيقة ضمن شريحة (${matchingRule.name}) بقيمة ${Math.round(finalAmount)} ${currency}`,
+      explanation: `Late by ${lateMinutes} minutes in bracket (${matchingRule.name}) with amount ${Math.round(finalAmount)} ${currency}`,
     });
 
     return prisma.deduction.create({
@@ -175,13 +175,13 @@ export class DeductionService {
     const finalAmount = await this.enforceCap(userId, rawAmount, salary, period.id);
 
     const calculationDetails = JSON.stringify({
-      ruleName: rule?.name || 'غياب بدون عذر',
+      ruleName: rule?.name || 'Unexcused Absence',
       multiplier,
       dayWage: Math.round(dayWage * 100) / 100,
       currency,
       rawAmount: Math.round(rawAmount * 100) / 100,
       cappedAmount: Math.round(finalAmount * 100) / 100,
-      explanation: `خصم غياب يوم بدون عذر بمضاعف ${multiplier}x أجر اليوم = ${Math.round(finalAmount)} ${currency}`,
+      explanation: `Unexcused absence deduction with multiplier ${multiplier}x day wage = ${Math.round(finalAmount)} ${currency}`,
     });
 
     return prisma.deduction.create({
@@ -273,13 +273,13 @@ export class DeductionService {
       include: { payrollPeriod: true },
     });
 
-    if (!deduction) throw new CustomError('الخصم المطلوب غير موجود', 404);
-    if (deduction.userId !== userId) throw new CustomError('غير مصرح لك بالاعتراض على هذا الخصم', 403);
+    if (!deduction) throw new CustomError('Deduction not found', 404);
+    if (deduction.userId !== userId) throw new CustomError('Unauthorized to dispute this deduction', 403);
     if (deduction.payrollPeriod?.status === 'closed') {
-      throw new CustomError('لا يمكن الاعتراض على خصم في شهر مالي مُغلق نهائياً', 400);
+      throw new CustomError('Cannot dispute a deduction in a permanently closed payroll period', 400);
     }
     if (deduction.status === 'closed_in_payroll') {
-      throw new CustomError('الخصم مغلق في الرواتب ولا يقبل الاعتراض', 400);
+      throw new CustomError('Deduction is closed in payroll and cannot be disputed', 400);
     }
 
     const dispute = await prisma.deductionDispute.create({
@@ -324,9 +324,9 @@ export class DeductionService {
       });
     }
 
-    if (!dispute) throw new CustomError('طلب الاعتراض غير موجود', 404);
+    if (!dispute) throw new CustomError('Dispute request not found', 404);
     if (dispute.deduction.payrollPeriod?.status === 'closed') {
-      throw new CustomError('الشهر المالي مُغلق ولا يمكن تعديل خصوماته', 400);
+      throw new CustomError('Payroll period is closed and deductions cannot be modified', 400);
     }
 
     const updatedDispute = await prisma.deductionDispute.update({
@@ -334,7 +334,7 @@ export class DeductionService {
       data: {
         status: decision,
         reviewedBy: adminId,
-        reviewNotes: notes || (decision === 'accepted' ? 'تم قبول الاعتراض وإلغاء الخصم' : 'تم رفض الاعتراض'),
+        reviewNotes: notes || (decision === 'accepted' ? 'Dispute accepted and deduction cancelled' : 'Dispute rejected'),
         reviewedAt: new Date(),
       },
     });
@@ -369,15 +369,15 @@ export class DeductionService {
    */
   async createAdjustment(adminId: string, payload: { userId: string; type: 'bonus' | 'manual_deduction'; amount: number; reason: string; monthStr?: string }) {
     if (!payload.reason || payload.reason.trim().length < 5) {
-      throw new CustomError('سبب كتابي واضح ومفصل إلزامي لإضافة التعديل المالي', 400);
+      throw new CustomError('A detailed written reason is required for financial adjustments', 400);
     }
     if (payload.amount <= 0) {
-      throw new CustomError('المبلغ يجب أن يكون أكبر من صفر', 400);
+      throw new CustomError('Amount must be greater than zero', 400);
     }
 
     const period = await this.getOrCreatePayrollPeriod(payload.monthStr);
     if (period.status === 'closed') {
-      throw new CustomError('لا يمكن إضافة تعديلات على شهر مالي مُغلق', 400);
+      throw new CustomError('Cannot add adjustments to a closed payroll period', 400);
     }
 
     return prisma.adjustment.create({

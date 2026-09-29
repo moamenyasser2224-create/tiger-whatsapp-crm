@@ -15,7 +15,7 @@ import { MotionPage } from '../components/motion/MotionPage.js';
 
 export const TemplatesPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const [activeStatus, setActiveStatus] = useState<string>('جديد');
+  const [activeStatus, setActiveStatus] = useState<string>('New');
   const [templateBodies, setTemplateBodies] = useState<Record<string, string>>({});
   const [previewName, setPreviewName] = useState('Alex Morgan');
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);

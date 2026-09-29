@@ -73,8 +73,8 @@ export class CrmService {
     await notificationService.createNotification({
       userId: params.assigneeId,
       type: 'crm_deal',
-      title: 'مهمة متابعة عميل جديدة',
-      body: `تم إسناد مهمة "${params.title}" لمتابعة العميل ${task.customer.name}`,
+      title: 'New customer follow-up task',
+      body: `Task "${params.title}" assigned for customer ${task.customer.name}`,
       payload: { customerId: params.customerId, taskId: task.id },
     });
 
@@ -109,7 +109,7 @@ export class CrmService {
     let grandTotalValue = 0;
 
     customers.forEach((c) => {
-      const stage = c.status || 'جديد';
+      const stage = c.status || 'New';
       const val = Number(c.dealValue || 0);
 
       if (!stageSummary[stage]) {
@@ -176,7 +176,7 @@ export class CrmService {
         payrollPeriodId: period.id,
         type: 'bonus',
         amount: commissionAmount,
-        reason: `عمولة إغلاق صفقة ناجحة بنسبة ${commissionPercent}% من قيمة الصفقة (${dealValue} ر.س)`,
+        reason: `Deal closed won commission: ${commissionPercent}% of deal value (${dealValue})`,
         createdBy: 'SYSTEM_CRM_AUTOMATION',
       },
     });
@@ -185,8 +185,8 @@ export class CrmService {
     await notificationService.createNotification({
       userId: sellerId,
       type: 'crm_deal',
-      title: 'تهانينا! عمولة بيع جديدة معتمدة',
-      body: `تم احتساب عمولة بيع بقيمة ${commissionAmount.toFixed(2)} ر.س وإضافتها لمسير راتبك لشهر ${currentMonth}`,
+      title: 'Congratulations! New sales commission approved',
+      body: `Sales commission of ${commissionAmount.toFixed(2)} calculated and added to your payroll for ${currentMonth}`,
       payload: { adjustmentId: adjustment.id, dealValue, commissionAmount },
     });
 

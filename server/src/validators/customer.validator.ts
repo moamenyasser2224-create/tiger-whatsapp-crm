@@ -1,23 +1,23 @@
 import { z } from 'zod';
-import { CUSTOMER_SOURCES, CUSTOMER_STATUSES, PHONE_REGEX } from '../config/constants.js';
+import { PHONE_REGEX } from '../config/constants.js';
 
 export const createCustomerSchema = z.object({
   name: z
-    .string({ required_error: 'اسم العميل مطلوب' })
-    .min(2, 'اسم العميل يجب أن لا يقل عن حرفين')
-    .max(120, 'اسم العميل يجب أن لا يتجاوز 120 حرف')
+    .string({ required_error: 'Customer name is required' })
+    .min(2, 'Customer name must be at least 2 characters')
+    .max(120, 'Customer name must not exceed 120 characters')
     .trim(),
-  company: z.string().max(120, 'اسم الشركة يجب أن لا يتجاوز 120 حرف').optional().nullable(),
+  company: z.string().max(120, 'Company name must not exceed 120 characters').optional().nullable(),
   phone: z
-    .string({ required_error: 'رقم الجوال مطلوب' })
+    .string({ required_error: 'Phone number is required' })
     .trim()
     .transform((val) => val.replace(/\D/g, ''))
     .refine((val) => PHONE_REGEX.test(val), {
-      message: 'رقم الجوال يجب أن يتكون من أرقام فقط بصيغة دولية بدون + (8 إلى 15 رقم)',
+      message: 'Phone number must consist of 8 to 15 digits in international format without +',
     }),
-  city: z.string().max(100, 'المدينة يجب أن لا تتجاوز 100 حرف').optional().nullable(),
-  source: z.string().optional().default('واتساب'),
-  status: z.string().optional().default('جديد'),
+  city: z.string().max(100, 'City must not exceed 100 characters').optional().nullable(),
+  source: z.string().optional().default('WhatsApp'),
+  status: z.string().optional().default('New'),
   sourceId: z.string().uuid().optional().nullable(),
   statusId: z.string().uuid().optional().nullable(),
   last: z
@@ -34,11 +34,11 @@ export const createCustomerSchema = z.object({
     .optional()
     .nullable()
     .transform((val) => (val ? new Date(val) : null)),
-  notes: z.string().max(2000, 'الملاحظات يجب أن لا تتجاوز 2000 حرف').optional().nullable(),
+  notes: z.string().max(2000, 'Notes must not exceed 2000 characters').optional().nullable(),
   consent: z
-    .boolean({ required_error: 'الموافقة الصريحة للعميل مطلوبة قبل الحفظ' })
+    .boolean({ required_error: 'Explicit client communication consent is required' })
     .refine((val) => val === true, {
-      message: 'يجب تأكيد موافقة العميل على التواصل قبل الحفظ',
+      message: 'Client communication consent must be confirmed before saving',
     }),
   force: z.boolean().optional().default(false),
 });
@@ -46,20 +46,20 @@ export const createCustomerSchema = z.object({
 export const updateCustomerSchema = z.object({
   name: z
     .string()
-    .min(2, 'اسم العميل يجب أن لا يقل عن حرفين')
-    .max(120, 'اسم العميل يجب أن لا يتجاوز 120 حرف')
+    .min(2, 'Customer name must be at least 2 characters')
+    .max(120, 'Customer name must not exceed 120 characters')
     .trim()
     .optional(),
-  company: z.string().max(120, 'اسم الشركة يجب أن لا يتجاوز 120 حرف').optional().nullable(),
+  company: z.string().max(120, 'Company name must not exceed 120 characters').optional().nullable(),
   phone: z
     .string()
     .trim()
     .transform((val) => val.replace(/\D/g, ''))
     .refine((val) => PHONE_REGEX.test(val), {
-      message: 'رقم الجوال يجب أن يتكون من أرقام فقط بصيغة دولية بدون + (8 إلى 15 رقم)',
+      message: 'Phone number must consist of 8 to 15 digits in international format without +',
     })
     .optional(),
-  city: z.string().max(100, 'المدينة يجب أن لا تتجاوز 100 حرف').optional().nullable(),
+  city: z.string().max(100, 'City must not exceed 100 characters').optional().nullable(),
   source: z.string().optional(),
   status: z.string().optional(),
   sourceId: z.string().uuid().optional().nullable(),
@@ -78,7 +78,7 @@ export const updateCustomerSchema = z.object({
     .optional()
     .nullable()
     .transform((val) => (val ? new Date(val) : null)),
-  notes: z.string().max(2000, 'الملاحظات يجب أن لا تتجاوز 2000 حرف').optional().nullable(),
+  notes: z.string().max(2000, 'Notes must not exceed 2000 characters').optional().nullable(),
   consent: z.boolean().optional(),
 });
 
@@ -94,5 +94,5 @@ export const customerQuerySchema = z.object({
 });
 
 export const importCsvSchema = z.object({
-  csvText: z.string({ required_error: 'نص CSV مطلوب' }).min(1, 'ملف CSV فارغ'),
+  csvText: z.string({ required_error: 'CSV content is required' }).min(1, 'CSV file cannot be empty'),
 });

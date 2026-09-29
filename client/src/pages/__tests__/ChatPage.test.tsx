@@ -45,10 +45,10 @@ describe('ChatPage Component', () => {
       </QueryClientProvider>
     );
 
-    expect(screen.getByText('القناة العامة لفريق العمل')).toBeInTheDocument();
+    expect(screen.getAllByText(/General Workspace/i).length).toBeGreaterThan(0);
     expect(
-      screen.getByPlaceholderText(/اكتب رسالتك إلى كل أعضاء الفريق/i)
+      screen.getByPlaceholderText(/Write a message/i)
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '' })).toBeInTheDocument(); // send button with icon
+    expect(screen.getByText(/Send Message/i)).toBeInTheDocument();
   });
 });

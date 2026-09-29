@@ -267,8 +267,8 @@ export const PromotCompanyPage: React.FC = () => {
               {featuredVideoSource === 'flow' ? (
                 <video
                   controls
-                  autoPlay
                   playsInline
+                  preload="metadata"
                   className="w-full h-full object-contain"
                   src="/videos/tiger_promo.mp4"
                   poster="https://www.promot-automation.com/wp-content/uploads/2026/02/Promot_Social.jpg"

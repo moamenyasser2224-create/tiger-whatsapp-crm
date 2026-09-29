@@ -1,24 +1,24 @@
 export const CUSTOMER_SOURCES = [
-  'إعلان',
-  'واتساب',
-  'انستغرام',
-  'فيسبوك',
-  'توصية',
-  'معرض',
-  'أخرى',
+  'Ads',
+  'WhatsApp',
+  'Instagram',
+  'Facebook',
+  'Referral',
+  'Exhibition',
+  'Other',
 ] as const;
 
-export type CustomerSource = typeof CUSTOMER_SOURCES[number];
+export type CustomerSource = typeof CUSTOMER_SOURCES[number] | string;
 
 export const CUSTOMER_STATUSES = [
-  'جديد',
-  'تم التواصل',
-  'مهتم',
-  'تم البيع',
-  'غير مهتم',
+  'New',
+  'Contacted',
+  'Interested',
+  'Closed Won',
+  'Lost',
 ] as const;
 
-export type CustomerStatus = typeof CUSTOMER_STATUSES[number];
+export type CustomerStatus = typeof CUSTOMER_STATUSES[number] | string;
 
 export interface User {
   id: string;

@@ -1,31 +1,37 @@
 export const CUSTOMER_SOURCES = [
-  'إعلان',
-  'واتساب',
-  'انستغرام',
-  'فيسبوك',
-  'توصية',
-  'معرض',
-  'أخرى',
+  'Ads',
+  'WhatsApp',
+  'Instagram',
+  'Facebook',
+  'Referral',
+  'Exhibition',
+  'Other',
 ] as const;
 
-export type CustomerSource = typeof CUSTOMER_SOURCES[number];
+export type CustomerSource = typeof CUSTOMER_SOURCES[number] | string;
 
 export const CUSTOMER_STATUSES = [
-  'جديد',
-  'تم التواصل',
-  'مهتم',
-  'تم البيع',
-  'غير مهتم',
+  'New',
+  'Contacted',
+  'Interested',
+  'Closed Won',
+  'Lost',
 ] as const;
 
-export type CustomerStatus = typeof CUSTOMER_STATUSES[number];
+export type CustomerStatus = typeof CUSTOMER_STATUSES[number] | string;
 
-export const DEFAULT_MESSAGE_TEMPLATES: Record<CustomerStatus, string> = {
-  'جديد': 'مرحباً {name}، شكرًا لتواصلك معنا! كيف يمكننا مساعدتك؟',
-  'تم التواصل': 'مرحباً {name}، تم التواصل معك سابقًا، حابب أتابع معاك آخر التفاصيل.',
-  'مهتم': 'مرحباً {name}، حابب أطمّن هل لسه مهتم بالعرض؟ جاهز أساعدك بأي استفسار.',
-  'تم البيع': 'مرحباً {name}، شكرًا لثقتك بنا! لو احتجت أي دعم بعد الشراء أنا موجود.',
-  'غير مهتم': 'مرحباً {name}، تمام، لو احتجت أي حاجة في المستقبل أنا موجود.',
+export const DEFAULT_MESSAGE_TEMPLATES: Record<string, string> = {
+  'New': 'Hello {name}, thank you for contacting Tiger! How can we assist you today?',
+  'Contacted': 'Hello {name}, following up regarding our recent discussion. Let us know if you need any further specifications.',
+  'Interested': 'Hello {name}, we are pleased to assist you with our machine automation solutions. Feel free to ask any questions!',
+  'Closed Won': 'Hello {name}, thank you for partnering with Tiger! We are dedicated to ensuring your operations run smoothly.',
+  'Lost': 'Hello {name}, thank you for your consideration. Feel free to contact us whenever you require industrial automation solutions.',
+  // Legacy backward-compatibility mappings
+  '\u062C\u062F\u064A\u062F': 'Hello {name}, thank you for contacting Tiger! How can we assist you today?',
+  '\u062A\u0645 \u0627\u0644\u062A\u0648\u0627\u0635\u0644': 'Hello {name}, following up regarding our recent discussion. Let us know if you need any further specifications.',
+  '\u0645\u0647\u062A\u0645': 'Hello {name}, we are pleased to assist you with our machine automation solutions. Feel free to ask any questions!',
+  '\u062A\u0645 \u0627\u0644\u0628\u064A\u0639': 'Hello {name}, thank you for partnering with Tiger! We are dedicated to ensuring your operations run smoothly.',
+  '\u063A\u064A\u0631 \u0645\u0647\u062A\u0645': 'Hello {name}, thank you for your consideration. Feel free to contact us whenever you require industrial automation solutions.',
 };
 
 // Phone regex: Digits only, 8 to 15 digits (international format without +)

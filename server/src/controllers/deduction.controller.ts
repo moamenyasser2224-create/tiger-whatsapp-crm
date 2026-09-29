@@ -7,7 +7,7 @@ const deductionService = new DeductionService();
 const payrollService = new PayrollService();
 
 export class DeductionController {
-  // Employee view: "خصوماتي"
+  // Employee view: "My Deductions"
   async getMyDeductions(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = (req as any).user.id || (req as any).user.userId;
@@ -28,7 +28,7 @@ export class DeductionController {
       const dispute = await deductionService.createDispute(userId, id, reason, attachmentUrl);
       res.status(201).json({
         success: true,
-        message: 'تم إرسال الاعتراض على الخصم بنجاح للمراجعة الإدارية',
+        message: 'Dispute submitted successfully for administrative review',
         data: dispute,
       });
     } catch (err) {
@@ -55,7 +55,7 @@ export class DeductionController {
       await deductionService.approveDeductions(adminId, deductionIds || []);
       res.status(200).json({
         success: true,
-        message: 'تم اعتماد الخصومات بنجاح',
+        message: 'Deductions approved successfully',
       });
     } catch (err) {
       next(err);
@@ -150,7 +150,7 @@ export class DeductionController {
       const result = await deductionService.reviewDispute(adminId, id, decision, notes);
       res.status(200).json({
         success: true,
-        message: decision === 'accepted' ? 'تم قبول الاعتراض وإلغاء الخصم' : 'تم رفض الاعتراض وتأكيد الخصم',
+        message: decision === 'accepted' ? 'Dispute accepted and deduction cancelled' : 'Dispute rejected and deduction confirmed',
         data: result,
       });
     } catch (err) {
@@ -165,7 +165,7 @@ export class DeductionController {
       const adjustment = await deductionService.createAdjustment(adminId, req.body);
       res.status(201).json({
         success: true,
-        message: 'تم إضافة التعديل المالي بنجاح وتوثيقه مع السبب',
+        message: 'Financial adjustment added successfully with documented reason',
         data: adjustment,
       });
     } catch (err) {
@@ -181,7 +181,7 @@ export class DeductionController {
       const closed = await payrollService.closePayrollPeriod(adminId, month);
       res.status(200).json({
         success: true,
-        message: `تم إغلاق شهر الرواتب ${month} نهائياً وتجميد الخصومات`,
+        message: `Payroll period ${month} permanently closed and deductions frozen`,
         data: closed,
       });
     } catch (err) {
@@ -246,7 +246,7 @@ export class DeductionController {
     try {
       const { id } = req.params;
       await prisma.deductionRule.delete({ where: { id } });
-      res.status(200).json({ success: true, message: 'تم حذف القاعدة بنجاح' });
+      res.status(200).json({ success: true, message: 'Rule deleted successfully' });
     } catch (err) {
       next(err);
     }

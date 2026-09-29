@@ -24,7 +24,7 @@ function escapeCsvValue(val: unknown): string {
 }
 
 /**
- * Generates CSV string with UTF-8 BOM for Excel Arabic compatibility
+ * Generates CSV string with UTF-8 BOM for spreadsheet compatibility
  */
 export function generateCustomersCsv(customers: Array<{
   name: string;
@@ -41,18 +41,18 @@ export function generateCustomersCsv(customers: Array<{
   createdAt: Date;
 }>): string {
   const headers = [
-    'الاسم (name)',
-    'الشركة (company)',
-    'رقم الجوال (phone)',
-    'المدينة (city)',
-    'المصدر (source)',
-    'الحالة (status)',
-    'تاريخ آخر تواصل (last)',
-    'تاريخ المتابعة القادمة (next)',
-    'الملاحظات (notes)',
-    'الموافقة (consent)',
-    'تاريخ الموافقة (consentDate)',
-    'تاريخ الإنشاء (createdAt)',
+    'Name',
+    'Company',
+    'Phone',
+    'City',
+    'Source',
+    'Status',
+    'Last Contact',
+    'Next Follow-Up',
+    'Notes',
+    'Consent',
+    'Consent Date',
+    'Created At',
   ];
 
   const rows = customers.map((c) => [
@@ -65,14 +65,13 @@ export function generateCustomersCsv(customers: Array<{
     escapeCsvValue(c.last ? c.last.toISOString().split('T')[0] : ''),
     escapeCsvValue(c.next ? c.next.toISOString().split('T')[0] : ''),
     escapeCsvValue(c.notes || ''),
-    escapeCsvValue(c.consent ? 'نعم' : 'لا'),
+    escapeCsvValue(c.consent ? 'Yes' : 'No'),
     escapeCsvValue(c.consentDate ? c.consentDate.toISOString().split('T')[0] : ''),
     escapeCsvValue(c.createdAt ? c.createdAt.toISOString() : ''),
   ]);
 
   const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
 
-  // Prefix with UTF-8 BOM so Excel opens Arabic properly
   return '\uFEFF' + csvContent;
 }
 
@@ -95,16 +94,16 @@ export function parseCustomersCsv(csvText: string): CustomerCsvRow[] {
 
   headerTokens.forEach((token, index) => {
     const lower = token.toLowerCase().trim();
-    if (lower.includes('name') || lower.includes('الاسم')) colIndexMap['name'] = index;
-    else if (lower.includes('company') || lower.includes('الشركة')) colIndexMap['company'] = index;
-    else if (lower.includes('phone') || lower.includes('جوال') || lower.includes('هاتف')) colIndexMap['phone'] = index;
-    else if (lower.includes('city') || lower.includes('المدينة')) colIndexMap['city'] = index;
-    else if (lower.includes('source') || lower.includes('المصدر')) colIndexMap['source'] = index;
-    else if (lower.includes('status') || lower.includes('الحالة')) colIndexMap['status'] = index;
-    else if (lower.includes('last') || lower.includes('آخر تواصل')) colIndexMap['last'] = index;
-    else if (lower.includes('next') || lower.includes('المتابعة')) colIndexMap['next'] = index;
-    else if (lower.includes('notes') || lower.includes('ملاحظات')) colIndexMap['notes'] = index;
-    else if (lower.includes('consent') || lower.includes('موافقة')) colIndexMap['consent'] = index;
+    if (lower.includes('name') || lower.includes('\u0627\u0644\u0627\u0633\u0645')) colIndexMap['name'] = index;
+    else if (lower.includes('company') || lower.includes('\u0627\u0644\u0634\u0631\u0643\u0629')) colIndexMap['company'] = index;
+    else if (lower.includes('phone') || lower.includes('mobile') || lower.includes('\u062C\u0648\u0627\u0644') || lower.includes('\u0647\u0627\u062A\u0641')) colIndexMap['phone'] = index;
+    else if (lower.includes('city') || lower.includes('\u0627\u0644\u0645\u062F\u064A\u0646\u0629')) colIndexMap['city'] = index;
+    else if (lower.includes('source') || lower.includes('\u0627\u0644\u0645\u0635\u062F\u0631')) colIndexMap['source'] = index;
+    else if (lower.includes('status') || lower.includes('\u0627\u0644\u062D\u0627\u0644\u0629')) colIndexMap['status'] = index;
+    else if (lower.includes('last') || lower.includes('\u0622\u062E\u0631')) colIndexMap['last'] = index;
+    else if (lower.includes('next') || lower.includes('\u0627\u0644\u0645\u062A\u0627\u0628\u0639\u0629')) colIndexMap['next'] = index;
+    else if (lower.includes('notes') || lower.includes('\u0645\u0644\u0627\u062D\u0638\u0627\u062A')) colIndexMap['notes'] = index;
+    else if (lower.includes('consent') || lower.includes('\u0645\u0648\u0627\u0641\u0642\u0629')) colIndexMap['consent'] = index;
   });
 
   const parsedRows: CustomerCsvRow[] = [];
@@ -123,12 +122,12 @@ export function parseCustomersCsv(csvText: string): CustomerCsvRow[] {
       company: colIndexMap['company'] !== undefined ? tokens[colIndexMap['company']]?.trim() : undefined,
       phone: phone.trim(),
       city: colIndexMap['city'] !== undefined ? tokens[colIndexMap['city']]?.trim() : undefined,
-      source: colIndexMap['source'] !== undefined ? tokens[colIndexMap['source']]?.trim() : 'واتساب',
-      status: colIndexMap['status'] !== undefined ? tokens[colIndexMap['status']]?.trim() : 'جديد',
+      source: colIndexMap['source'] !== undefined ? tokens[colIndexMap['source']]?.trim() : 'WhatsApp',
+      status: colIndexMap['status'] !== undefined ? tokens[colIndexMap['status']]?.trim() : 'New',
       last: colIndexMap['last'] !== undefined ? tokens[colIndexMap['last']]?.trim() : undefined,
       next: colIndexMap['next'] !== undefined ? tokens[colIndexMap['next']]?.trim() : undefined,
       notes: colIndexMap['notes'] !== undefined ? tokens[colIndexMap['notes']]?.trim() : undefined,
-      consent: true,
+      consent: colIndexMap['consent'] !== undefined ? tokens[colIndexMap['consent']]?.trim() : 'yes',
     });
   }
 
@@ -136,7 +135,7 @@ export function parseCustomersCsv(csvText: string): CustomerCsvRow[] {
 }
 
 /**
- * Handles quoted fields with embedded commas/quotes
+ * Standard CSV Line parser handling quotes and commas
  */
 function parseCsvLine(line: string): string[] {
   const result: string[] = [];
@@ -145,21 +144,23 @@ function parseCsvLine(line: string): string[] {
 
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
+    const nextChar = line[i + 1];
+
     if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') {
+      if (inQuotes && nextChar === '"') {
         current += '"';
-        i++; // skip next quote
+        i++; // skip escaped quote
       } else {
         inQuotes = !inQuotes;
       }
     } else if (char === ',' && !inQuotes) {
-      result.push(current.trim());
+      result.push(current);
       current = '';
     } else {
       current += char;
     }
   }
 
-  result.push(current.trim());
+  result.push(current);
   return result;
 }

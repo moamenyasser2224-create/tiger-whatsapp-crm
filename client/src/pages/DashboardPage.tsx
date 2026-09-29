@@ -161,7 +161,7 @@ export const DashboardPage: React.FC = () => {
             <div>
               <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">Closed Deals</p>
               <h3 className="text-2xl font-black text-neutral-900 dark:text-white mt-1">
-                {statsLoading ? '...' : <CountUp end={stats?.statusDistribution?.['تم البيع'] || (stats?.statusDistribution as any)?.['Closed Won'] || 0} />}
+                {statsLoading ? '...' : <CountUp end={(stats?.statusDistribution as any)?.['Closed Won'] || (stats?.statusDistribution as any)?.['\u062A\u0645 \u0627\u0644\u0628\u064A\u0639'] || 0} />}
               </h3>
             </div>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-neutral-300 dark:border-neutral-700 bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-white">

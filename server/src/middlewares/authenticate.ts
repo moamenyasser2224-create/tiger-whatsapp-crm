@@ -28,7 +28,7 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       res.status(401).json({
         success: false,
-        error: 'جلسة العمل غير صالحة أو غير موجودة. يرجى تسجيل الدخول.',
+        error: 'Invalid or missing session authorization. Please sign in.',
       });
       return;
     }
@@ -56,7 +56,7 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
     if (!user) {
       res.status(401).json({
         success: false,
-        error: 'المستخدم غير موجود أو تم تعطيل الحساب.',
+        error: 'User account does not exist or has been deactivated.',
       });
       return;
     }
@@ -79,7 +79,7 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
   } catch (error) {
     res.status(401).json({
       success: false,
-      error: 'انتهت صلاحية الجلسة أو الرمز غير صالح.',
+      error: 'Session expired or invalid authorization token.',
     });
   }
 }
@@ -88,7 +88,7 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
   if (req.user?.role !== 'admin') {
     res.status(403).json({
       success: false,
-      error: 'غير مصرح لك بتنفيذ هذا الإجراء، يتطلب صلاحيات المدير (Admin).',
+      error: 'Access denied. Administrator privileges required.',
     });
     return;
   }

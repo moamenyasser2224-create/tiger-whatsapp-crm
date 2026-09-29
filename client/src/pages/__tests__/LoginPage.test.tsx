@@ -17,9 +17,9 @@ describe('LoginPage Component', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByText('تسجيل الدخول')).toBeInTheDocument();
+    expect(screen.getByText('Sign In')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('name@example.com')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /دخول إلى الحساب/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Sign In to Account/i })).toBeInTheDocument();
   });
 });

@@ -14,7 +14,7 @@ export class CustomerController {
 
       res.status(201).json({
         success: true,
-        message: 'تم إضافة العميل بنجاح',
+        message: 'Customer added successfully',
         data: customer,
       });
     } catch (error) {
@@ -82,7 +82,7 @@ export class CustomerController {
 
       res.status(200).json({
         success: true,
-        message: 'تم تحديث بيانات العميل بنجاح',
+        message: 'Customer updated successfully',
         data: updated,
       });
     } catch (error) {
@@ -99,7 +99,7 @@ export class CustomerController {
 
       res.status(200).json({
         success: true,
-        message: 'تم حذف العميل بنجاح',
+        message: 'Customer deleted successfully',
       });
     } catch (error) {
       next(error);
@@ -129,7 +129,7 @@ export class CustomerController {
 
       res.status(200).json({
         success: true,
-        message: `تم استيراد ${result.importedCount} عميل بنجاح (${result.skippedCount} تم تخطيهم لتكرارهم أو عدم صحة البيانات)`,
+        message: `Successfully imported ${result.importedCount} customers (${result.skippedCount} skipped due to duplicates or invalid data)`,
         data: result,
       });
     } catch (error) {

@@ -7,7 +7,7 @@ export class SettingsRepository {
     if (!settings) {
       settings = await prisma.settings.create({
         data: {
-          orgName: 'تايجر CRM',
+          orgName: 'Tiger',
         },
       });
     }

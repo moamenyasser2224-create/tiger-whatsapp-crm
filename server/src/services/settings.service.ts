@@ -11,7 +11,7 @@ export class SettingsService {
   async updateSettings(orgName: string) {
     const trimmed = (orgName || '').trim();
     if (!trimmed) {
-      throw new CustomError('اسم المؤسسة لا يمكن أن يكون فارغاً', 400);
+      throw new CustomError('Organization name cannot be empty', 400);
     }
     return settingsRepository.update(trimmed);
   }
