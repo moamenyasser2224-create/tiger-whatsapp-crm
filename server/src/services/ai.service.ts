@@ -48,6 +48,41 @@ export class AIService {
   }
 
   /**
+   * Resilient executor for Gemini API with retry and model fallback (handles 503 transient spikes)
+   */
+  private async executeGeminiCall(
+    ai: GoogleGenAI,
+    options: { contents: any[]; systemInstruction: string; temperature?: number }
+  ): Promise<string> {
+    const candidateModels = ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-flash-latest'];
+    let lastError: any = null;
+
+    for (const model of candidateModels) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const res = await ai.models.generateContent({
+            model,
+            contents: options.contents,
+            config: {
+              systemInstruction: { parts: [{ text: options.systemInstruction }] },
+              temperature: options.temperature ?? 0.7,
+            },
+          });
+          if (res.text) return res.text.trim();
+        } catch (err: any) {
+          lastError = err;
+          if (err.message?.includes('503') || err.message?.includes('429')) {
+            await new Promise((r) => setTimeout(r, 1000));
+            continue;
+          }
+          break; // Try next candidate model
+        }
+      }
+    }
+    throw lastError;
+  }
+
+  /**
    * Checks whether Gemini is configured and active
    */
   async getStatus(): Promise<{ configured: boolean; model: string }> {
@@ -91,6 +126,190 @@ export class AIService {
   }
 
   /**
+   * Fetches the Auto-Reply configuration
+   */
+  async getAutoReplyConfig(): Promise<{
+    enabled: boolean;
+    businessContext: string;
+    delaySeconds: number;
+    configured: boolean;
+  }> {
+    const settings = await prisma.settings.findFirst();
+    const key = await this.getApiKey();
+    return {
+      enabled: settings?.aiAutoReplyEnabled ?? true,
+      businessContext:
+        settings?.aiBusinessContext ||
+        'شركة Tiger: متخصصة في حلول الأتمتة المتقدمة، وأنظمة إدارة علاقات العملاء (CRM)، وحلول دعم الشركات. مواعيد العمل الرسمية: من الأحد إلى الخميس من 9:00 صباحاً حتى 5:00 مساءً بتوقيت القاهرة.',
+      delaySeconds: settings?.aiAutoReplyDelaySeconds ?? 2,
+      configured: !!key,
+    };
+  }
+
+  /**
+   * Updates Auto-Reply configuration (Admin only)
+   */
+  async updateAutoReplyConfig(
+    adminId: string,
+    params: { enabled?: boolean; businessContext?: string; delaySeconds?: number }
+  ): Promise<{ success: boolean; message: string }> {
+    const settings = await prisma.settings.findFirst();
+    if (settings) {
+      await prisma.settings.update({
+        where: { id: settings.id },
+        data: {
+          ...(typeof params.enabled === 'boolean' ? { aiAutoReplyEnabled: params.enabled } : {}),
+          ...(typeof params.businessContext === 'string' ? { aiBusinessContext: params.businessContext.trim() } : {}),
+          ...(typeof params.delaySeconds === 'number' ? { aiAutoReplyDelaySeconds: params.delaySeconds } : {}),
+        },
+      });
+    }
+
+    await prisma.auditLog.create({
+      data: {
+        userId: adminId,
+        action: 'AI_AUTO_REPLY_CONFIG_UPDATED',
+        entity: 'SETTINGS',
+        details: JSON.stringify(params),
+      },
+    });
+
+    return {
+      success: true,
+      message: 'تم تحديث إعدادات الرد الآلي بالذكاء الاصطناعي بنجاح.',
+    };
+  }
+
+  /**
+   * Generates automated customer response to incoming WhatsApp messages using Gemini 3.8 Flash
+   */
+  async generateCustomerAutoReply(params: {
+    customerName: string;
+    customerNotes?: string;
+    inboundMessage: string;
+    businessContext?: string;
+  }): Promise<{ replyText: string; model: string; simulated?: boolean }> {
+    const ai = await this.getClient();
+    const defaultBusinessContext =
+      params.businessContext ||
+      'شركة Tiger: متخصصة في حلول الأتمتة المتقدمة، وأنظمة إدارة علاقات العملاء (CRM)، وخدمات دعم الأعمال. مواعيد العمل الرسمية: من الأحد إلى الخميس من 9:00 صباحاً حتى 5:00 مساءً بتوقيت القاهرة.';
+
+    const systemInstruction = `You are "Tiger AI Auto-Responder" (نظام الرد الآلي الذكي لشركة Tiger).
+Your job is to respond immediately to incoming WhatsApp messages from customers with extreme courtesy, professionalism, clarity, and sales effectiveness.
+
+Business Knowledge Base:
+${defaultBusinessContext}
+
+Rules for Customer Auto-Replies:
+1. Greet the customer warmly by name: ${params.customerName}.
+2. Language: Reply in the same language as the customer (Arabic if Arabic, English if English).
+3. Brevity & WhatsApp style: Keep messages readable on mobile screens (1-3 short paragraphs or clean bullet points). Avoid excessive filler words.
+4. Accuracy: Only share facts stated in the business knowledge base. If asked for a custom quote or complex technical request, give a helpful general answer and assure them that an assigned account representative is reviewing their request to provide exact pricing.
+5. Action-oriented: End with a polite question or clear call to action (e.g., asking about their specific requirements, or proposing a convenient time for a call).
+6. Security & Privacy: Do not share internal employee personal phone numbers, system keys, or internal payroll details.`;
+
+    if (ai) {
+      try {
+        const reply = await this.executeGeminiCall(ai, {
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  text: `Customer Name: ${params.customerName}\nCustomer History/Notes: ${params.customerNotes || 'New Inquiry'}\n\nIncoming WhatsApp Message:\n"${params.inboundMessage}"\n\nGenerate the optimal automated WhatsApp reply to this customer now:`,
+                },
+              ],
+            },
+          ],
+          systemInstruction,
+          temperature: 0.6,
+        });
+
+        return {
+          replyText: reply || `أهلاً بك أستاذ ${params.customerName}، شكراً لتواصلك مع شركة Tiger. تم استلام رسالتك وسيتواصل معك أحد مسؤولي خدمة العملاء في أقرب وقت.`,
+          model: 'gemini-3.8-flash',
+        };
+      } catch (err: any) {
+        console.error('❌ [Gemini Customer Auto-Reply Error]:', err.message);
+      }
+    }
+
+    // Contextual simulated response if GEMINI_API_KEY is not configured
+    const msg = params.inboundMessage.toLowerCase();
+    let simulatedReply = '';
+
+    if (msg.includes('سعر') || msg.includes('اسعار') || msg.includes('بكام') || msg.includes('cost') || msg.includes('price')) {
+      simulatedReply = `أهلاً بك أستاذ ${params.customerName}! يسعدنا اهتمامك بخدمات Tiger.
+خطط الأسعار لدينا مرنة ومصممة لتناسب حجم نشاطك واحتياجاتك بدقة.
+هل تفضل أن نرسل لك تفاصيل الباقات الأساسية هنا على الواتساب، أم نحدد مكالمة سريعة لمدة 5 دقائق لمناقشة متطلباتك بالتفصيل؟`;
+    } else if (msg.includes('مواعيد') || msg.includes('عنوان') || msg.includes('شغالين') || msg.includes('hours') || msg.includes('location')) {
+      simulatedReply = `أهلاً بك أستاذ ${params.customerName}! 
+مواعيد العمل الرسمية لدينا من الأحد إلى الخميس من الساعة 9:00 صباحاً حتى 5:00 مساءً.
+فريقنا دائماً في خدمتك، كيف يمكننا مساعدتك اليوم بخصوص خدماتنا؟`;
+    } else if (msg.includes('سلام') || msg.includes('مرحبا') || msg.includes('ازيك') || msg.includes('صباح') || msg.includes('مساء') || msg.includes('hello') || msg.includes('hi')) {
+      simulatedReply = `وعليكم السلام ورحمة الله وبركاته، أهلاً بحضرتك يا أستاذ ${params.customerName}! 
+أتمنى لك يوماً سعيداً وموفقاً. أنا المساعد الآلي لشركة Tiger، كيف أستطيع خدمتك اليوم؟`;
+    } else {
+      simulatedReply = `أهلاً بك أستاذ ${params.customerName}! شكراً لتواصلك مع شركة Tiger.
+تم استلام رسالتك بخصوص: "${params.inboundMessage}"، وجارٍ متابعتها فوراً.
+هل هناك أي استفسار آخر تحب أن نجهزه لك أثناء مراجعة طلبك؟`;
+    }
+
+    return {
+      replyText: simulatedReply,
+      model: 'gemini-3.8-flash (auto-responder)',
+      simulated: true,
+    };
+  }
+
+  /**
+   * Generates 3 quick smart reply suggestions for an employee managing a customer
+   */
+  async suggestReplies(params: {
+    customerName: string;
+    lastMessage: string;
+  }): Promise<{ suggestions: string[]; model: string }> {
+    const ai = await this.getClient();
+    if (ai) {
+      try {
+        const response = await ai.models.generateContent({
+          model: 'gemini-3.8-flash',
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  text: `Customer Name: ${params.customerName}\nLast message: "${params.lastMessage}"\nGenerate exactly 3 distinct, professional, concise WhatsApp quick reply options for our sales agent in Arabic. Return strictly JSON array of 3 strings: ["reply 1", "reply 2", "reply 3"]`,
+                },
+              ],
+            },
+          ],
+          config: {
+            temperature: 0.7,
+            responseMimeType: 'application/json',
+          },
+        });
+
+        const parsed = JSON.parse(response.text || '[]');
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return { suggestions: parsed, model: 'gemini-3.8-flash' };
+        }
+      } catch (e) {
+        // Fallback to static suggestions
+      }
+    }
+
+    return {
+      suggestions: [
+        `أهلاً بك أستاذ ${params.customerName}، يسعدنا تواصلك ويسرنا تزويدك بكافة التفاصيل الآن.`,
+        `تحياتي أستاذ ${params.customerName}، بخصوص استفسارك تم تجهيز العرض المناسب لحضرتك، هل يناسبك الاتصال الآن؟`,
+        `أهلاً بحضرتك يا فندم، هل تحب نحدد موعد لاجتماع تجريبي لشرح النظام عملياً؟`,
+      ],
+      model: 'gemini-3.8-flash (copilot)',
+    };
+  }
+
+  /**
    * Generates conversational AI response using official gemini-3.8-flash
    */
   async chat(
@@ -120,22 +339,15 @@ Core Capabilities & Guidelines:
           parts: [{ text: m.content }],
         }));
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.8-flash',
+        const replyText = await this.executeGeminiCall(ai, {
           contents,
-          config: {
-            systemInstruction: {
-              parts: [{ text: systemPrompt }],
-            },
-            temperature: 0.7,
-          },
+          systemInstruction: systemPrompt,
+          temperature: 0.7,
         });
-
-        const replyText = response.text || 'عذراً، لم أستطع توليد إجابة في الوقت الحالي. يرجى المحاولة مرة أخرى.';
 
         return {
           role: 'assistant',
-          content: replyText,
+          content: replyText || 'عذراً، لم أستطع توليد إجابة في الوقت الحالي. يرجى المحاولة مرة أخرى.',
           model: 'gemini-3.8-flash',
         };
       } catch (err: any) {

@@ -14,5 +14,6 @@ router.use(authenticate);
 
 router.get('/status', (req, res) => whatsAppController.getStatus(req, res));
 router.post('/send', (req, res, next) => whatsAppController.sendMessage(req, res, next));
+router.post('/simulate-inbound', (req, res, next) => whatsAppController.simulateInbound(req, res, next));
 
 export default router;

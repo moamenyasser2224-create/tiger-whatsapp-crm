@@ -39,6 +39,8 @@ import {
   Key,
   Eye,
   EyeOff,
+  Zap,
+  MessageCircle,
 } from 'lucide-react';
 import { MotionPage } from '../components/motion/MotionPage.js';
 
@@ -81,6 +83,18 @@ export const SettingsPage: React.FC = () => {
   const [geminiKeyFeedback, setGeminiKeyFeedback] = useState<{ success: boolean; message: string } | null>(null);
   const [isTestingGemini, setIsTestingGemini] = useState(false);
   const [geminiTestFeedback, setGeminiTestFeedback] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Google Gemini AI Auto-Responder State
+  const [autoReplyEnabled, setAutoReplyEnabled] = useState(true);
+  const [businessContextInput, setBusinessContextInput] = useState('');
+  const [autoReplyDelay, setAutoReplyDelay] = useState(2);
+  const [isSavingAutoReply, setIsSavingAutoReply] = useState(false);
+  const [autoReplyFeedback, setAutoReplyFeedback] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Inbound WhatsApp Simulation State
+  const [simulateMessageText, setSimulateMessageText] = useState('');
+  const [isSimulatingInbound, setIsSimulatingInbound] = useState(false);
+  const [simulationResult, setSimulationResult] = useState<any | null>(null);
 
   // 2FA Setup State
   const [is2FASetupOpen, setIs2FASetupOpen] = useState(false);
@@ -390,6 +404,69 @@ export const SettingsPage: React.FC = () => {
       });
     } finally {
       setIsTestingGemini(false);
+    }
+  };
+
+  // Google Gemini AI Auto-Responder Query & Handlers (Admin)
+  const { data: autoReplyConfig, refetch: refetchAutoReplyConfig } = useQuery<{
+    enabled: boolean;
+    businessContext: string;
+    delaySeconds: number;
+    configured: boolean;
+  }>({
+    queryKey: ['ai-auto-reply-config'],
+    queryFn: async () => {
+      const res = await api.get('/ai/auto-reply');
+      return res.data.data;
+    },
+    enabled: isAdmin,
+  });
+
+  useEffect(() => {
+    if (autoReplyConfig) {
+      setAutoReplyEnabled(autoReplyConfig.enabled);
+      setBusinessContextInput(autoReplyConfig.businessContext);
+      setAutoReplyDelay(autoReplyConfig.delaySeconds);
+    }
+  }, [autoReplyConfig]);
+
+  const handleSaveAutoReplyConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingAutoReply(true);
+    setAutoReplyFeedback(null);
+    try {
+      const res = await api.put('/ai/auto-reply', {
+        enabled: autoReplyEnabled,
+        businessContext: businessContextInput,
+        delaySeconds: autoReplyDelay,
+      });
+      setAutoReplyFeedback({ success: true, message: res.data.message });
+      refetchAutoReplyConfig();
+      setTimeout(() => setAutoReplyFeedback(null), 4000);
+    } catch (err: any) {
+      setAutoReplyFeedback({
+        success: false,
+        message: err.response?.data?.error || 'Failed to update auto-reply settings',
+      });
+    } finally {
+      setIsSavingAutoReply(false);
+    }
+  };
+
+  const handleSimulateInbound = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!simulateMessageText.trim()) return;
+    setIsSimulatingInbound(true);
+    setSimulationResult(null);
+    try {
+      const res = await api.post('/whatsapp/simulate-inbound', {
+        messageText: simulateMessageText.trim(),
+      });
+      setSimulationResult(res.data);
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to simulate inbound message');
+    } finally {
+      setIsSimulatingInbound(false);
     }
   };
 
@@ -818,6 +895,165 @@ export const SettingsPage: React.FC = () => {
               <span className="font-mono text-[10px]">Model: gemini-3.8-flash</span>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Admin Section: AI Auto-Responder & Automated Messaging Engine */}
+      {isAdmin && (
+        <div className="rounded-xl border border-border bg-card p-6 shadow-subtle space-y-5 text-text">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-text flex items-center gap-2">
+              <Zap className="h-4 w-4 text-accent" />
+              <span>AI Auto-Responder &amp; Inbound Message Automation</span>
+            </h2>
+            <StatusBadge
+              label={autoReplyEnabled ? 'Auto-Pilot Active (All Inbound WhatsApp Messages)' : 'Auto-Pilot Paused'}
+              variant={autoReplyEnabled ? 'positive' : 'muted'}
+            />
+          </div>
+
+          <p className="text-xs text-muted leading-relaxed">
+            When enabled, Tiger AI automatically responds to incoming WhatsApp customer messages 24/7 using your business knowledge base below. The AI greets the customer, provides accurate answers, and logs the entire exchange to the customer timeline.
+          </p>
+
+          {autoReplyFeedback && (
+            <div
+              className={`p-3 rounded-lg border text-xs flex items-center gap-2 ${
+                autoReplyFeedback.success
+                  ? 'border-accent/30 bg-accent-soft text-accent'
+                  : 'border-danger/30 bg-danger-soft text-danger'
+              }`}
+            >
+              {autoReplyFeedback.success ? (
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+              )}
+              <span>{autoReplyFeedback.message}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSaveAutoReplyConfig} className="space-y-4">
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-bg/50">
+              <input
+                type="checkbox"
+                id="autoReplyToggle"
+                checked={autoReplyEnabled}
+                onChange={(e) => setAutoReplyEnabled(e.target.checked)}
+                className="w-4 h-4 rounded text-accent focus:ring-accent border-border"
+              />
+              <label htmlFor="autoReplyToggle" className="text-xs font-medium text-text cursor-pointer select-none">
+                Enable 24/7 AI Auto-Reply on all inbound customer WhatsApp messages
+              </label>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block font-medium text-xs text-muted">
+                  Business Knowledge Base &amp; FAQs for Auto-Responder
+                </label>
+                <span className="text-[10px] text-muted">Used by Gemini AI to form truthful, accurate answers</span>
+              </div>
+              <textarea
+                rows={4}
+                value={businessContextInput}
+                onChange={(e) => setBusinessContextInput(e.target.value)}
+                placeholder="Write facts about Tiger company, services, pricing guidelines, working hours, and FAQs (e.g. نحن شركة تايجر لحلول الأتمتة وإدارة العملاء. مواعيد العمل من الأحد للخميس 9ص-5م. أسعار الباقات تبدأ من...)"
+                className="w-full rounded-lg border border-border bg-bg p-3 text-xs text-text focus:border-accent focus:outline-none"
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted">Natural Typing Delay:</span>
+                <select
+                  value={autoReplyDelay}
+                  onChange={(e) => setAutoReplyDelay(parseInt(e.target.value, 10))}
+                  className="rounded-lg border border-border bg-bg px-2.5 py-1.5 text-xs text-text focus:border-accent focus:outline-none"
+                >
+                  <option value={1}>1 second</option>
+                  <option value={2}>2 seconds (Recommended)</option>
+                  <option value={3}>3 seconds</option>
+                  <option value={5}>5 seconds</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSavingAutoReply}
+                className="flex items-center gap-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover px-4 py-2 text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+              >
+                <Save className="h-3.5 w-3.5" />
+                <span>{isSavingAutoReply ? 'Saving Rules...' : 'Save Automation Rules'}</span>
+              </button>
+            </div>
+          </form>
+
+          {/* Live Inbound Message Simulator & Sandbox */}
+          <div className="border-t border-border pt-4 mt-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <MessageCircle className="w-4 h-4 text-accent" />
+              <h3 className="font-semibold text-xs text-text">
+                Live Inbound WhatsApp Simulator (مختبر تجربة واختبار الرد الآلي)
+              </h3>
+            </div>
+            <p className="text-[11px] text-muted">
+              Type any customer inquiry below to test how Tiger AI will automatically analyze the message and reply in real-time.
+            </p>
+
+            <form onSubmit={handleSimulateInbound} className="flex gap-2">
+              <input
+                type="text"
+                value={simulateMessageText}
+                onChange={(e) => setSimulateMessageText(e.target.value)}
+                placeholder="Type customer message (e.g. السلام عليكم، عايز أعرف الأسعار عندكم ومواعيد العمل)..."
+                className="flex-1 rounded-lg border border-border bg-bg px-3.5 py-2 text-xs text-text focus:border-accent focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={isSimulatingInbound || !simulateMessageText.trim()}
+                className="flex items-center gap-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover px-4 py-2 text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+              >
+                <Bot className="h-3.5 w-3.5" />
+                <span>{isSimulatingInbound ? 'Simulating...' : 'Test Auto-Reply'}</span>
+              </button>
+            </form>
+
+            {/* Simulation Result Preview */}
+            {simulationResult && (
+              <div className="p-4 rounded-xl border border-border bg-bg space-y-3 mt-2">
+                <div className="flex items-center justify-between text-[11px] text-muted border-b border-border pb-2">
+                  <span className="font-medium text-text">Simulation for: {simulationResult.customer?.name}</span>
+                  <span className="font-mono text-[10px] bg-accent-soft text-accent px-2 py-0.5 rounded">
+                    {simulationResult.autoReply?.model || 'Gemini 3.8 Flash'}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {/* Customer Inbound Bubble */}
+                  <div className="flex justify-end">
+                    <div className="max-w-[80%] p-2.5 rounded-xl rounded-tr-none bg-card border border-border text-xs text-text shadow-subtle">
+                      <span className="text-[10px] text-muted block mb-0.5 font-medium">Customer (WhatsApp):</span>
+                      <p>{simulationResult.inboundMessage}</p>
+                    </div>
+                  </div>
+
+                  {/* Tiger AI Auto-Reply Bubble */}
+                  {simulationResult.autoReply && (
+                    <div className="flex justify-start">
+                      <div className="max-w-[85%] p-3 rounded-xl rounded-tl-none bg-accent text-white text-xs shadow-subtle space-y-1">
+                        <span className="text-[10px] text-emerald-200 block mb-0.5 font-semibold flex items-center gap-1">
+                          <Bot className="w-3 h-3" />
+                          <span>Tiger AI Auto-Responder:</span>
+                        </span>
+                        <p className="whitespace-pre-wrap leading-relaxed">{simulationResult.autoReply.replyText}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

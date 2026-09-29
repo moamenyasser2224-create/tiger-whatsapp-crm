@@ -45,4 +45,45 @@ export class AIController {
       next(err);
     }
   }
+
+  async getAutoReply(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const config = await aiService.getAutoReplyConfig();
+      res.status(200).json({
+        success: true,
+        data: config,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async updateAutoReply(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const user = req.user!;
+      const result = await aiService.updateAutoReplyConfig(user.id, req.body);
+      res.status(200).json({
+        success: true,
+        message: result.message,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async suggestReplies(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { customerName, lastMessage } = req.body;
+      const result = await aiService.suggestReplies({
+        customerName: customerName || 'العميل',
+        lastMessage: lastMessage || '',
+      });
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 }

@@ -73,6 +73,7 @@ model Customer {
   last              DateTime?
   next              DateTime?
   notes             String?
+  aiAutoReplyEnabled Boolean  @default(true)
   consent           Boolean   @default(true)
   consentDate       DateTime  @default(now())
   createdAt         DateTime  @default(now())
@@ -117,6 +118,9 @@ model Settings {
   disciplinaryMonthlyCapPercent Decimal  @default(20.0)
   disputeWindowDays            Int      @default(3)
   geminiApiKey                 String?
+  aiAutoReplyEnabled           Boolean  @default(true)
+  aiBusinessContext            String?  // Knowledge base facts about products, working hours, pricing
+  aiAutoReplyDelaySeconds      Int      @default(2)
   updatedAt                    DateTime @updatedAt
 
   @@map("settings")

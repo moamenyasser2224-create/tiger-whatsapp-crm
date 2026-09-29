@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api.js';
 import { StatusBadge } from './common/StatusBadge.js';
-import { X, MessageCircle, Send, ExternalLink, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, MessageCircle, Send, ExternalLink, CheckCircle2, AlertCircle, Sparkles, Bot } from 'lucide-react';
 
 interface WhatsAppDispatchModalProps {
   isOpen: boolean;
@@ -26,6 +26,27 @@ export const WhatsAppDispatchModal: React.FC<WhatsAppDispatchModalProps> = ({
   const [messageText, setMessageText] = useState(defaultMessage);
   const [isSending, setIsSending] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  const handleGenerateSuggestions = async () => {
+    setIsSuggesting(true);
+    try {
+      const res = await api.post('/ai/suggest-reply', {
+        customerName: customer?.name || 'العميل',
+        lastMessage: messageText || 'طلب استفسار عن الخدمات والأسعار',
+      });
+      setSuggestions(res.data.data?.suggestions || []);
+    } catch (e) {
+      setSuggestions([
+        `أهلاً بك أستاذ ${customer?.name || ''}، يسعدنا تواصلك ويسرنا تزويدك بكافة التفاصيل الآن.`,
+        `تحياتي أستاذ ${customer?.name || ''}، بخصوص استفسارك تم تجهيز العرض المناسب لحضرتك، هل يناسبك الاتصال الآن؟`,
+        `أهلاً بحضرتك يا فندم، هل تحب نحدد موعد لاجتماع تجريبي لشرح النظام عملياً؟`,
+      ]);
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
 
   // Check WhatsApp API status
   const { data: statusData } = useQuery({
@@ -142,7 +163,39 @@ export const WhatsAppDispatchModal: React.FC<WhatsAppDispatchModalProps> = ({
           )}
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-text">Message Content</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-text">Message Content</label>
+              <button
+                type="button"
+                onClick={handleGenerateSuggestions}
+                disabled={isSuggesting}
+                className="inline-flex items-center gap-1 text-[11px] text-accent hover:text-accent-hover font-medium cursor-pointer"
+              >
+                <Sparkles className="w-3 h-3 animate-pulse" />
+                <span>{isSuggesting ? 'Generating AI Replies...' : 'AI Smart Suggestions'}</span>
+              </button>
+            </div>
+
+            {suggestions.length > 0 && (
+              <div className="space-y-1.5 p-2.5 rounded-lg border border-border bg-card">
+                <span className="text-[10px] text-muted font-medium block">
+                  Click an AI reply to use instantly:
+                </span>
+                <div className="space-y-1">
+                  {suggestions.map((s, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setMessageText(s)}
+                      className="w-full text-left p-2 rounded-md border border-border bg-bg hover:border-accent hover:bg-accent-soft/20 text-xs text-text transition-colors line-clamp-2 cursor-pointer"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <textarea
               rows={4}
               value={messageText}

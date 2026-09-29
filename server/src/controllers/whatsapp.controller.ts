@@ -74,4 +74,24 @@ export class WhatsAppController {
       webhookEndpoint: `${env.FRONTEND_URL.replace(/:\d+$/, ':5000')}/api/whatsapp/webhook`,
     });
   }
+
+  async simulateInbound(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { customerId, messageText } = req.body;
+      if (!messageText || !messageText.trim()) {
+        res.status(400).json({ success: false, error: 'Message text is required' });
+        return;
+      }
+
+      const result = await whatsappService.simulateInboundMessage({
+        userId: req.user!.id,
+        customerId,
+        messageText: messageText.trim(),
+      });
+
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

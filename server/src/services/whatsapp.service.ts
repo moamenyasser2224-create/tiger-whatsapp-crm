@@ -2,6 +2,7 @@ import { env } from '../config/env.js';
 import { prisma } from '../config/prisma.js';
 import { hashPhone } from '../utils/crypto.js';
 import { getIO } from '../socket.js';
+import { aiService } from './ai.service.js';
 
 export interface WhatsAppSendResult {
   success: boolean;
@@ -164,6 +165,16 @@ export class WhatsAppService {
               },
             });
 
+            // Record inbound activity in timeline
+            await prisma.customerActivity.create({
+              data: {
+                customerId: customer.id,
+                userId: customer.userId,
+                type: 'inbound_message',
+                content: messageText,
+              },
+            });
+
             // Emit live real-time notification to user
             try {
               const io = getIO();
@@ -176,6 +187,72 @@ export class WhatsAppService {
               });
             } catch (ioErr) {
               // Socket might not be initialized in non-server tests
+            }
+
+            // 🤖 Check and Execute AI Auto-Responder
+            const settings = await prisma.settings.findFirst();
+            const isAutoReplyActive =
+              (settings?.aiAutoReplyEnabled ?? true) && (customer.aiAutoReplyEnabled ?? true);
+
+            if (isAutoReplyActive) {
+              console.log(`🤖 [WhatsApp AI Auto-Responder] Generating auto-reply for "${customer.name}"...`);
+              const autoReply = await aiService.generateCustomerAutoReply({
+                customerName: customer.name,
+                customerNotes: customer.notes || '',
+                inboundMessage: messageText,
+                businessContext: settings?.aiBusinessContext || undefined,
+              });
+
+              if (autoReply && autoReply.replyText) {
+                // Configurable simulated delay
+                const delayMs = (settings?.aiAutoReplyDelaySeconds ?? 2) * 1000;
+                if (delayMs > 0) {
+                  await new Promise((r) => setTimeout(r, delayMs));
+                }
+
+                // Dispatch auto-reply via WhatsApp
+                await this.sendMessage({
+                  userId: customer.userId,
+                  customerId: customer.id,
+                  rawPhone: fromPhone,
+                  messageText: autoReply.replyText,
+                  customerName: customer.name,
+                });
+
+                // Record AI reply activity in timeline
+                await prisma.customerActivity.create({
+                  data: {
+                    customerId: customer.id,
+                    userId: customer.userId,
+                    type: 'ai_reply',
+                    content: autoReply.replyText,
+                    metadata: JSON.stringify({ model: autoReply.model, simulated: autoReply.simulated }),
+                  },
+                });
+
+                // Append to customer notes
+                const replyTimestamp = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                const aiNote = `\n[${replyTimestamp}] رد آلي (Tiger AI): ${autoReply.replyText}`;
+                await prisma.customer.update({
+                  where: { id: customer.id },
+                  data: {
+                    notes: `${updatedNotes}${aiNote}`,
+                    last: new Date(),
+                  },
+                });
+
+                // Emit live AI reply notification
+                try {
+                  const io = getIO();
+                  io.to(`user_${customer.userId}`).emit('whatsapp:ai_replied', {
+                    customerId: customer.id,
+                    customerName: customer.name,
+                    replyText: autoReply.replyText,
+                    model: autoReply.model,
+                    timestamp: new Date().toISOString(),
+                  });
+                } catch (ioErr) {}
+              }
             }
           }
 
@@ -205,6 +282,120 @@ export class WhatsAppService {
     } catch (err: any) {
       console.error('❌ [WhatsApp Webhook Processor] Error processing event:', err.message);
     }
+  }
+
+  /**
+   * Simulates an incoming customer message for testing auto-reply end-to-end
+   */
+  async simulateInboundMessage(params: {
+    userId: string;
+    customerId?: string;
+    messageText: string;
+  }): Promise<{
+    success: boolean;
+    customer: any;
+    inboundMessage: string;
+    autoReply: { replyText: string; model: string; simulated?: boolean } | null;
+  }> {
+    let customer = params.customerId
+      ? await prisma.customer.findFirst({ where: { id: params.customerId, deletedAt: null } })
+      : null;
+
+    if (!customer) {
+      customer = await prisma.customer.findFirst({
+        where: { userId: params.userId, deletedAt: null },
+      });
+    }
+
+    if (!customer) {
+      // Fallback: any active customer
+      customer = await prisma.customer.findFirst({
+        where: { deletedAt: null },
+      });
+    }
+
+    if (!customer) {
+      throw new Error('No customer record available for testing. Please create a customer first.');
+    }
+
+    const settings = await prisma.settings.findFirst();
+    const timestamp = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+    const inboundNote = `\n[${timestamp}] وارد (محاكاة): ${params.messageText}`;
+    const updatedNotes = `${customer.notes || ''}${inboundNote}`;
+
+    await prisma.customer.update({
+      where: { id: customer.id },
+      data: {
+        notes: updatedNotes,
+        last: new Date(),
+      },
+    });
+
+    await prisma.customerActivity.create({
+      data: {
+        customerId: customer.id,
+        userId: customer.userId,
+        type: 'inbound_message',
+        content: params.messageText,
+      },
+    });
+
+    let autoReplyResult: any = null;
+    const isAutoReplyActive =
+      (settings?.aiAutoReplyEnabled ?? true) && (customer.aiAutoReplyEnabled ?? true);
+
+    if (isAutoReplyActive) {
+      autoReplyResult = await aiService.generateCustomerAutoReply({
+        customerName: customer.name,
+        customerNotes: customer.notes || '',
+        inboundMessage: params.messageText,
+        businessContext: settings?.aiBusinessContext || undefined,
+      });
+
+      if (autoReplyResult && autoReplyResult.replyText) {
+        await prisma.customerActivity.create({
+          data: {
+            customerId: customer.id,
+            userId: customer.userId,
+            type: 'ai_reply',
+            content: autoReplyResult.replyText,
+            metadata: JSON.stringify({ model: autoReplyResult.model, simulated: autoReplyResult.simulated }),
+          },
+        });
+
+        const replyTimestamp = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        const aiNote = `\n[${replyTimestamp}] رد آلي (Tiger AI): ${autoReplyResult.replyText}`;
+        await prisma.customer.update({
+          where: { id: customer.id },
+          data: {
+            notes: `${updatedNotes}${aiNote}`,
+            last: new Date(),
+          },
+        });
+
+        try {
+          const io = getIO();
+          io.to(`user_${customer.userId}`).emit('whatsapp:ai_replied', {
+            customerId: customer.id,
+            customerName: customer.name,
+            replyText: autoReplyResult.replyText,
+            model: autoReplyResult.model,
+            timestamp: new Date().toISOString(),
+          });
+        } catch (e) {}
+      }
+    }
+
+    return {
+      success: true,
+      customer: {
+        id: customer.id,
+        name: customer.name,
+        phone: customer.phone,
+      },
+      inboundMessage: params.messageText,
+      autoReply: autoReplyResult,
+    };
   }
 }
 
