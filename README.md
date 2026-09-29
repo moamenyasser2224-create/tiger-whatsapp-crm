@@ -272,7 +272,7 @@ npm run dev
 | **عزل شبكة وصلاحيات قاعدة البيانات** | سكربت حصر الصلاحيات لمستخدم التطبيق `tiger_app` و`tiger_readonly` | [`scripts/init-db-roles.sql`](file:///scripts/init-db-roles.sql) |
 | **تحصين خادم الإنتاج (VPS Hardening)** | سكربت أتمتة إغلاق SSH root وكلمات المرور، وجدار ناري UFW، وfail2ban | [`scripts/setup-vps-security.sh`](file:///scripts/setup-vps-security.sh) |
 | **حجب الأصل وتكامل Cloudflare WAF** | إعداد Nginx يقصر قبول الزيارات على نطاقات IPs الخاصة بـ Cloudflare | [`scripts/cloudflare-nginx.conf`](file:///scripts/cloudflare-nginx.conf) |
-| **أمن سلسلة التوريد (Supply Chain & SAST)** | مسار GitHub Actions لفحص الحزم، فحص CodeQL، ومسح ثغرات صور Docker عبر Trivy | [`.github/workflows/security-ci.yml`](file:///.github/workflows/security-ci.yml) |
+| **أمن سلسلة التوريد (Supply Chain & SAST)** | مسار GitHub Actions لفحص الحزم، فحص CodeQL، ومسح ثغرات صور Docker عبر Trivy | [`ci_workflows/workflows/security-ci.yml`](file:///ci_workflows/workflows/security-ci.yml) |
 | **نسخ احتياطي مشفر ومختبر (Backup & Restore)** | سكربت تشفير AES-256-CBC مع فحص استعادة تلقائي في قاعدة بيانات تجريبية | [`scripts/backup-database.sh`](file:///scripts/backup-database.sh) \| [`scripts/restore-test.sh`](file:///scripts/restore-test.sh) |
 | **مصادقة WebSocket Handshake** | فحص JWT في مصافحة Socket.io ورفض أي اتصال غير مصرح | [`server/src/socket.ts`](file:///server/src/socket.ts) |
 | **تعقيم المدخلات ضد XSS** | تجريد ونزع وسوم `<script>` والسمات الخطرة من رسائل الشات والملاحظات | [`server/src/utils/sanitize.ts`](file:///server/src/utils/sanitize.ts) |
