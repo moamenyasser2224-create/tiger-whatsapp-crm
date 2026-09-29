@@ -3,6 +3,7 @@ import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { prisma } from './config/prisma.js';
 import { initSocket } from './socket.js';
+import { initBackgroundJobs } from './jobs/index.js';
 
 const app = createApp();
 const server = http.createServer(app);
@@ -13,8 +14,9 @@ server.keepAliveTimeout = 61000; // Cloud reverse-proxy keepalive
 server.requestTimeout = 30000;   // Drop hanging requests after 30s
 server.maxHeadersCount = 100;    // Prevent Header Flooding attacks
 
-// Initialize Socket.io
+// Initialize Socket.io and background jobs
 initSocket(server);
+initBackgroundJobs();
 
 server.listen(env.PORT, () => {
   console.log(`🚀 [Tiger Workspace CRM] Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);

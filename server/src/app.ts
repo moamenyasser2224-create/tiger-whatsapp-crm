@@ -14,10 +14,14 @@ import {
   prototypePollutionGuard,
   parameterPollutionGuard,
 } from './middlewares/cloudProtection.js';
+import { logRedactionMiddleware } from './middlewares/logRedactor.js';
 import routes from './routes/index.js';
 
 export function createApp(): Express {
   const app = express();
+
+  // 0. Install Log Redactor & Data Leak Prevention Shield
+  app.use(logRedactionMiddleware);
 
   // Trust Cloudflare, Reverse Proxies & Cloud Load Balancers
   app.set('trust proxy', 1);

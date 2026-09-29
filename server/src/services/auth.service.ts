@@ -21,6 +21,8 @@ import {
   PASSWORD_RESET_EXPIRY_MINUTES,
 } from '../config/constants.js';
 import { env } from '../config/env.js';
+import { prisma } from '../config/prisma.js';
+import { checkPwnedPassword } from '../utils/pwnedPassword.js';
 
 const userRepository = new UserRepository();
 const tokenRepository = new TokenRepository();
@@ -40,6 +42,15 @@ export class AuthService {
     const existing = await userRepository.findByEmail(data.email);
     if (existing) {
       throw new CustomError('Email is already registered in the system', 400);
+    }
+
+    // Verify candidate password against known breached password dumps (k-Anonymity)
+    const pwned = await checkPwnedPassword(data.password);
+    if (pwned.isPwned) {
+      throw new CustomError(
+        `This password has been exposed in a known public data breach (${pwned.count.toLocaleString()} times). For security, please choose a different password.`,
+        400
+      );
     }
 
     const hashedPassword = await bcrypt.hash(data.password, BCRYPT_COST);
@@ -147,6 +158,45 @@ export class AuthService {
       ipAddress: data.ipAddress,
       userAgent: data.userAgent,
     });
+
+    // Privileged Security Alert: Detect login from new device or new IP address
+    const isPrivileged = user.role === 'admin' || user.role === 'hr' || user.role === 'owner';
+    if (isPrivileged && (data.ipAddress || data.userAgent)) {
+      const priorLogins = await prisma.auditLog.findMany({
+        where: {
+          userId: user.id,
+          action: 'LOGIN',
+        },
+        take: 2,
+        orderBy: { createdAt: 'desc' },
+      });
+
+      // If this is not the user's first login and the IP differs from previous sessions
+      const hasPriorDifferent = priorLogins.some(
+        (l) => l.ipAddress && data.ipAddress && l.ipAddress !== data.ipAddress
+      );
+
+      if (hasPriorDifferent || priorLogins.length <= 1) {
+        await auditRepository.log({
+          userId: user.id,
+          action: 'SECURITY_ALERT_NEW_DEVICE_LOGIN',
+          entity: 'AUTH',
+          entityId: user.id,
+          details: {
+            alert: 'Privileged sign-in detected from an unrecognized IP address or client device',
+            email: user.email,
+            role: user.role,
+            clientIp: data.ipAddress,
+            userAgent: data.userAgent,
+            timestamp: new Date().toISOString(),
+          },
+          ipAddress: data.ipAddress,
+          userAgent: data.userAgent,
+        });
+
+        console.warn(`🚨 [SECURITY ALERT] New device / IP login detected for privileged account: ${user.email} (${user.role}) from IP: ${data.ipAddress || 'unknown'}`);
+      }
+    }
 
     return {
       requires2FA: false,
@@ -281,6 +331,15 @@ export class AuthService {
       throw new CustomError('Password reset link is invalid or expired (valid for 15 minutes only)', 400);
     }
 
+    // Verify candidate password against known breached password dumps (k-Anonymity)
+    const pwned = await checkPwnedPassword(newPassword);
+    if (pwned.isPwned) {
+      throw new CustomError(
+        `This password has been exposed in a known public data breach (${pwned.count.toLocaleString()} times). For security, please choose a different password.`,
+        400
+      );
+    }
+
     const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_COST);
 
     await userRepository.update(resetRecord.userId, {
@@ -372,6 +431,15 @@ export class AuthService {
 
     if (!data.newPassword || data.newPassword.length < 8) {
       throw new CustomError('New password must be at least 8 characters long', 400);
+    }
+
+    // Verify candidate password against known breached password dumps (k-Anonymity)
+    const pwned = await checkPwnedPassword(data.newPassword);
+    if (pwned.isPwned) {
+      throw new CustomError(
+        `This password has been exposed in a known public data breach (${pwned.count.toLocaleString()} times). For security, please choose a different password.`,
+        400
+      );
     }
 
     const hashedPassword = await bcrypt.hash(data.newPassword, BCRYPT_COST);

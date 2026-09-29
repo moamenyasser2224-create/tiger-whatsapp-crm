@@ -5,7 +5,21 @@ const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;
 const AUTH_TAG_LENGTH = 16;
 
-function getKeyBuffer(): Buffer {
+/**
+ * Isolated Key Buffer strictly for Biometric Facial Embeddings (Defense in Depth)
+ */
+function getFaceKeyBuffer(): Buffer {
+  const key = env.FACE_EMBEDDING_ENCRYPTION_KEY;
+  if (/^[0-9a-fA-F]{64}$/.test(key)) {
+    return Buffer.from(key, 'hex');
+  }
+  return crypto.createHash('sha256').update(key).digest();
+}
+
+/**
+ * Fallback Key Buffer for migration compatibility if encrypted under legacy key
+ */
+function getLegacyKeyBuffer(): Buffer {
   const key = env.PHONE_ENCRYPTION_KEY;
   if (/^[0-9a-fA-F]{64}$/.test(key)) {
     return Buffer.from(key, 'hex');
@@ -53,13 +67,13 @@ export function euclideanDistance(vecA: number[], vecB: number[]): number {
 }
 
 /**
- * Encrypts a float array embedding using AES-256-GCM.
+ * Encrypts a float array embedding using AES-256-GCM and FACE_EMBEDDING_ENCRYPTION_KEY.
  * Never stores raw faces or unencrypted biometric data.
  */
 export function encryptFaceEmbedding(embedding: number[]): string {
   const jsonStr = JSON.stringify(embedding);
   const iv = crypto.randomBytes(IV_LENGTH);
-  const key = getKeyBuffer();
+  const key = getFaceKeyBuffer();
   const cipher = crypto.createCipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH });
 
   let encrypted = cipher.update(jsonStr, 'utf8', 'hex');
@@ -87,15 +101,32 @@ export function decryptFaceEmbedding(payload: string): number[] {
   const [ivHex, tagHex, encryptedText] = parts;
   const iv = Buffer.from(ivHex, 'hex');
   const tag = Buffer.from(tagHex, 'hex');
-  const key = getKeyBuffer();
 
-  const decipher = crypto.createDecipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH });
-  decipher.setAuthTag(tag);
+  // Try dedicated face embedding key first
+  try {
+    const key = getFaceKeyBuffer();
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv, { authTagLength: AUTH_TAG_LENGTH });
+    decipher.setAuthTag(tag);
 
-  let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
 
-  return JSON.parse(decrypted);
+    return JSON.parse(decrypted);
+  } catch {
+    // Fallback to legacy key for zero-downtime migration
+    try {
+      const fallbackKey = getLegacyKeyBuffer();
+      const decipher = crypto.createDecipheriv(ALGORITHM, fallbackKey, iv, { authTagLength: AUTH_TAG_LENGTH });
+      decipher.setAuthTag(tag);
+
+      let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+
+      return JSON.parse(decrypted);
+    } catch {
+      return [];
+    }
+  }
 }
 
 const LIVENESS_ACTIONS = [

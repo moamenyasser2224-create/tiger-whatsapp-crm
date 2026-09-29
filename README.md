@@ -173,7 +173,12 @@ JWT_ACCESS_SECRET="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abc
 JWT_REFRESH_SECRET="abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
 JWT_RESET_PASSWORD_SECRET="reset_secret_key_minimum_32_characters_long_1234567890"
 
+# مفاتيح التشفير المنفصلة (64-character Hex / 32-byte Keys)
 PHONE_ENCRYPTION_KEY="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+SALARY_ENCRYPTION_KEY="1123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+FACE_EMBEDDING_ENCRYPTION_KEY="2123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+BACKUP_ENCRYPTION_KEY="3123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
 SECURE_COOKIE=false
 COOKIE_SAME_SITE="lax"
 ENABLE_RLS=false
@@ -204,21 +209,78 @@ npm run dev
 
 ---
 
-## 🛡️ قائمة الفحص الأمني (Security Checklist)
+## 🔐 إدارة الأسرار وفصل مفاتيح التشفير (Enterprise Secrets Management & Key Rotation)
+
+في بيئة الإنتاج الحقيقية، **يُحظر تماماً حفظ مفاتيح التشفير أو أسرار JWT داخل ملفات `.env` على نظام ملفات الخادم**. يجب حقن المتغيرات البيئية مباشرة في ذاكرة المعالجة (Process Memory) بواسطة منصة متخصصة لإدارة الأسرار.
+
+### 1. منصات إدارة الأسرار المعتمدة
+- **Doppler (موصى به للبساطة وسرعة الربط):**
+  ```bash
+  # تثبيت Doppler CLI على الخادم
+  curl -Ls --tlsv1.2 --proto "=https" https://cli.doppler.com/install.sh | sudo sh
+
+  # تسجيل الدخول وتحديد بيئة الإنتاج
+  doppler login
+  doppler setup --project tiger-workspace --config prd
+
+  # تشغيل الخادم بحقن الأسرار مباشرة في الذاكرة دون أي ملف .env على القرص
+  doppler run -- node dist/server.js
+  # أو مع PM2
+  doppler run -- pm2 start dist/server.js --name tiger-crm
+  ```
+- **HashiCorp Vault (للبنى التحتية الخاصة Enterprise On-Prem / Hybrid):**
+  - تفعيل محرك KV v2 وتخزين الأسرار تحت المسار `secret/data/tiger/production`.
+  - استخدام `vault-agent` أو AppRole لتمرير الـ Token وتشغيل الحاوية دون تخزين دائم للأسرار.
+- **مزودو الاستضافة المدارون (AWS Secrets Manager / GCP Secret Manager / Render Secrets):**
+  - ضبط المتغيرات كـ Environment Secrets مباشرة في لوحة التحكم وتفعيل التشفير أثناء النقل والراحة (KMS).
+
+### 2. مفاتيح التشفير الأربعة المنفصلة (Cryptographic Key Separation)
+النظام يعتمد على 4 مفاتيح 256-bit منفصلة تماماً ومستقلة:
+1. `PHONE_ENCRYPTION_KEY`: تشفير أرقام هواتف العملاء (AES-256-GCM) مع تجزئة SHA-256 مفهرسة.
+2. `SALARY_ENCRYPTION_KEY`: تشفير رواتب الموظفين والبدلات ومبالغ الخصومات الحساسة.
+3. `FACE_EMBEDDING_ENCRYPTION_KEY`: تشفير متجهات بصمة الوجه (64-float cosine vector) بمعزل تام عن باقي البيانات.
+4. `BACKUP_ENCRYPTION_KEY`: تشفير النسخ الاحتياطية المضغوطة لقاعدة البيانات باستخدام OpenSSL AES-256-CBC وPBKDF2.
+
+### 3. دليل تدوير المفاتيح الدوري (Zero-Downtime Key Rotation Procedure)
+لإجراء تدوير دوري لمفاتيح التشفير (كل 180 يوماً أو فور الاشتباه بأي تسريب):
+1. **توليد المفتاح الجديد:** توليد مفتاح 64-char hex عشوائي آمن وحفظه كـ `NEW_<KEY_NAME>`.
+2. **تشغيل سكربت إعادة التشفير المزدوج (Dual-Key Migration):**
+   - قراءة السجل القديم وفك تشفيره باستخدام المفتاح الحالي (`OLD_KEY`).
+   - إعادة تشفيره فوراً بالمفتاح الجديد (`NEW_KEY`) وتحديث الحقل في قاعدة البيانات.
+   - التحقق من سلامة فك التشفير لكافة السجلات (Assert Checksum / Test Decryption).
+3. **تحديث المفتاح في Doppler/Vault:** تعيين `KEY_NAME = NEW_KEY` وحذف المفتاح القديم.
+4. **إعادة تشغيل التطبيق بنظام Graceful Reload:** (`pm2 reload tiger-crm`).
+
+---
+
+## 🛡️ طبقات الحماية وقائمة الفحص الأمني (Defense in Depth)
+
+وثائق الامتثال والحماية المتقدمة متوفرة في الملفات المخصصة التالية:
+- 📋 [**بوابة الجاهزية للإنتاج وفحص الاعتماد (SECURITY_CHECKLIST.md)**](file:///SECURITY_CHECKLIST.md): تفصيل دقيق لما تم اختباره برمجياً وما يتطلب إجراءات تشغيلية وبشرية مع جدول التوقيع الإلزامي قبل فتح النظام للإنتاج.
+- 👤 [**تقييم الأثر على حماية البيانات الحيوية (DPIA.md)**](file:///DPIA.md): توثيق تقني وقانوني لمعالجة بصمات الوجه، الموافقة الطوعية، والبدائل المتاحة.
+- 🚨 [**خطة الاستجابة للطوارئ والاختراقات (INCIDENT_RESPONSE.md)**](file:///INCIDENT_RESPONSE.md): تصنيف الحوادث (SEV-1 إلى SEV-4)، إجراءات الاحتواء في أقل من 15 دقيقة، وإشعار المتضررين خلال 72 ساعة.
+
+### جدول مصفوفة الضوابط الأمنية المتكاملة
 
 | المتطلب الأمني | آلية التنفيذ البرمجية | المسار الدقيق للملف |
 | :--- | :--- | :--- |
+| **فصل مفاتيح التشفير (Key Separation)** | 4 مفاتيح 256-بت منفصلة للهواتف والرواتب والبصمات والنسخ الاحتياطي | [`server/src/utils/crypto.ts`](file:///server/src/utils/crypto.ts) \| [`server/src/utils/faceMath.ts`](file:///server/src/utils/faceMath.ts) |
+| **تعقيم السجلات (Log Redaction)** | حجب تلقائي لكلمات المرور وأرقام الهواتف والرواتب والبصمات والتوكنات من Console | [`server/src/middlewares/logRedactor.ts`](file:///server/src/middlewares/logRedactor.ts) |
+| **فحص كلمات المرور المسربة (HIBP)** | فحص آمن عبر k-anonymity لمنع استخدام أي كلمة مرور مسربة عالمياً | [`server/src/utils/pwnedPassword.ts`](file:///server/src/utils/pwnedPassword.ts) \| [`server/src/services/auth.service.ts`](file:///server/src/services/auth.service.ts) |
+| **حذف البصمات التلقائي (Biometric Purge)** | مهمة خلفية مجدولة تحذف بصمات المفصولين ومن ألغوا موافقتهم بعد 24 ساعة | [`server/src/jobs/biometricPurge.job.ts`](file:///server/src/jobs/biometricPurge.job.ts) |
+| **تنبيه الأجهزة الجديدة للحسابات الحساسة** | كشف وتسجيل فوري لمحاولات الدخول من عناوين IP أو متصفحات جديدة للإداريين | [`server/src/services/auth.service.ts`](file:///server/src/services/auth.service.ts) |
+| **عزل شبكة وصلاحيات قاعدة البيانات** | سكربت حصر الصلاحيات لمستخدم التطبيق `tiger_app` و`tiger_readonly` | [`scripts/init-db-roles.sql`](file:///scripts/init-db-roles.sql) |
+| **تحصين خادم الإنتاج (VPS Hardening)** | سكربت أتمتة إغلاق SSH root وكلمات المرور، وجدار ناري UFW، وfail2ban | [`scripts/setup-vps-security.sh`](file:///scripts/setup-vps-security.sh) |
+| **حجب الأصل وتكامل Cloudflare WAF** | إعداد Nginx يقصر قبول الزيارات على نطاقات IPs الخاصة بـ Cloudflare | [`scripts/cloudflare-nginx.conf`](file:///scripts/cloudflare-nginx.conf) |
+| **أمن سلسلة التوريد (Supply Chain & SAST)** | مسار GitHub Actions لفحص الحزم، فحص CodeQL، ومسح ثغرات صور Docker عبر Trivy | [`.github/workflows/security-ci.yml`](file:///.github/workflows/security-ci.yml) |
+| **نسخ احتياطي مشفر ومختبر (Backup & Restore)** | سكربت تشفير AES-256-CBC مع فحص استعادة تلقائي في قاعدة بيانات تجريبية | [`scripts/backup-database.sh`](file:///scripts/backup-database.sh) \| [`scripts/restore-test.sh`](file:///scripts/restore-test.sh) |
 | **مصادقة WebSocket Handshake** | فحص JWT في مصافحة Socket.io ورفض أي اتصال غير مصرح | [`server/src/socket.ts`](file:///server/src/socket.ts) |
 | **تعقيم المدخلات ضد XSS** | تجريد ونزع وسوم `<script>` والسمات الخطرة من رسائل الشات والملاحظات | [`server/src/utils/sanitize.ts`](file:///server/src/utils/sanitize.ts) |
 | **منع إغراق الشات (Chat Rate Limit)** | تحديد 10 رسائل/دقيقة لكل مستخدم برفض الطلب الحادي عشر بكود `429` | [`server/src/middlewares/rateLimiter.ts`](file:///server/src/middlewares/rateLimiter.ts) |
 | **منع تكرار الحضور والانصراف** | فحص حالة الحضور والخروج مسبقاً مع قيد `@@unique([userId, date])` | [`server/src/services/attendance.service.ts`](file:///server/src/services/attendance.service.ts) |
-| **تشفير أرقام الهواتف** | تشفير بـ `AES-256-GCM` ومفتاح 32 بايت مع AuthTag وIV عشوائي | [`server/src/utils/crypto.ts`](file:///server/src/utils/crypto.ts) |
-| **فهرسة الأرقام المشفرة** | توليد تجزئة `SHA-256` للبحث السريع وفحص التكرار | [`server/src/utils/crypto.ts`](file:///server/src/utils/crypto.ts) |
 | **حماية الـ CSRF** | نمط Double Submit Cookie عبر الـ Header `x-csrf-token` | [`server/src/middlewares/csrfProtection.ts`](file:///server/src/middlewares/csrfProtection.ts) |
 | **عزل البيانات ومنع IDOR** | ربط كافة العمليات بـ `req.user.id` مع سياسات RLS | [`server/src/middlewares/authenticate.ts`](file:///server/src/middlewares/authenticate.ts) |
 | **المصادقة الثنائية (2FA TOTP)** | توليد أسرار TOTP وQR Code والتحقق من رموز الـ 6 أرقام | [`server/src/utils/totp.ts`](file:///server/src/utils/totp.ts) |
-| **ترويسات الحماية الصارمة** | تفعيل `helmet()` لضبط HSTS وX-Content-Type-Options | [`server/src/app.ts`](file:///server/src/app.ts) |
-| **تجزئة كلمات المرور** | خوارزمية `bcrypt` بعامل تكلفة 12 | [`server/src/services/auth.service.ts`](file:///server/src/services/auth.service.ts) |
 | **سجل التدقيق (Audit Logs)** | توثيق كامل للعمليات الحساسة مع عنوان الـ IP والـ User-Agent | [`server/src/repositories/audit.repository.ts`](file:///server/src/repositories/audit.repository.ts) |
 
 ---
@@ -233,67 +295,51 @@ docker-compose up -d --build
 
 ---
 
-### 2. النشر على خادم VPS مستقل (Ubuntu/PM2/Nginx/SSL/WebSocket)
+---
 
-عند النشر على VPS، يجب تهيئة Nginx ليدعم ترقية اتصالات **WebSocket الخاصة بـ Socket.io** عبر التكوين التالي:
+### 2. النشر على خادم VPS مستقل وتحصين البنية التحتية (Hardened Ubuntu VPS)
 
-أنشئ الإعداد في `/etc/nginx/sites-available/tiger-crm`:
-```nginx
-# Map لترقية اتصالات WebSocket
-map $http_upgrade $connection_upgrade {
-    default upgrade;
-    ''      close;
-}
+لضمان تحصين الخادم قبل استقبال بيانات حقيقية، تم إعداد حزمة سكربتات أتمتة متكاملة داخل مجلد `scripts/`:
 
-server {
-    server_name crm.yourdomain.com;
-
-    root /var/www/whatsapp-crm/client/dist;
-    index index.html;
-
-    # Gzip Compression
-    gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml text/javascript;
-
-    # SPA Routing للواجهة الأمامية
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # تمرير طلبات الـ REST API للخادم الخلفي
-    location /api {
-        proxy_pass http://127.0.0.1:5000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # تمرير اتصالات WebSocket الحية لـ Socket.io (شات وحضور لحظي)
-    location /socket.io/ {
-        proxy_pass http://127.0.0.1:5000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection $connection_upgrade;
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_read_timeout 86400s;
-        proxy_send_timeout 86400s;
-    }
-}
-```
-
-تفعيل الموقع وإصدار شهادة SSL المجانية:
+#### أ) تشغيل سكربت تحصين الخادم (Automated VPS Hardening):
 ```bash
-sudo ln -s /etc/nginx/sites-available/tiger-crm /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-sudo certbot --nginx -d crm.yourdomain.com
+chmod +x scripts/setup-vps-security.sh
+sudo ./scripts/setup-vps-security.sh
 ```
+يقوم السكربت بالمهام التالية تلقائياً:
+- تعطيل تسجيل الدخول بحساب `root` عبر SSH وإلغاء تسجيل الدخول بكلمات المرور (`PasswordAuthentication no`).
+- تفعيل جدار الحماية `UFW` وإغلاق المنافذ الداخلية (منفذ PostgreSQL 5432 ومنفذ Node 5000) مع السماح فقط بـ 80 و443 وSSH.
+- تثبيت وتفعيل `fail2ban` لمنع محاولات التخمين والاختراق العنيف (Brute Force).
+- تفعيل التحديثات الأمنية التلقائية عبر `unattended-upgrades`.
+
+#### ب) عزل صلاحيات قاعدة البيانات (Least Privilege Roles):
+```bash
+# تنفيذ سكربت إنشاء المستخدمين ذوي الصلاحيات المحدودة في PostgreSQL:
+sudo -u postgres psql -d tiger_db -f scripts/init-db-roles.sql
+```
+- ينشئ مستخدم التطبيق `tiger_app` بصلاحيات `SELECT, INSERT, UPDATE, DELETE` فقط مع حظر صلاحيات Superuser وحذف الجداول.
+- ينشئ مستخدم القراءة والتحليلات `tiger_readonly` بصلاحيات `SELECT` فقط.
+
+#### ج) حجب الأصل وNginx مع Cloudflare WAF (Origin Cloaking):
+استخدم التكوين الجاهز في [`scripts/cloudflare-nginx.conf`](file:///scripts/cloudflare-nginx.conf):
+```bash
+sudo cp scripts/cloudflare-nginx.conf /etc/nginx/sites-available/tiger-crm
+sudo ln -s /etc/nginx/sites-available/tiger-crm /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+- يستقبل الاتصالات فقط من خوادم Cloudflare الأصلية (يقفل الوصول المباشر عبر IP السيرفر).
+- يستعيد IP الحقيقي للزائر عبر ترويسة `CF-Connecting-IP`.
+- يفرض بروتوكول TLS 1.2+ مع ترويسات HSTS الصارمة ويدعم WebSocket الشات والحضور.
+
+#### د) خط أنابيب النسخ الاحتياطي المشفر والتحقق من الاستعادة (Backup & Restore Verification):
+```bash
+# 1. أخذ نسخة احتياطية مشفرة بـ AES-256-CBC:
+BACKUP_ENCRYPTION_KEY="your_64_char_hex_key" ./scripts/backup-database.sh
+
+# 2. إجراء اختبار استعادة دوري للتحقق من سلامة البيانات:
+BACKUP_ENCRYPTION_KEY="your_64_char_hex_key" ./scripts/restore-test.sh /var/backups/tiger/tiger_backup_YYYYMMDD_HHMMSS.sql.enc
+```
+- يمكنك جدولة السكربت كـ Cron Job يومي الساعة 2:00 صباحاً مع رفع تلقائي إلى S3 / Wasabi مع خاصية WORM (Object Lock).
 
 ---
 
